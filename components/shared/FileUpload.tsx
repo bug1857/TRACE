@@ -1,0 +1,86 @@
+'use client';
+
+import React, { useRef, useState } from 'react';
+import { Upload } from 'lucide-react';
+
+interface FileUploadProps {
+  onFileSelect: (file: File) => void;
+  accept?: string;
+  placeholder?: string;
+}
+
+export default function FileUpload({
+  onFileSelect,
+  accept = '.csv,.xml',
+  placeholder = 'Drop OCEL 2.0 CSV or XML here, or click to select'
+}: FileUploadProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragActive, setIsDragActive] = useState(false);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragActive(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragActive(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      // Basic type validation
+      const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+      if (accept.split(',').includes(fileExtension)) {
+        onFileSelect(file);
+      }
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      onFileSelect(e.target.files[0]);
+    }
+  };
+
+  const triggerSelect = () => {
+    fileInputRef.current?.click();
+  };
+
+  return (
+    <div
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      onClick={triggerSelect}
+      className={`border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-colors min-h-[160px] select-none ${
+        isDragActive
+          ? 'border-[#2D6A4F] bg-[#E8F0EB]'
+          : 'border-[#E2E0D8] bg-[#F3F2EE] hover:bg-[#ECEAE4]'
+      }`}
+    >
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept={accept}
+        className="hidden"
+      />
+      
+      <div className="mb-3 text-[#6B6963]">
+        <Upload className="w-8 h-8 mx-auto" strokeWidth={1.5} />
+      </div>
+
+      <p className="text-[13px] font-sans font-medium text-[#1A1917]">
+        {placeholder}
+      </p>
+      
+      <p className="text-[11px] text-[#6B6963] font-sans mt-1">
+        Accepted file types: {accept.toUpperCase()}
+      </p>
+    </div>
+  );
+}
