@@ -2,12 +2,61 @@ import pandas as pd
 from typing import List, Dict, Any
 from carbon_budget import classify_activity
 
-VIOLATION_RULES = [
-    {"forbidden": "air freight", "mandated": "rail freight", "category": "transport", "reduction_factor": 0.85},
-    {"forbidden": "truck delivery", "mandated": "rail delivery", "category": "transport", "reduction_factor": 0.75},
-    {"forbidden": "incineration", "mandated": "recycling", "category": "waste", "reduction_factor": 0.70},
-    {"forbidden": "landfill", "mandated": "recycling", "category": "waste", "reduction_factor": 0.60},
+CONFORMANCE_RULES = [
+    {
+        "disallowed_activities": ["Air Freight Dispatch", "Truck Delivery Transport Dispatch"],
+        "mandated_alternative": "Rail",
+        "category": "transport",
+        "reduction_factors": {
+            "Air Freight Dispatch": 0.85,
+            "Truck Delivery Transport Dispatch": 0.75
+        }
+    },
+    {
+        "disallowed_activities": ["Incineration Disposal", "Landfill Disposal"],
+        "mandated_alternative": "Recycling",
+        "category": "waste",
+        "reduction_factors": {
+            "Incineration Disposal": 0.70,
+            "Landfill Disposal": 0.60
+        }
+    }
 ]
+
+# Dynamically construct legacy VIOLATION_RULES for backward compatibility with carbon_fitness.py
+VIOLATION_RULES = []
+for rule in CONFORMANCE_RULES:
+    mandated = rule["mandated_alternative"]
+    category = rule["category"]
+    for disallowed in rule["disallowed_activities"]:
+        reduction_factor = rule["reduction_factors"].get(disallowed, 1.0)
+        # Determine the mandated alternative string byte-for-byte as today
+        if mandated == "Rail":
+            if "freight" in disallowed.lower():
+                mandated_alternative_str = "rail freight"
+            else:
+                mandated_alternative_str = "rail delivery"
+        else:
+            mandated_alternative_str = mandated.lower()
+            
+        # carbon_fitness.py expects substrings as forbidden keys:
+        if "air freight" in disallowed.lower():
+            forbidden_substring = "air freight"
+        elif "truck delivery" in disallowed.lower():
+            forbidden_substring = "truck delivery"
+        elif "incineration" in disallowed.lower():
+            forbidden_substring = "incineration"
+        elif "landfill" in disallowed.lower():
+            forbidden_substring = "landfill"
+        else:
+            forbidden_substring = disallowed.lower()
+
+        VIOLATION_RULES.append({
+            "forbidden": forbidden_substring,
+            "mandated": mandated_alternative_str,
+            "category": category,
+            "reduction_factor": reduction_factor
+        })
 
 def detect_violations(events_df: pd.DataFrame, case_id_col: str, activity_col: str, timestamp_col: str) -> List[Dict[str, Any]]:
     """
@@ -35,51 +84,62 @@ def detect_violations(events_df: pd.DataFrame, case_id_col: str, activity_col: s
             ts_str = str(row[timestamp_col])
             
         # Check against rules
-        for rule in VIOLATION_RULES:
-            forbidden = rule["forbidden"].lower()
-            if forbidden in activity_lower:
-                mandated = rule["mandated"]
-                category = rule["category"]
-                reduction_factor = rule["reduction_factor"]
-                
-                # Compute carbon factors
-                _, forbidden_factor, _ = classify_activity(activity)
-                
-                # Check for weight/quantity column to scale carbon
-                qty = 1.0
-                for col in ["weight", "quantity", "cargo_weight", "volume", "amount"]:
-                    if col in row and pd.notna(row[col]):
-                        try:
-                            qty = float(row[col])
-                        except ValueError:
-                            pass
-                        break
-                        
-                forbidden_carbon = forbidden_factor * qty
-                delta = forbidden_carbon * reduction_factor
-                
-                # Determine severity
-                if delta > 2.0:
-                    severity = "critical"
-                elif delta > 0.5:
-                    severity = "warning"
-                else:
-                    severity = "info"
+        for rule in CONFORMANCE_RULES:
+            for disallowed in rule["disallowed_activities"]:
+                if disallowed.lower() in activity_lower:
+                    mandated = rule["mandated_alternative"]
+                    category = rule["category"]
+                    reduction_factor = rule["reduction_factors"].get(disallowed, 1.0)
                     
-                # Build unique violation ID
-                clean_act = "".join(c for c in activity if c.isalnum() or c in ("-", "_"))
-                v_id = f"v-{case_id}-{clean_act}-{idx}"
-                
-                violations.append({
-                    "id": v_id,
-                    "caseId": case_id,
-                    "activity": activity,
-                    "mandatedAlternative": mandated,
-                    "category": category,
-                    "severity": severity,
-                    "carbonDeltaKg": round(delta, 2),
-                    "estimated": True,
-                    "timestamp": ts_str
-                })
-                
+                    # Compute carbon factors
+                    _, forbidden_factor, _ = classify_activity(activity)
+                    
+                    # Check for weight/quantity column to scale carbon
+                    qty = 1.0
+                    for col in ["weight", "quantity", "cargo_weight", "volume", "amount"]:
+                        if col in row and pd.notna(row[col]):
+                            try:
+                                qty = float(row[col])
+                            except ValueError:
+                                pass
+                            break
+                            
+                    forbidden_carbon = forbidden_factor * qty
+                    delta = forbidden_carbon * reduction_factor
+                    
+                    # Determine severity
+                    if delta > 2.0:
+                        severity = "critical"
+                    elif delta > 0.5:
+                        severity = "warning"
+                    else:
+                        severity = "info"
+                        
+                    # Build unique violation ID
+                    clean_act = "".join(c for c in activity if c.isalnum() or c in ("-", "_"))
+                    v_id = f"v-{case_id}-{clean_act}-{idx}"
+                    
+                    # Format mandated alternative string byte-for-byte as today
+                    if mandated == "Rail":
+                        if "freight" in activity_lower:
+                            mandated_alternative_str = "rail freight"
+                        else:
+                            mandated_alternative_str = "rail delivery"
+                    else:
+                        mandated_alternative_str = mandated.lower()
+                    
+                    violations.append({
+                        "id": v_id,
+                        "caseId": case_id,
+                        "activity": activity,
+                        "mandatedAlternative": mandated_alternative_str,
+                        "category": category,
+                        "severity": severity,
+                        "carbonDeltaKg": round(delta, 2),
+                        "estimated": True,
+                        "timestamp": ts_str
+                    })
+                    break  # Matched one disallowed activity for this rule category, move to next rule
+                    
     return violations
+
