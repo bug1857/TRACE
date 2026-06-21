@@ -40,6 +40,9 @@ export default function OcelPage() {
   const [selectedTimestamp, setSelectedTimestamp] = useState<string>('');
   const [selectedResource, setSelectedResource] = useState<string>('');
   const [selectedSupplier, setSelectedSupplier] = useState<string>('');
+  const [selectedWater, setSelectedWater] = useState<string>('');
+  const [selectedElectricity, setSelectedElectricity] = useState<string>('');
+  const [selectedCost, setSelectedCost] = useState<string>('');
 
   // Derived state directly from analysis or demo data
   const nodes = isDemo ? mockOcelNodes : (analysis?.nodes || []);
@@ -69,7 +72,10 @@ export default function OcelPage() {
         activity: selectedActivity || null,
         timestamp: selectedTimestamp || null,
         resource: selectedResource === '— None —' || !selectedResource ? null : selectedResource,
-        supplier: selectedSupplier === '— None —' || !selectedSupplier ? null : selectedSupplier
+        supplier: selectedSupplier === '— None —' || !selectedSupplier ? null : selectedSupplier,
+        water: selectedWater === '— None —' || !selectedWater ? null : selectedWater,
+        electricity: selectedElectricity === '— None —' || !selectedElectricity ? null : selectedElectricity,
+        cost: selectedCost === '— None —' || !selectedCost ? null : selectedCost
       };
       overrideStr = JSON.stringify(overrideObj);
     } else {
@@ -115,6 +121,9 @@ export default function OcelPage() {
         setSelectedTimestamp(detectedMap.timestamp?.column || '');
         setSelectedResource(detectedMap.resource?.column || '— None —');
         setSelectedSupplier(detectedMap.supplier?.column || '— None —');
+        setSelectedWater(detectedMap.water?.column || '— None —');
+        setSelectedElectricity(detectedMap.electricity?.column || '— None —');
+        setSelectedCost(detectedMap.cost?.column || '— None —');
       } else {
         setErrorType('500');
       }
@@ -335,6 +344,69 @@ export default function OcelPage() {
                           ))}
                         </select>
                       </div>
+
+                      {/* Water */}
+                      <div className="space-y-1">
+                        <label className={`block text-[11px] font-medium ${isFieldMissing('water') ? 'text-red-600' : 'text-[#1A1917]'}`}>
+                          Water (Optional)
+                        </label>
+                        <select
+                          value={selectedWater}
+                          onChange={(e) => setSelectedWater(e.target.value)}
+                          className={`w-full h-8 px-2 bg-white border rounded text-[12px] font-sans focus:outline-none focus:ring-1 focus:ring-[#2D6A4F] ${
+                            isFieldMissing('water') ? 'border-red-500 bg-red-50 text-red-900 font-medium' : 'border-[#E2E0D8] text-[#1A1917]'
+                          }`}
+                        >
+                          <option value="— None —">— None —</option>
+                          {errorDetails.availableColumns.map((col) => (
+                            <option key={col} value={col}>
+                              {col}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Electricity */}
+                      <div className="space-y-1">
+                        <label className={`block text-[11px] font-medium ${isFieldMissing('electricity') ? 'text-red-600' : 'text-[#1A1917]'}`}>
+                          Electricity (Optional)
+                        </label>
+                        <select
+                          value={selectedElectricity}
+                          onChange={(e) => setSelectedElectricity(e.target.value)}
+                          className={`w-full h-8 px-2 bg-white border rounded text-[12px] font-sans focus:outline-none focus:ring-1 focus:ring-[#2D6A4F] ${
+                            isFieldMissing('electricity') ? 'border-red-500 bg-red-50 text-red-900 font-medium' : 'border-[#E2E0D8] text-[#1A1917]'
+                          }`}
+                        >
+                          <option value="— None —">— None —</option>
+                          {errorDetails.availableColumns.map((col) => (
+                            <option key={col} value={col}>
+                              {col}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Cost */}
+                      <div className="space-y-1">
+                        <label className={`block text-[11px] font-medium ${isFieldMissing('cost') ? 'text-red-600' : 'text-[#1A1917]'}`}>
+                          Cost (Optional)
+                        </label>
+                        <select
+                          value={selectedCost}
+                          onChange={(e) => setSelectedCost(e.target.value)}
+                          className={`w-full h-8 px-2 bg-white border rounded text-[12px] font-sans focus:outline-none focus:ring-1 focus:ring-[#2D6A4F] ${
+                            isFieldMissing('cost') ? 'border-red-500 bg-red-50 text-red-900 font-medium' : 'border-[#E2E0D8] text-[#1A1917]'
+                          }`}
+                        >
+                          <option value="— None —">— None —</option>
+                          {errorDetails.availableColumns.map((col) => (
+                            <option key={col} value={col}>
+                              {col}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
 
                     <div className="pt-2 flex gap-2">
@@ -446,11 +518,14 @@ export default function OcelPage() {
           </div>
 
           {isAnalyzed && (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className={`grid grid-cols-2 ${(!isDemo && analysis?.totalOperationalCostUSD !== undefined && analysis?.totalOperationalCostUSD !== null) ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-4`}>
               <StatCard label="Total Cases" value={isDemo ? mockOcelMetadata.caseCount : (metadata?.caseCount ?? '—')} />
               <StatCard label="Unique Activities" value={isDemo ? mockOcelMetadata.activityCount : (metadata?.activityCount ?? '—')} />
               <StatCard label="Process Variants" value={isDemo ? 18 : '—'} />
               <StatCard label="Avg Case Duration" value={isDemo ? '14.8' : '—'} unit={isDemo ? 'h' : undefined} />
+              {!isDemo && analysis?.totalOperationalCostUSD !== undefined && analysis?.totalOperationalCostUSD !== null && (
+                <StatCard label="Operational Cost" value={`$${analysis.totalOperationalCostUSD.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
+              )}
             </div>
           )}
         </div>

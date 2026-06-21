@@ -187,6 +187,9 @@ export interface ColumnMapping {
   timestamp: MappingField;
   resource: MappingField;
   supplier: SupplierMappingField;
+  water?: MappingField;
+  electricity?: MappingField;
+  cost?: MappingField;
   mappingSource: 'auto' | 'manual';
 }
 

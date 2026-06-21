@@ -18,6 +18,7 @@ export interface UploadResponse {
   brsrReport?: BrsrReport;
   esgReport?: EsgReport;
   greenRoutes?: RouteRecommendation[];
+  totalOperationalCostUSD?: number;
 }
 
 interface AnalysisContextType {

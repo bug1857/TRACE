@@ -51,6 +51,8 @@ Delivery_Logistics.csv
 # e2e scratch files
 backend/test_override_e2e.py
 backend/verify_reset.py
+backend/test_custom_mapping_e2e.py
+test_custom_mapping.csv
 
 # databases
 *.db
