@@ -32,3 +32,12 @@ def test_upload_brsr_report():
     assert "sectionC" in brsr, "Missing 'sectionC' in brsrReport"
     assert "sectionD_traceabilityMatrix" in brsr, "Missing 'sectionD_traceabilityMatrix' in brsrReport"
     assert "recommendations" in brsr, "Missing 'recommendations' in brsrReport"
+    
+    # Assert response contains "esgReport"
+    assert "esgReport" in result, "Missing 'esgReport' in upload response"
+    esg = result["esgReport"]
+    
+    assert "environmental" in esg, "Missing 'environmental' in esgReport"
+    assert "social" in esg, "Missing 'social' in esgReport"
+    assert "governance" in esg, "Missing 'governance' in esgReport"
+    assert "overallScore" in esg, "Missing 'overallScore' in esgReport"

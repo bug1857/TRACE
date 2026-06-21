@@ -15,6 +15,7 @@ from conformance import detect_violations
 from carbon_fitness import calculate_cfs, calculate_supplier_fitness
 from process_optimization import compute_process_optimization
 from brsr_report import assemble_brsr_report
+from esg_report import assemble_esg_report
 
 # Create tables in trace.db (stateless for now, but ready for future features)
 Base.metadata.create_all(bind=engine)
@@ -227,6 +228,29 @@ async def upload_ocel_log(
             detail=f"Failed during BRSR report assembly: {str(e)}"
         )
 
+    # Calculate ESG report
+    try:
+        esg_report_result = assemble_esg_report(
+            metadata={
+                "filename": filename,
+                "rowCount": len(df),
+                "caseCount": case_count,
+                "activityCount": act_count,
+                "totalEvents": total_events
+            },
+            carbon_budget=carbon_data["carbonBudget"],
+            total_carbon_kg=carbon_data["totalCarbonKg"],
+            activity_carbon_breakdown=carbon_data["activityCarbonBreakdown"],
+            violations=violations,
+            cfs_scores=cfs_scores,
+            supplier_fitness=supplier_fitness
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed during ESG report assembly: {str(e)}"
+        )
+
     # Return output contract
     # metadata keys exactly: filename, rowCount, caseCount, activityCount, totalEvents
     return {
@@ -247,7 +271,8 @@ async def upload_ocel_log(
         "cfsScores": cfs_scores,
         "supplierFitness": supplier_fitness,
         "processOptimization": process_optimization_result,
-        "brsrReport": brsr_report_result
+        "brsrReport": brsr_report_result,
+        "esgReport": esg_report_result
     }
 
 
