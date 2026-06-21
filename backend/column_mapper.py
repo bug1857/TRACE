@@ -45,6 +45,18 @@ SUPPLIER_ALIASES = [
     "supplier", "supplier_id", "supplier_name", "vendor", "vendor_id", "vendor_name"
 ]
 
+WATER_ALIASES = [
+    "water", "h2o", "litres", "liters", "water_usage", "water_consumption", "water_qty"
+]
+
+ELECTRICITY_ALIASES = [
+    "electricity", "power", "kwh", "energy", "electricity_usage", "power_usage"
+]
+
+COST_ALIASES = [
+    "cost", "price", "amount", "fare", "charge", "expense", "expenses"
+]
+
 def get_fuzzy_score(col_name: str, aliases: list) -> float:
     col_norm = col_name.lower().replace("_", "").replace("-", "").replace(" ", "")
     best_score = 0.0
@@ -122,8 +134,8 @@ def map_columns(df: pd.DataFrame, mapping_override: dict | None = None) -> dict:
             if not col_val or col_val not in available_cols:
                 missing_fields.append(field)
                 
-        # Validate optional fields: resource, supplier (if key present and non-null)
-        for field in ["resource", "supplier"]:
+        # Validate optional fields: resource, supplier, water, electricity, cost (if key present and non-null)
+        for field in ["resource", "supplier", "water", "electricity", "cost"]:
             if field in mapping_override:
                 col_val = mapping_override[field]
                 if col_val is not None and col_val not in available_cols:
@@ -160,12 +172,27 @@ def map_columns(df: pd.DataFrame, mapping_override: dict | None = None) -> dict:
             "isResourceFallback": is_resource_fallback
         }
         
+        water_col = mapping_override.get("water")
+        water_valid = water_col and water_col in available_cols
+        water_map = {"column": water_col if water_valid else None, "confidence": 1.0 if water_valid else 0.0}
+        
+        elec_col = mapping_override.get("electricity")
+        elec_valid = elec_col and elec_col in available_cols
+        elec_map = {"column": elec_col if elec_valid else None, "confidence": 1.0 if elec_valid else 0.0}
+        
+        cost_col = mapping_override.get("cost")
+        cost_valid = cost_col and cost_col in available_cols
+        cost_map = {"column": cost_col if cost_valid else None, "confidence": 1.0 if cost_valid else 0.0}
+        
         mapping = {
             "case_id": case_map,
             "activity": act_map,
             "timestamp": ts_map,
             "resource": res_map,
             "supplier": sup_map,
+            "water": water_map,
+            "electricity": elec_map,
+            "cost": cost_map,
             "mappingSource": "manual"
         }
         
@@ -176,7 +203,10 @@ def map_columns(df: pd.DataFrame, mapping_override: dict | None = None) -> dict:
                 "activity": act_map,
                 "timestamp": ts_map,
                 "resource": res_map,
-                "supplier": sup_map
+                "supplier": sup_map,
+                "water": water_map,
+                "electricity": elec_map,
+                "cost": cost_map
             }
             raise ColumnMappingError(
                 error=f"Failed to validate manual column mapping override. Missing or invalid fields: {', '.join(missing_fields)}",
@@ -304,6 +334,48 @@ def map_columns(df: pd.DataFrame, mapping_override: dict | None = None) -> dict:
     if best_sup_col is None and best_res_col is not None:
         is_resource_fallback = True
 
+    # 6. Map Water (Optional)
+    remaining_cols_for_water = [c for c in remaining_cols_for_sup if c != best_sup_col]
+    water_scores = {}
+    for col in remaining_cols_for_water:
+        f_score = get_fuzzy_score(col, WATER_ALIASES)
+        s_mult = 1.0
+        water_scores[col] = f_score * s_mult
+        
+    best_water_col = max(water_scores, key=water_scores.get) if water_scores else None
+    water_confidence = water_scores[best_water_col] if best_water_col else 0.0
+    if water_confidence < 0.3:
+        best_water_col = None
+        water_confidence = 0.0
+
+    # 7. Map Electricity (Optional)
+    remaining_cols_for_elec = [c for c in remaining_cols_for_water if c != best_water_col]
+    elec_scores = {}
+    for col in remaining_cols_for_elec:
+        f_score = get_fuzzy_score(col, ELECTRICITY_ALIASES)
+        s_mult = 1.0
+        elec_scores[col] = f_score * s_mult
+        
+    best_elec_col = max(elec_scores, key=elec_scores.get) if elec_scores else None
+    elec_confidence = elec_scores[best_elec_col] if best_elec_col else 0.0
+    if elec_confidence < 0.3:
+        best_elec_col = None
+        elec_confidence = 0.0
+
+    # 8. Map Cost (Optional)
+    remaining_cols_for_cost = [c for c in remaining_cols_for_elec if c != best_elec_col]
+    cost_scores = {}
+    for col in remaining_cols_for_cost:
+        f_score = get_fuzzy_score(col, COST_ALIASES)
+        s_mult = 1.0
+        cost_scores[col] = f_score * s_mult
+        
+    best_cost_col = max(cost_scores, key=cost_scores.get) if cost_scores else None
+    cost_confidence = cost_scores[best_cost_col] if best_cost_col else 0.0
+    if cost_confidence < 0.3:
+        best_cost_col = None
+        cost_confidence = 0.0
+
     return {
         "case_id": {"column": best_case_col, "confidence": round(case_confidence, 2)},
         "activity": {"column": best_act_col, "confidence": round(act_confidence, 2)},
@@ -314,6 +386,9 @@ def map_columns(df: pd.DataFrame, mapping_override: dict | None = None) -> dict:
             "confidence": round(sup_confidence, 2),
             "isResourceFallback": is_resource_fallback
         },
+        "water": {"column": best_water_col, "confidence": round(water_confidence, 2)},
+        "electricity": {"column": best_elec_col, "confidence": round(elec_confidence, 2)},
+        "cost": {"column": best_cost_col, "confidence": round(cost_confidence, 2)},
         "mappingSource": "auto"
     }
 

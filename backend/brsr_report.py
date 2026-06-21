@@ -13,7 +13,9 @@ def assemble_brsr_report(
     org_name: str = "Demo Organization",
     workspace_context: str = "default",
     project_context: str = "default",
-    reporting_period: str = "2026"
+    reporting_period: str = "2026",
+    water_liters: float = None,
+    energy_kwh: float = None
 ) -> dict:
     """
     Assembles a BRSR disclosure payload from data already computed elsewhere.
@@ -199,8 +201,8 @@ def assemble_brsr_report(
         },
         "sectionC": {
             "resourceDraw": {
-                "energyKwh": None,
-                "waterLiters": None,
+                "energyKwh": energy_kwh,
+                "waterLiters": water_liters,
                 "wasteKg": None,
                 "carbonBudgetLimitKg": carbon_budget_limit_kg,
                 "carbonBudgetStatus": carbon_budget_status

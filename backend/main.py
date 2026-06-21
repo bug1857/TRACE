@@ -209,6 +209,28 @@ async def upload_ocel_log(
             detail=f"Failed during process optimization calculation: {str(e)}"
         )
 
+    # Calculate water/electricity/cost sums if mapped
+    water_liters = None
+    water_info = mapping.get("water")
+    if water_info and water_info.get("column"):
+        col = water_info["column"]
+        if col in df.columns:
+            water_liters = float(pd.to_numeric(df[col], errors='coerce').sum())
+
+    energy_kwh = None
+    elec_info = mapping.get("electricity")
+    if elec_info and elec_info.get("column"):
+        col = elec_info["column"]
+        if col in df.columns:
+            energy_kwh = float(pd.to_numeric(df[col], errors='coerce').sum())
+
+    total_cost = None
+    cost_info = mapping.get("cost")
+    if cost_info and cost_info.get("column"):
+        col = cost_info["column"]
+        if col in df.columns:
+            total_cost = float(pd.to_numeric(df[col], errors='coerce').sum())
+
     # Calculate BRSR report
     try:
         brsr_report_result = assemble_brsr_report(
@@ -225,7 +247,9 @@ async def upload_ocel_log(
             violations=violations,
             cfs_scores=cfs_scores,
             supplier_fitness=supplier_fitness,
-            process_optimization=process_optimization_result
+            process_optimization=process_optimization_result,
+            water_liters=water_liters,
+            energy_kwh=energy_kwh
         )
     except Exception as e:
         raise HTTPException(
@@ -267,7 +291,7 @@ async def upload_ocel_log(
 
     # Return output contract
     # metadata keys exactly: filename, rowCount, caseCount, activityCount, totalEvents
-    return {
+    response_payload = {
         "metadata": {
             "filename": filename,
             "rowCount": len(df),
@@ -289,6 +313,9 @@ async def upload_ocel_log(
         "esgReport": esg_report_result,
         "greenRoutes": green_routes_result
     }
+    if total_cost is not None:
+        response_payload["totalOperationalCostUSD"] = round(total_cost, 2)
+    return response_payload
 
 
 class AuditLogCreate(BaseModel):
