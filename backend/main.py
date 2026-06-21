@@ -16,6 +16,7 @@ from carbon_fitness import calculate_cfs, calculate_supplier_fitness
 from process_optimization import compute_process_optimization
 from brsr_report import assemble_brsr_report
 from esg_report import assemble_esg_report
+from green_routes import compute_green_routes
 
 # Create tables in trace.db (stateless for now, but ready for future features)
 Base.metadata.create_all(bind=engine)
@@ -251,6 +252,15 @@ async def upload_ocel_log(
             detail=f"Failed during ESG report assembly: {str(e)}"
         )
 
+    # Calculate green routes recommendations
+    try:
+        green_routes_result = compute_green_routes(
+            activity_carbon_breakdown=carbon_data["activityCarbonBreakdown"],
+            violations=violations
+        )
+    except Exception:
+        green_routes_result = []
+
     # Return output contract
     # metadata keys exactly: filename, rowCount, caseCount, activityCount, totalEvents
     return {
@@ -272,7 +282,8 @@ async def upload_ocel_log(
         "supplierFitness": supplier_fitness,
         "processOptimization": process_optimization_result,
         "brsrReport": brsr_report_result,
-        "esgReport": esg_report_result
+        "esgReport": esg_report_result,
+        "greenRoutes": green_routes_result
     }
 
 

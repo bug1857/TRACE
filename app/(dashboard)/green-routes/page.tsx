@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CheckCircle, Leaf, ArrowRight } from 'lucide-react';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable, { Column } from '@/components/shared/DataTable';
 import { mockRouteRecommendations } from '@/lib/mockData';
 import { RouteRecommendation } from '@/lib/types';
 import { Button } from '@/components/ui/button';
+import { useAnalysis } from '@/lib/AnalysisContext';
 import {
   Dialog,
   DialogContent,
@@ -17,7 +18,15 @@ import {
 } from '@/components/ui/dialog';
 
 export default function GreenRoutesPage() {
-  const [recommendations, setRecommendations] = useState<RouteRecommendation[]>(mockRouteRecommendations);
+  const { analysis } = useAnalysis();
+  
+  // Use real backend recommendations when analysis is present, else fall back to mock data
+  const [recommendations, setRecommendations] = useState<RouteRecommendation[]>([]);
+
+  useEffect(() => {
+    setRecommendations(analysis?.greenRoutes || mockRouteRecommendations);
+  }, [analysis]);
+
   const [activeRec, setActiveRec] = useState<RouteRecommendation | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState('');
@@ -39,6 +48,15 @@ export default function GreenRoutesPage() {
       setFeedbackMsg('');
     }, 4500); // clear feedback msg after 4.5s
   };
+
+  // Dynamically calculate emissions savings (in tCO2e) and cost delta from active list
+  const totalCarbonSavingKg = recommendations.reduce((sum, r) => sum + r.carbonSaving, 0);
+  const totalCarbonSavingT = (totalCarbonSavingKg / 1000).toFixed(1);
+  const totalCostDelta = recommendations.reduce((sum, r) => sum + r.costDelta, 0);
+  const absCostDelta = Math.abs(totalCostDelta);
+  const costText = totalCostDelta <= 0
+    ? `reduced by $${absCostDelta.toLocaleString()}`
+    : `increased by $${absCostDelta.toLocaleString()}`;
 
   const columns: Column<RouteRecommendation>[] = [
     {
@@ -102,7 +120,7 @@ export default function GreenRoutesPage() {
     <div className="flex flex-col flex-1 space-y-6">
       <PageHeader
         title="Green Route Recommendations"
-        subtitle="AI-driven transport rerouting tips targeting scope 3 reductions and freight cost savings."
+        subtitle="Transport rerouting scenarios computed from real shipment volumes, using industry-typical carbon reduction estimates."
       />
 
       {/* Feedback Banner */}
@@ -121,7 +139,7 @@ export default function GreenRoutesPage() {
             Emissions Optimization Potential
           </h4>
           <p className="text-[12px] text-[#6B6963] font-sans mt-0.5">
-            Applying all recommendations saves <span className="font-mono font-bold text-[#166534]">46.8 tCO₂e</span> this quarter. Cumulative shipping costs are reduced by <span className="font-mono font-bold text-[#166534]">$770</span>.
+            Applying all recommendations saves <span className="font-mono font-bold text-[#166534]">{totalCarbonSavingT} tCO₂e</span> this quarter. Cumulative shipping costs are <span className="font-mono font-bold text-[#166534]">{costText}</span>.
           </p>
         </div>
       </div>

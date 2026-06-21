@@ -42,6 +42,21 @@ def test_upload_brsr_report():
     assert "governance" in esg, "Missing 'governance' in esgReport"
     assert "overallScore" in esg, "Missing 'overallScore' in esgReport"
 
+    # Assert response contains "greenRoutes"
+    assert "greenRoutes" in result, "Missing 'greenRoutes' in upload response"
+    green_routes = result["greenRoutes"]
+    assert isinstance(green_routes, list), "greenRoutes must be a list"
+    
+    # If there are recommendations, verify their structure
+    if len(green_routes) > 0:
+        rec = green_routes[0]
+        assert "id" in rec, "Missing 'id' in greenRoutes recommendation"
+        assert "currentRoute" in rec, "Missing 'currentRoute' in greenRoutes recommendation"
+        assert "recommendedRoute" in rec, "Missing 'recommendedRoute' in greenRoutes recommendation"
+        assert "carbonSaving" in rec, "Missing 'carbonSaving' in greenRoutes recommendation"
+        assert "costDelta" in rec, "Missing 'costDelta' in greenRoutes recommendation"
+        assert "confidence" in rec, "Missing 'confidence' in greenRoutes recommendation"
+
 
 from unittest.mock import patch, MagicMock
 import urllib.error
