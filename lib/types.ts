@@ -121,8 +121,8 @@ export interface CopilotMessage {
   timestamp: string;
   structured?: {
     answer: string;
-    why: string;
-    evidence: { label: string; value: string | number }[];
+    why?: string;
+    evidence?: { label: string; value: string | number }[];
     action?: { label: string; actionId: string };
   };
 }

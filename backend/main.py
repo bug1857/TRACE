@@ -329,3 +329,124 @@ def get_audit_logs(db: Session = Depends(get_db)):
             status_code=500,
             detail=f"Database query failed: {str(e)}"
         )
+
+
+# Copilot Schemas
+class CopilotQuery(BaseModel):
+    query: str
+    model: Optional[str] = "gemma3:4b"
+    style: Optional[str] = "balanced"
+    context: Optional[Dict[str, Any]] = None
+
+
+@app.get("/api/copilot/status")
+def get_copilot_status():
+    import urllib.request
+    import json
+    url = "http://localhost:11434/api/tags"
+    try:
+        req = urllib.request.Request(url)
+        with urllib.request.urlopen(req, timeout=2.0) as response:
+            if response.status == 200:
+                res_body = response.read().decode('utf-8')
+                data = json.loads(res_body)
+                models = [m["name"] for m in data.get("models", [])]
+                return {"online": True, "availableModels": models}
+    except Exception:
+        pass
+    return {"online": False, "availableModels": []}
+
+
+@app.post("/api/copilot/query")
+def query_copilot(payload: CopilotQuery):
+    # 1. Build context string
+    context_str = ""
+    if payload.context:
+        meta = payload.context.get("metadata", {})
+        filename = meta.get("filename", "unknown.csv")
+        case_count = meta.get("caseCount", "unknown")
+        total_events = meta.get("totalEvents", "unknown")
+        activity_count = meta.get("activityCount", "unknown")
+        total_carbon = payload.context.get("totalCarbonKg", "unknown")
+        
+        violations = payload.context.get("violations", [])
+        v_count = len(violations)
+        critical_v = sum(1 for v in violations if v.get("severity") == "critical" or v.get("severity") == "CRITICAL")
+        
+        suppliers = payload.context.get("supplierFitness", [])
+        s_count = len(suppliers)
+        avg_cfs = "unknown"
+        if s_count > 0:
+            avg_cfs = round(sum(s.get("avgCfsScore", 0) for s in suppliers) / s_count, 1)
+            
+        context_str = (
+            f"Active Project Context:\n"
+            f"- Loaded Log File: {filename}\n"
+            f"- Cases Analyzed: {case_count}\n"
+            f"- Total Events: {total_events}\n"
+            f"- Unique Activities: {activity_count}\n"
+            f"- Total Carbon Footprint: {total_carbon} kg\n"
+            f"- Conformance Gaps/Violations: {v_count} detected ({critical_v} critical)\n"
+            f"- Suppliers Monitored: {s_count} (Average Carrier CFS: {avg_cfs})\n"
+        )
+    else:
+        context_str = "No active project data loaded yet. User has not uploaded any event log."
+
+    # 2. Select system prompt style
+    system_prompt = ""
+    if payload.style == "numerical":
+        system_prompt = "You are TRACE. Copilot, an AI carbon auditing assistant. Focus heavily on numerical data, metrics, and statistics. Lead with raw numbers and keep prose/paragraphs minimal. Do not make up any numbers; use only the provided context."
+    elif payload.style == "executive":
+        system_prompt = "You are TRACE. Copilot, an AI carbon auditing assistant. Use a concise, professional, and bottom-line-oriented business summary tone. Avoid excessive fluff or details. Do not make up any numbers; use only the provided context."
+    elif payload.style == "formal":
+        system_prompt = "You are TRACE. Copilot, an AI carbon auditing assistant. Use a highly structured, objective, and formal audit-report tone. Use clear bullet points and clear definitions. Do not make up any numbers; use only the provided context."
+    else:  # balanced
+        system_prompt = "You are TRACE. Copilot, an AI carbon auditing assistant. Use a balanced, professional, conversational, and helpful tone. Do not make up any numbers; use only the provided context."
+
+    # 3. Call local Ollama
+    url = "http://localhost:11434/api/generate"
+    ollama_payload = {
+        "model": payload.model or "gemma3:4b",
+        "prompt": f"Data Context:\n{context_str}\n\nUser Question:\n{payload.query}",
+        "system": system_prompt,
+        "stream": False
+    }
+    
+    import urllib.request
+    import urllib.error
+    import json
+    import time
+
+    start_time = time.time()
+    try:
+        data = json.dumps(ollama_payload).encode('utf-8')
+        req = urllib.request.Request(
+            url,
+            data=data,
+            headers={"Content-Type": "application/json"}
+        )
+        with urllib.request.urlopen(req, timeout=30.0) as response:
+            latency_ms = int((time.time() - start_time) * 1000)
+            if response.status == 200:
+                res_body = response.read().decode('utf-8')
+                result = json.loads(res_body)
+                return {
+                    "answer": result.get("response", ""),
+                    "model": payload.model or "gemma3:4b",
+                    "latencyMs": latency_ms
+                }
+            else:
+                raise HTTPException(
+                    status_code=502,
+                    detail=f"Ollama returned bad status: {response.status}"
+                )
+    except urllib.error.URLError as e:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Ollama service is unreachable. Make sure Ollama is running locally. Error: {str(e)}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to query local LLM: {str(e)}"
+        )

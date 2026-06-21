@@ -41,3 +41,80 @@ def test_upload_brsr_report():
     assert "social" in esg, "Missing 'social' in esgReport"
     assert "governance" in esg, "Missing 'governance' in esgReport"
     assert "overallScore" in esg, "Missing 'overallScore' in esgReport"
+
+
+from unittest.mock import patch, MagicMock
+import urllib.error
+
+def test_copilot_status():
+    # Mock successful status response
+    mock_response = MagicMock()
+    mock_response.status = 200
+    mock_response.__enter__.return_value = mock_response
+    mock_response.read.return_value = json.dumps({
+        "models": [
+            {"name": "gemma3:4b"},
+            {"name": "qwen2.5:1.5b"}
+        ]
+    }).encode("utf-8")
+    
+    with patch("urllib.request.urlopen", return_value=mock_response):
+        response = client.get("/api/copilot/status")
+        print("STATUS RESPONSE TEXT (SUCCESS):", response.json())
+        assert response.status_code == 200
+        assert response.json() == {
+            "online": True,
+            "availableModels": ["gemma3:4b", "qwen2.5:1.5b"]
+        }
+
+    # Mock unreachable Ollama (fails with exception)
+    with patch("urllib.request.urlopen", side_effect=urllib.error.URLError("Connection refused")):
+        response = client.get("/api/copilot/status")
+        print("STATUS RESPONSE TEXT (UNREACHABLE):", response.json())
+        assert response.status_code == 200
+        assert response.json() == {
+            "online": False,
+            "availableModels": []
+        }
+
+def test_copilot_query_success():
+    mock_response = MagicMock()
+    mock_response.status = 200
+    mock_response.__enter__.return_value = mock_response
+    mock_response.read.return_value = json.dumps({
+        "response": "The simulated carbon audit response from Gemma."
+    }).encode("utf-8")
+    
+    payload = {
+        "query": "What is our carbon footprint?",
+        "model": "gemma3:4b",
+        "style": "balanced",
+        "context": {
+            "metadata": {"filename": "test.csv", "caseCount": 10, "totalEvents": 50, "activityCount": 5},
+            "totalCarbonKg": 2500,
+            "violations": [{"severity": "critical"}],
+            "supplierFitness": [{"avgCfsScore": 85.0}]
+        }
+    }
+    
+    with patch("urllib.request.urlopen", return_value=mock_response):
+        response = client.post("/api/copilot/query", json=payload)
+        print("QUERY RESPONSE TEXT (SUCCESS):", response.text)
+        assert response.status_code == 200
+        res_data = response.json()
+        assert res_data["answer"] == "The simulated carbon audit response from Gemma."
+        assert res_data["model"] == "gemma3:4b"
+        assert "latencyMs" in res_data
+
+def test_copilot_query_unreachable():
+    payload = {
+        "query": "What is our carbon footprint?",
+        "model": "gemma3:4b",
+        "style": "balanced"
+    }
+    
+    with patch("urllib.request.urlopen", side_effect=urllib.error.URLError("Connection refused")):
+        response = client.post("/api/copilot/query", json=payload)
+        print("QUERY RESPONSE TEXT (UNREACHABLE):", response.text)
+        assert response.status_code == 503
+        assert "Ollama service is unreachable" in response.json()["detail"]
