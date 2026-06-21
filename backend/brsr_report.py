@@ -18,6 +18,26 @@ def assemble_brsr_report(
     """
     Assembles a BRSR disclosure payload from data already computed elsewhere.
     """
+    # Try to derive reporting period from metadata timestamp info if present
+    min_ts = metadata.get("minTimestamp") or metadata.get("min_timestamp") or metadata.get("startTimestamp") or metadata.get("start_timestamp")
+    max_ts = metadata.get("maxTimestamp") or metadata.get("max_timestamp") or metadata.get("endTimestamp") or metadata.get("end_timestamp")
+    
+    if min_ts and max_ts:
+        try:
+            import pandas as pd
+            min_dt = pd.to_datetime(min_ts)
+            max_dt = pd.to_datetime(max_ts)
+            reporting_period = f"{min_dt.strftime('%b %Y')} – {max_dt.strftime('%b %Y')}"
+        except Exception:
+            pass
+    elif metadata.get("timestampRange") or metadata.get("timestamp_range"):
+        reporting_period = metadata.get("timestampRange") or metadata.get("timestamp_range")
+    else:
+        # Fallback: metadata passed from the API currently contains only row/case/activity counts
+        # and filename. Since no timestamp range is present in metadata, we default to the passed
+        # reporting_period parameter (e.g., '2026') or the default value.
+        pass
+
     total_cases = metadata.get("caseCount", 1)
     if total_cases == 0:
         total_cases = 1
@@ -64,6 +84,7 @@ def assemble_brsr_report(
         new_item = item.copy()
         new_item["contributionPercent"] = contrib
         carbon_hotspots.append(new_item)
+    carbon_hotspots.sort(key=lambda x: x["contributionPercent"], reverse=True)
 
     # 8. Worst Bottleneck
     bottlenecks_list = process_optimization.get("bottlenecks", [])
@@ -161,6 +182,14 @@ def assemble_brsr_report(
             "carbonFitnessScore": carbon_fitness_score,
             "esgOverallScore": esg_overall_score,
             "totalActualEmissions": total_carbon_kg
+        },
+        "sectionA": {
+            "orgName": org_name,
+            "workspaceContext": workspace_context,
+            "projectContext": project_context,
+            "reportingPeriod": reporting_period,
+            "reportVersion": "Version 1",
+            "auditReadiness": audit_readiness
         },
         "sectionB": {
             "conformanceMethodology": "rule_based_pattern_matching",

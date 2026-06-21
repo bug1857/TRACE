@@ -219,4 +219,87 @@ export interface ProcessOptimization {
   totalCasesAnalyzed: number;
 }
 
+export interface BrsrHeader {
+  orgName: string;
+  workspaceContext: string;
+  projectContext: string;
+  reportingPeriod: string;
+  reportVersion: string;
+  auditReadiness: string;
+  reportHash: string;
+}
 
+export interface BrsrSectionA {
+  orgName: string;
+  workspaceContext: string;
+  projectContext: string;
+  reportingPeriod: string;
+  reportVersion: string;
+  auditReadiness: string;
+}
+
+export interface BrsrBottleneck {
+  activity: string;
+  avgWaitHours: number;
+  occurrences: number;
+  status: 'critical' | 'moderate' | 'optimized';
+}
+
+export interface BrsrSectionB {
+  conformanceMethodology: string;
+  totalEvaluatedTraces: number;
+  nonConformingTraces: number;
+  bottlenecks: BrsrBottleneck[];
+}
+
+export interface BrsrResourceDraw {
+  energyKwh: number | null;
+  waterLiters: number | null;
+  wasteKg: number | null;
+  carbonBudgetLimitKg: number;
+  carbonBudgetStatus: 'EXCEEDED' | 'WITHIN_LIMIT';
+}
+
+export interface BrsrCarbonHotspot {
+  activity: string;
+  category: string;
+  estimated: boolean;
+  frequency: number;
+  totalCarbon: number;
+  contributionPercent: number;
+}
+
+export interface BrsrSectionC {
+  resourceDraw: BrsrResourceDraw;
+  carbonHotspots: BrsrCarbonHotspot[];
+}
+
+export interface BrsrTraceabilityItem {
+  metric: string;
+  engine: string;
+  sourceTable: string;
+  referenceField: string;
+}
+
+export interface BrsrRecommendation {
+  title: string;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  narrative: string;
+  estEmissionReductionKg?: number;
+}
+
+export interface BrsrReport {
+  header: BrsrHeader;
+  executiveSummary: string;
+  kpiStrip: {
+    processComplianceScore: number;
+    carbonFitnessScore: number;
+    esgOverallScore: number;
+    totalActualEmissions: number;
+  };
+  sectionA: BrsrSectionA;
+  sectionB: BrsrSectionB;
+  sectionC: BrsrSectionC;
+  sectionD_traceabilityMatrix: BrsrTraceabilityItem[];
+  recommendations: BrsrRecommendation[];
+}

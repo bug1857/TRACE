@@ -1,7 +1,7 @@
 import json
 from brsr_report import assemble_brsr_report
 
-def run_test():
+def test_brsr_report():
     print("--- STARTING BRSR REPORT TEST ---")
 
     # 1. Setup synthetic input data
@@ -101,6 +101,14 @@ def run_test():
     assert actual["header"]["auditReadiness"] == "Needs Review"
     assert "reportHash" in actual["header"]
 
+    # Validate sectionA
+    assert "sectionA" in actual
+    assert actual["sectionA"]["orgName"] == "Louis India Corp"
+    assert actual["sectionA"]["auditReadiness"] == "Needs Review"
+    assert actual["sectionA"]["reportingPeriod"] == "2026"
+    assert "reportHash" not in actual["sectionA"]
+    print("✓ Section A matched.")
+
     # Validate summary
     assert actual["executiveSummary"] == expected_exec_summary, f"\nExpected: {expected_exec_summary}\nGot: {actual['executiveSummary']}"
     print("✓ Executive summary matched.")
@@ -117,9 +125,13 @@ def run_test():
     assert actual["sectionB"]["nonConformingTraces"] == 2
     assert actual["sectionC"]["resourceDraw"]["carbonBudgetLimitKg"] == 2000.0
     assert actual["sectionC"]["resourceDraw"]["carbonBudgetStatus"] == "WITHIN_LIMIT"
-    assert actual["sectionC"]["carbonHotspots"][0]["contributionPercent"] == 23.8  # 250 / 1050 * 100
-    assert actual["sectionC"]["carbonHotspots"][1]["contributionPercent"] == 76.2  # 800 / 1050 * 100
-    print("✓ Conformance, resource draw, and hotspot percentages matched.")
+    
+    # Assert carbonHotspots sorted descending
+    hotspots = actual["sectionC"]["carbonHotspots"]
+    assert hotspots[0]["contributionPercent"] >= hotspots[-1]["contributionPercent"]
+    assert hotspots[0]["contributionPercent"] == 76.2  # 800 / 1050 * 100
+    assert hotspots[1]["contributionPercent"] == 23.8  # 250 / 1050 * 100
+    print("✓ Conformance, resource draw, and hotspot percentages matched (and correctly sorted descending).")
 
     # Validate Recommendations
     recs = actual["recommendations"]
@@ -143,4 +155,4 @@ def run_test():
     print("=============================================")
 
 if __name__ == "__main__":
-    run_test()
+    test_brsr_report()

@@ -27,6 +27,7 @@ def test_upload_brsr_report():
     assert "header" in brsr, "Missing 'header' in brsrReport"
     assert "executiveSummary" in brsr, "Missing 'executiveSummary' in brsrReport"
     assert "kpiStrip" in brsr, "Missing 'kpiStrip' in brsrReport"
+    assert "sectionA" in brsr, "Missing 'sectionA' in brsrReport"
     assert "sectionB" in brsr, "Missing 'sectionB' in brsrReport"
     assert "sectionC" in brsr, "Missing 'sectionC' in brsrReport"
     assert "sectionD_traceabilityMatrix" in brsr, "Missing 'sectionD_traceabilityMatrix' in brsrReport"
