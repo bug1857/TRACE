@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { OcelMetadata, OcelNode, OcelEdge, CarbonBudgetMonth, Violation, CfsScore, SupplierFitness, ColumnMapping, ActivityCarbonBreakdownItem, ProcessOptimization, BrsrReport } from './types';
+import { OcelMetadata, OcelNode, OcelEdge, CarbonBudgetMonth, Violation, CfsScore, SupplierFitness, ColumnMapping, ActivityCarbonBreakdownItem, ProcessOptimization, BrsrReport, EsgReport } from './types';
 
 export interface UploadResponse {
   metadata: OcelMetadata;
@@ -16,6 +16,7 @@ export interface UploadResponse {
   supplierFitness: SupplierFitness[];
   processOptimization: ProcessOptimization;
   brsrReport?: BrsrReport;
+  esgReport?: EsgReport;
 }
 
 interface AnalysisContextType {

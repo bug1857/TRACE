@@ -303,3 +303,43 @@ export interface BrsrReport {
   sectionD_traceabilityMatrix: BrsrTraceabilityItem[];
   recommendations: BrsrRecommendation[];
 }
+
+export interface EsgHotspot {
+  activity: string;
+  category: string;
+  estimated: boolean;
+  frequency: number;
+  totalCarbon: number;
+}
+
+export interface EsgEnvironmental {
+  score: number;
+  totalCarbonKg: number;
+  carbonBudgetStatus: 'EXCEEDED' | 'WITHIN_LIMIT';
+  topHotspots: EsgHotspot[];
+  dataCompleteness: 'full' | 'partial';
+}
+
+export interface EsgSocial {
+  score: number | null;
+  supplierCount: number;
+  atRiskSupplierCount: number;
+  note: string;
+  dataCompleteness: 'full' | 'partial';
+}
+
+export interface EsgGovernance {
+  score: number;
+  violationCount: number;
+  auditReadiness: 'Audit Ready' | 'Needs Review';
+  note: string;
+  dataCompleteness: 'full' | 'partial';
+}
+
+export interface EsgReport {
+  environmental: EsgEnvironmental;
+  social: EsgSocial;
+  governance: EsgGovernance;
+  overallScore: number;
+}
+
