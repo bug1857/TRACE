@@ -25,11 +25,15 @@ export default function SimulationPage() {
   const isReal = !!(analysis && analysis.cfsScores && analysis.cfsScores.length > 0);
 
   // Compute baselines dynamically
+  const totalBudgetLimit = (analysis && analysis.carbonBudget && analysis.carbonBudget.length > 0)
+    ? analysis.carbonBudget.reduce((sum, item) => sum + item.budget, 0)
+    : 120000;
+
   const baselineCarbon = isReal ? analysis.totalCarbonKg : 78430;
   const baselineCfs = isReal
     ? Math.round(analysis.cfsScores.reduce((sum, item) => sum + item.cfsScore, 0) / analysis.cfsScores.length)
     : 72;
-  const baselineBudget = 120000 - baselineCarbon;
+  const baselineBudget = totalBudgetLimit - baselineCarbon;
   const baselineViolations = isReal ? analysis.violations.length : 23;
 
   // Active comparison state - stores only simulated overrides, defaults to null (falls back to baselines)
@@ -97,7 +101,7 @@ export default function SimulationPage() {
       const carbonReduction = (airFreightRed * 0.35 + supplierShift * 0.45 + (activityRemoval !== 'None' ? 8 : 0));
       const simulatedAfterCarbon = Math.round(baselineCarbon * (1 - carbonReduction / 100));
       const simulatedAfterCfs = Math.min(100, Math.round(baselineCfs + (airFreightRed * 0.15 + supplierShift * 0.18)));
-      const simulatedAfterBudget = 120000 - simulatedAfterCarbon;
+      const simulatedAfterBudget = totalBudgetLimit - simulatedAfterCarbon;
       const simulatedAfterViolations = Math.max(2, Math.round(baselineViolations * (1 - (airFreightRed * 0.4 + supplierShift * 0.3) / 100)));
 
       const newScenario: SimulationScenario = {
