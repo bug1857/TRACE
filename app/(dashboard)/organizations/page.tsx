@@ -1,10 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { Building2, Plus, Trash2, ArrowRight } from 'lucide-react';
-import { mockOrganizations } from '@/lib/mockData';
-import { Organization } from '@/lib/types';
+import { useWorkspace, BackendOrganization } from '@/lib/WorkspaceContext';
+import { createOrganization, deleteOrganization } from '@/lib/api';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable, { Column } from '@/components/shared/DataTable';
 import EmptyState from '@/components/shared/EmptyState';
@@ -19,40 +18,57 @@ import {
 import { Input } from '@/components/ui/input';
 
 export default function OrganizationsPage() {
-  const [organizations, setOrganizations] = useState<Organization[]>(mockOrganizations);
+  const {
+    organizations,
+    activeOrgId,
+    setActiveOrgId,
+    refreshOrganizations
+  } = useWorkspace();
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newName, setNewName] = useState('');
-  const [newCountry, setNewCountry] = useState('India');
   const [validationError, setValidationError] = useState('');
 
-  const handleCreateOrg = (e: React.FormEvent) => {
+  const handleCreateOrg = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newName.trim() || !newCountry.trim()) {
-      setValidationError('Please enter both name and country.');
+    if (!newName.trim()) {
+      setValidationError('Please enter organization name.');
       return;
     }
 
-    const newOrg: Organization = {
-      id: `org-${Date.now()}`,
-      name: newName,
-      country: newCountry,
-      projectsCount: 0,
-      createdAt: new Date().toISOString().split('T')[0]
-    };
-
-    setOrganizations([newOrg, ...organizations]);
-    setNewName('');
-    setNewCountry('India');
-    setValidationError('');
-    setIsDialogOpen(false);
+    try {
+      const created = await createOrganization(newName.trim());
+      await refreshOrganizations();
+      if (created?.id) {
+        setActiveOrgId(created.id);
+      }
+      setNewName('');
+      setValidationError('');
+      setIsDialogOpen(false);
+    } catch (err) {
+      console.error(err);
+      setValidationError('Failed to create organization on backend.');
+    }
   };
 
-  const handleDeleteOrg = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setOrganizations(organizations.filter(o => o.id !== id));
+  const handleDeleteOrg = async (id: number) => {
+    try {
+      await deleteOrganization(id);
+      const remaining = await refreshOrganizations();
+      if (activeOrgId === id) {
+        if (remaining.length > 0) {
+          setActiveOrgId(remaining[0].id);
+        } else {
+          setActiveOrgId(null);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete organization on backend.');
+    }
   };
 
-  const columns: Column<Organization>[] = [
+  const columns: Column<BackendOrganization>[] = [
     {
       header: 'Name',
       accessorKey: 'name',
@@ -65,46 +81,53 @@ export default function OrganizationsPage() {
       )
     },
     {
-      header: 'Country',
-      accessorKey: 'country',
-      sortable: true
-    },
-    {
-      header: 'Projects',
-      accessorKey: 'projectsCount',
-      isNumeric: true,
-      sortable: true
-    },
-    {
       header: 'Created',
-      accessorKey: 'createdAt',
-      sortable: true
+      accessorKey: 'created_at',
+      sortable: true,
+      cell: (row) => (
+        <span className="text-[#6B6963] text-[13px]">
+          {new Date(row.created_at).toLocaleDateString()}
+        </span>
+      )
     },
     {
       header: 'Actions',
       accessorKey: 'actions',
-      cell: (row) => (
-        <div className="flex items-center gap-2">
-          <Link href="/projects">
+      cell: (row) => {
+        const isActive = activeOrgId === row.id;
+        return (
+          <div className="flex items-center gap-2">
+            {!isActive ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setActiveOrgId(row.id)}
+                className="h-[28px] text-[11px] font-sans text-[#2D6A4F] border-[#2D6A4F] hover:bg-[#E8F0EB] hover:text-[#2D6A4F] flex items-center gap-1 rounded-md"
+              >
+                <span>Activate</span>
+                <ArrowRight className="w-3 h-3" />
+              </Button>
+            ) : (
+              <span className="text-[11px] font-medium text-[#2D6A4F] bg-[#E8F0EB] px-2.5 py-1 rounded-md">
+                Active
+              </span>
+            )}
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
-              className="h-[28px] text-[11px] font-sans text-[#2D6A4F] border-[#2D6A4F] hover:bg-[#E8F0EB] hover:text-[#2D6A4F] flex items-center gap-1 rounded-md"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (confirm("WARNING: Deleting this organization will trigger a CASCADE DELETE on the backend. This permanently removes all associated projects, workspaces, and audit analysis logs. Are you sure you want to proceed?")) {
+                  handleDeleteOrg(row.id);
+                }
+              }}
+              className="h-[28px] w-[28px] p-0 text-[#C0392B] hover:bg-[#FDECEA] hover:text-[#C0392B] rounded-md"
             >
-              <span>View Projects</span>
-              <ArrowRight className="w-3 h-3" />
+              <Trash2 className="w-3.5 h-3.5" />
             </Button>
-          </Link>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => handleDeleteOrg(row.id, e)}
-            className="h-[28px] w-[28px] p-0 text-[#C0392B] hover:bg-[#FDECEA] hover:text-[#C0392B] rounded-md"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </Button>
-        </div>
-      )
+          </div>
+        );
+      }
     }
   ];
 
@@ -163,18 +186,6 @@ export default function OrganizationsPage() {
                 placeholder="e.g. Louis India Pvt. Ltd."
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                className="h-[34px] text-[13px] bg-[#F3F2EE] border-[#E2E0D8] text-[#1A1917] rounded-md focus:border-[#2D6A4F]"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] font-sans font-medium text-[#6B6963] uppercase tracking-wider block">
-                Country / Region
-              </label>
-              <Input
-                placeholder="e.g. India"
-                value={newCountry}
-                onChange={(e) => setNewCountry(e.target.value)}
                 className="h-[34px] text-[13px] bg-[#F3F2EE] border-[#E2E0D8] text-[#1A1917] rounded-md focus:border-[#2D6A4F]"
               />
             </div>

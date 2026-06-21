@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Briefcase, Plus, Trash2, ArrowRight } from 'lucide-react';
-import { mockProjects } from '@/lib/mockData';
-import { Project } from '@/lib/types';
+import { Briefcase, Plus, Trash2, ArrowRight, Building2 } from 'lucide-react';
+import { useWorkspace, BackendProject } from '@/lib/WorkspaceContext';
+import { createProject, deleteProject } from '@/lib/api';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable, { Column } from '@/components/shared/DataTable';
 import EmptyState from '@/components/shared/EmptyState';
@@ -20,41 +20,64 @@ import { Input } from '@/components/ui/input';
 
 export default function ProjectsPage() {
   const router = useRouter();
-  const [projects, setProjects] = useState<Project[]>(mockProjects);
+  const {
+    projects,
+    activeOrgId,
+    activeProjectId,
+    setActiveProjectId,
+    refreshProjects
+  } = useWorkspace();
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newName, setNewName] = useState('');
-  const [newDesc, setNewDesc] = useState('');
   const [validationError, setValidationError] = useState('');
 
-  const handleCreateProject = (e: React.FormEvent) => {
+  const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName.trim()) {
       setValidationError('Please enter a project name.');
       return;
     }
 
-    const newProj: Project = {
-      id: `proj-${Date.now()}`,
-      organizationId: 'org-1',
-      name: newName,
-      description: newDesc || 'No description provided.',
-      eventLogsCount: 0,
-      lastUpdated: new Date().toISOString().split('T')[0]
-    };
+    if (activeOrgId === null) {
+      setValidationError('No active organization selected.');
+      return;
+    }
 
-    setProjects([newProj, ...projects]);
-    setNewName('');
-    setNewDesc('');
-    setValidationError('');
-    setIsDialogOpen(false);
+    try {
+      const created = await createProject(activeOrgId, newName.trim());
+      await refreshProjects(activeOrgId);
+      if (created?.id) {
+        setActiveProjectId(created.id);
+      }
+      setNewName('');
+      setValidationError('');
+      setIsDialogOpen(false);
+    } catch (err) {
+      console.error(err);
+      setValidationError('Failed to create project on backend.');
+    }
   };
 
-  const handleDeleteProject = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setProjects(projects.filter(p => p.id !== id));
+  const handleDeleteProject = async (id: number) => {
+    if (activeOrgId === null) return;
+    try {
+      await deleteProject(id);
+      const remaining = await refreshProjects(activeOrgId);
+      if (activeProjectId === id) {
+        if (remaining.length > 0) {
+          setActiveProjectId(remaining[0].id);
+        } else {
+          setActiveProjectId(null);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete project on backend.');
+    }
   };
 
-  const columns: Column<Project>[] = [
+  const columns: Column<BackendProject>[] = [
     {
       header: 'Name',
       accessorKey: 'name',
@@ -62,53 +85,88 @@ export default function ProjectsPage() {
       cell: (row) => (
         <div className="flex flex-col">
           <span className="font-medium text-[#1A1917]">{row.name}</span>
-          <span className="text-[11px] text-[#6B6963] max-w-[280px] truncate">{row.description}</span>
         </div>
       )
     },
     {
-      header: 'Description',
-      accessorKey: 'description',
+      header: 'Created',
+      accessorKey: 'created_at',
       sortable: true,
-      cell: (row) => <span className="text-[#6B6963] text-[13px]">{row.description}</span>
-    },
-    {
-      header: 'Event Logs',
-      accessorKey: 'eventLogsCount',
-      isNumeric: true,
-      sortable: true
-    },
-    {
-      header: 'Last Updated',
-      accessorKey: 'lastUpdated',
-      sortable: true
+      cell: (row) => (
+        <span className="text-[#6B6963] text-[13px]">
+          {new Date(row.created_at).toLocaleDateString()}
+        </span>
+      )
     },
     {
       header: 'Actions',
       accessorKey: 'actions',
-      cell: (row) => (
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.push('/workspaces')}
-            className="h-[28px] text-[11px] font-sans text-[#2D6A4F] border-[#2D6A4F] hover:bg-[#E8F0EB] hover:text-[#2D6A4F] flex items-center gap-1 rounded-md"
-          >
-            <span>Enter Project</span>
-            <ArrowRight className="w-3 h-3" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => handleDeleteProject(row.id, e)}
-            className="h-[28px] w-[28px] p-0 text-[#C0392B] hover:bg-[#FDECEA] hover:text-[#C0392B] rounded-md"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </Button>
-        </div>
-      )
+      cell: (row) => {
+        const isActive = activeProjectId === row.id;
+        return (
+          <div className="flex items-center gap-2">
+            {!isActive ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setActiveProjectId(row.id);
+                  router.push('/workspaces');
+                }}
+                className="h-[28px] text-[11px] font-sans text-[#2D6A4F] border-[#2D6A4F] hover:bg-[#E8F0EB] hover:text-[#2D6A4F] flex items-center gap-1 rounded-md"
+              >
+                <span>Enter Project</span>
+                <ArrowRight className="w-3 h-3" />
+              </Button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-medium text-[#2D6A4F] bg-[#E8F0EB] px-2.5 py-1 rounded-md">
+                  Active
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.push('/workspaces')}
+                  className="h-[28px] text-[11px] font-sans text-[#2D6A4F] border-[#2D6A4F] hover:bg-[#E8F0EB] hover:text-[#2D6A4F] flex items-center gap-1 rounded-md"
+                >
+                  <span>Go to Workspaces</span>
+                  <ArrowRight className="w-3 h-3" />
+                </Button>
+              </div>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (confirm("WARNING: Deleting this project will permanently delete all its workspaces and stored audit analysis snapshots. Are you sure you want to proceed?")) {
+                  handleDeleteProject(row.id);
+                }
+              }}
+              className="h-[28px] w-[28px] p-0 text-[#C0392B] hover:bg-[#FDECEA] hover:text-[#C0392B] rounded-md"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+        );
+      }
     }
   ];
+
+  if (activeOrgId === null) {
+    return (
+      <div className="flex flex-col flex-1">
+        <PageHeader title="Projects" subtitle="Operational audits and carbon-fitness monitors." />
+        <EmptyState
+          icon={Building2}
+          title="No active organization"
+          description="Please select or create an organization first to manage projects."
+          actionText="Go to Organizations"
+          onAction={() => router.push('/organizations')}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col flex-1">
@@ -133,7 +191,10 @@ export default function ProjectsPage() {
         <DataTable
           columns={columns}
           data={projects}
-          onRowClick={() => router.push('/workspaces')}
+          onRowClick={(row) => {
+            setActiveProjectId(row.id);
+            router.push('/workspaces');
+          }}
         />
       ) : (
         <EmptyState
@@ -169,18 +230,6 @@ export default function ProjectsPage() {
                 placeholder="e.g. Q3 Supply Chain Audit 2024"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                className="h-[34px] text-[13px] bg-[#F3F2EE] border-[#E2E0D8] text-[#1A1917] rounded-md focus:border-[#2D6A4F]"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] font-sans font-medium text-[#6B6963] uppercase tracking-wider block">
-                Description
-              </label>
-              <Input
-                placeholder="Brief summary of the audit scope..."
-                value={newDesc}
-                onChange={(e) => setNewDesc(e.target.value)}
                 className="h-[34px] text-[13px] bg-[#F3F2EE] border-[#E2E0D8] text-[#1A1917] rounded-md focus:border-[#2D6A4F]"
               />
             </div>

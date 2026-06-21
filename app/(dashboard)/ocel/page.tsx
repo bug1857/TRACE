@@ -10,12 +10,14 @@ import StatCard from '@/components/shared/StatCard';
 import { mockOcelNodes, mockOcelEdges, mockOcelMetadata } from '@/lib/mockData';
 import { Button } from '@/components/ui/button';
 import { uploadOcelFile } from '@/lib/api';
-import { useAnalysis } from '@/lib/AnalysisContext';
+import { useAnalysis, UploadResponse } from '@/lib/AnalysisContext';
+import { useWorkspace } from '@/lib/WorkspaceContext';
 import { ColumnMapping, MappingField } from '@/lib/types';
 import { AxiosError } from 'axios';
 
 export default function OcelPage() {
   const { analysis, setAnalysis } = useAnalysis();
+  const { activeWorkspaceId } = useWorkspace();
 
   // Real backend states / Derived states
   const [isDemo, setIsDemo] = useState(false);
@@ -25,7 +27,6 @@ export default function OcelPage() {
     }
     return null;
   });
-  const [isAnalyzed, setIsAnalyzed] = useState(() => !!analysis?.metadata);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const [errorType, setErrorType] = useState<'422' | '500' | null>(null);
@@ -46,6 +47,40 @@ export default function OcelPage() {
 
   const [isAdjustingMapping, setIsAdjustingMapping] = useState(false);
   const [parsedHeaders, setParsedHeaders] = useState<string[]>([]);
+
+  const isAnalyzed = isDemo || !!analysis?.metadata;
+
+  const displayedFileName = isDemo 
+    ? mockOcelMetadata.filename 
+    : (analysis?.metadata?.filename || selectedFile?.name || null);
+
+  const displayedFileSizeStr = isDemo 
+    ? 'Demo dataset' 
+    : (analysis?.metadata 
+        ? 'Active log' 
+        : (selectedFile 
+            ? `${(selectedFile.size / 1024).toFixed(1)} KB` 
+            : ''));
+
+  const [prevWorkspaceId, setPrevWorkspaceId] = useState<number | null>(null);
+  if (activeWorkspaceId !== prevWorkspaceId) {
+    setPrevWorkspaceId(activeWorkspaceId);
+    setSelectedFile(null);
+    setErrorType(null);
+    setErrorDetails(null);
+    setIsAdjustingMapping(false);
+  }
+
+  const [prevAnalysis, setPrevAnalysis] = useState<UploadResponse | null>(null);
+  if (analysis !== prevAnalysis) {
+    setPrevAnalysis(analysis);
+    if (analysis?.metadata) {
+      setSelectedFile(new File([''], analysis.metadata.filename || 'uploaded_log.csv', { type: 'text/csv' }));
+      setErrorType(null);
+      setErrorDetails(null);
+      setIsAdjustingMapping(false);
+    }
+  }
 
   // Helper to read headers from selected file
   const getHeadersFromFile = (file: File): Promise<string[]> => {
@@ -80,7 +115,8 @@ export default function OcelPage() {
 
   const handleFileSelect = async (file: File) => {
     setSelectedFile(file);
-    setIsAnalyzed(false);
+    setAnalysis(null);
+    setIsDemo(false);
     setErrorType(null);
     setErrorDetails(null);
     setIsAdjustingMapping(false);
@@ -95,7 +131,6 @@ export default function OcelPage() {
   const handleRunAnalysis = async (isManualOverride = false) => {
     if (!selectedFile) return;
     setIsAnalyzing(true);
-    setIsAnalyzed(false);
 
     let overrideStr: string | undefined = undefined;
     if (isManualOverride) {
@@ -116,10 +151,9 @@ export default function OcelPage() {
     }
 
     try {
-      const result = await uploadOcelFile(selectedFile, overrideStr);
+      const result = await uploadOcelFile(selectedFile, overrideStr, activeWorkspaceId || undefined);
       setAnalysis(result);
       setIsDemo(false);
-      setIsAnalyzed(true);
       setErrorType(null);
       setErrorDetails(null);
       setIsAdjustingMapping(false);
@@ -193,7 +227,6 @@ export default function OcelPage() {
     setTimeout(() => {
       setIsDemo(true);
       setIsAnalyzing(false);
-      setIsAnalyzed(true);
     }, 1200);
   };
 
@@ -286,16 +319,16 @@ export default function OcelPage() {
 
             <FileUpload onFileSelect={handleFileSelect} placeholder="Drop OCEL 2.0 CSV/XML" />
 
-            {selectedFile && (
+            {(selectedFile || displayedFileName) && (
               <div className="mt-4 border-t border-[#E2E0D8] pt-4 space-y-3.5">
                 <div className="flex items-start gap-2.5 p-2 bg-[#F3F2EE] rounded-md border border-[#E2E0D8]">
                   <FileSpreadsheet className="w-5 h-5 text-[#2D6A4F] shrink-0 mt-0.5" />
                   <div className="overflow-hidden">
                     <p className="text-[12px] font-sans font-medium text-[#1A1917] truncate">
-                      {selectedFile.name}
+                      {displayedFileName}
                     </p>
                     <p className="text-[10px] text-[#6B6963] font-mono">
-                      {selectedFile.size > 0 ? `${(selectedFile.size / 1024).toFixed(1)} KB` : isDemo ? 'Demo dataset' : 'Active log'}
+                      {displayedFileSizeStr}
                     </p>
                   </div>
                 </div>

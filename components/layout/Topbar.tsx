@@ -3,6 +3,7 @@
 import React from 'react';
 import { usePathname } from 'next/navigation';
 import { ChevronRight, FolderKanban } from 'lucide-react';
+import { useWorkspace } from '@/lib/WorkspaceContext';
 import {
   Select,
   SelectContent,
@@ -13,20 +14,32 @@ import {
 
 export default function Topbar() {
   const pathname = usePathname();
+  const {
+    organizations,
+    projects,
+    workspaces,
+    activeOrgId,
+    activeProjectId,
+    activeWorkspaceId,
+    setActiveWorkspaceId,
+  } = useWorkspace();
 
-  // Generate dynamic breadcrumb segments based on pathname
+  const activeOrg = organizations.find((o) => o.id === activeOrgId);
+  const activeProj = projects.find((p) => p.id === activeProjectId);
+
+  // Generate dynamic breadcrumb segments based on pathname and workspace context
   const getBreadcrumbs = () => {
-    const defaultOrg = 'Louis India Pvt. Ltd.';
-    const defaultProj = 'Q3 Supply Chain Audit 2024';
+    const orgName = activeOrg ? activeOrg.name : 'Louis India Pvt. Ltd.';
+    const projName = activeProj ? activeProj.name : 'Q3 Supply Chain Audit 2024';
 
     if (pathname === '/organizations') {
-      return [defaultOrg];
+      return [orgName];
     }
     if (pathname === '/projects') {
-      return [defaultOrg, 'Projects'];
+      return [orgName, 'Projects'];
     }
     if (pathname === '/workspaces') {
-      return [defaultOrg, defaultProj, 'Workspaces'];
+      return [orgName, projName, 'Workspaces'];
     }
 
     // Map other routes
@@ -48,7 +61,7 @@ export default function Topbar() {
     };
 
     const currentSegment = pathMapping[pathname] || pathname.split('/').filter(Boolean).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' / ');
-    return [defaultOrg, defaultProj, currentSegment];
+    return [orgName, projName, currentSegment];
   };
 
   const breadcrumbs = getBreadcrumbs();
@@ -67,25 +80,26 @@ export default function Topbar() {
         ))}
       </div>
 
-      {/* Right: Project Selector & User Avatar */}
+      {/* Right: Workspace Selector & User Avatar */}
       <div className="flex items-center gap-3">
-        {/* Project Selector */}
+        {/* Workspace Selector */}
         <div className="w-[210px]">
-          <Select defaultValue="proj-1">
+          <Select 
+            value={activeWorkspaceId !== null ? activeWorkspaceId.toString() : ''}
+            onValueChange={(val) => setActiveWorkspaceId(val ? parseInt(val) : null)}
+          >
             <SelectTrigger className="h-[28px] text-[12px] bg-[#F3F2EE] border-[#E2E0D8] text-[#1A1917] font-sans px-2.5 rounded-md focus:ring-0 focus:ring-offset-0">
               <FolderKanban className="w-3.5 h-3.5 mr-1 text-[#6B6963]" />
-              <SelectValue placeholder="Select Project" />
+              <SelectValue placeholder="Select Workspace">
+                {workspaces.find((w) => w.id === activeWorkspaceId)?.name}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent className="bg-[#FAFAF8] border-[#E2E0D8] rounded-md shadow-sm">
-              <SelectItem value="proj-1" className="text-[12px] font-sans text-[#1A1917]">
-                Q3 Supply Chain Audit 2024
-              </SelectItem>
-              <SelectItem value="proj-2" className="text-[12px] font-sans text-[#1A1917]">
-                Decarbonization Initiative 2024
-              </SelectItem>
-              <SelectItem value="proj-3" className="text-[12px] font-sans text-[#1A1917]">
-                Warehouse Process Optimization
-              </SelectItem>
+              {workspaces.map((w) => (
+                <SelectItem key={w.id} value={w.id.toString()} className="text-[12px] font-sans text-[#1A1917]">
+                  {w.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

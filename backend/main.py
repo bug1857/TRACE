@@ -1,4 +1,6 @@
 import io
+import json
+import datetime
 import pandas as pd
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, status, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from column_mapper import map_columns, ColumnMappingError
 from process_mining import extract_dfg
-from database import engine, Base, get_db
+from database import engine, Base, get_db, SessionLocal
 import models
 from carbon_budget import calculate_carbon_budget
 from conformance import detect_violations, get_rule_scope_summary
@@ -40,9 +42,18 @@ def health_check():
 async def upload_ocel_log(
     file: UploadFile = File(...),
     mapping_override: Optional[str] = Form(None),
+    workspace_id: Optional[int] = Form(None),
     db: Session = Depends(get_db)
 ):
     filename = file.filename or "unknown.csv"
+    
+    if workspace_id is not None:
+        workspace = db.query(models.Workspace).filter(models.Workspace.id == workspace_id).first()
+        if not workspace:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Workspace not found"
+            )
     
     # Read uploaded CSV
     try:
@@ -73,7 +84,6 @@ async def upload_ocel_log(
         stripped = mapping_override.strip()
         if stripped and stripped != "null":
             try:
-                import json
                 parsed_override = json.loads(mapping_override)
             except Exception as e:
                 raise HTTPException(
@@ -317,6 +327,22 @@ async def upload_ocel_log(
         response_payload["conformanceRuleScope"] = get_rule_scope_summary()
     if total_cost is not None:
         response_payload["totalOperationalCostUSD"] = round(total_cost, 2)
+
+    if workspace_id is not None:
+        try:
+            snapshot = models.AnalysisSnapshot(
+                workspace_id=workspace_id,
+                upload_response_json=json.dumps(response_payload)
+            )
+            db.add(snapshot)
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to save analysis snapshot: {str(e)}"
+            )
+
     return response_payload
 
 
@@ -541,3 +567,210 @@ def query_copilot(payload: CopilotQuery):
             status_code=500,
             detail=f"Failed to query local LLM: {str(e)}"
         )
+
+
+# --- Multi-Tenancy Schemas ---
+
+class OrganizationBase(BaseModel):
+    name: str
+
+class OrganizationCreate(OrganizationBase):
+    pass
+
+class OrganizationResponse(OrganizationBase):
+    id: int
+    created_at: datetime.datetime
+
+    class Config:
+        from_attributes = True
+        orm_mode = True
+
+class ProjectBase(BaseModel):
+    name: str
+
+class ProjectCreate(ProjectBase):
+    pass
+
+class ProjectResponse(ProjectBase):
+    id: int
+    org_id: int
+    created_at: datetime.datetime
+
+    class Config:
+        from_attributes = True
+        orm_mode = True
+
+class WorkspaceBase(BaseModel):
+    name: str
+
+class WorkspaceCreate(WorkspaceBase):
+    pass
+
+class WorkspaceResponse(WorkspaceBase):
+    id: int
+    project_id: int
+    created_at: datetime.datetime
+
+    class Config:
+        from_attributes = True
+        orm_mode = True
+
+# --- Multi-Tenancy Endpoints ---
+
+@app.get("/api/organizations", response_model=List[OrganizationResponse])
+def get_organizations(db: Session = Depends(get_db)):
+    return db.query(models.Organization).all()
+
+@app.post("/api/organizations", response_model=OrganizationResponse, status_code=201)
+def create_organization(org: OrganizationCreate, db: Session = Depends(get_db)):
+    try:
+        db_org = models.Organization(name=org.name)
+        db.add(db_org)
+        db.commit()
+        db.refresh(db_org)
+        return db_org
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database organization creation failed: {str(e)}"
+        )
+
+@app.delete("/api/organizations/{org_id}")
+def delete_organization(org_id: int, db: Session = Depends(get_db)):
+    db_org = db.query(models.Organization).filter(models.Organization.id == org_id).first()
+    if not db_org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    try:
+        db.delete(db_org)
+        db.commit()
+        return {"status": "success"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database organization deletion failed: {str(e)}"
+        )
+
+@app.get("/api/organizations/{org_id}/projects", response_model=List[ProjectResponse])
+def get_projects(org_id: int, db: Session = Depends(get_db)):
+    db_org = db.query(models.Organization).filter(models.Organization.id == org_id).first()
+    if not db_org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    return db.query(models.Project).filter(models.Project.org_id == org_id).all()
+
+@app.post("/api/organizations/{org_id}/projects", response_model=ProjectResponse, status_code=201)
+def create_project(org_id: int, project: ProjectCreate, db: Session = Depends(get_db)):
+    db_org = db.query(models.Organization).filter(models.Organization.id == org_id).first()
+    if not db_org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    try:
+        db_project = models.Project(org_id=org_id, name=project.name)
+        db.add(db_project)
+        db.commit()
+        db.refresh(db_project)
+        return db_project
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database project creation failed: {str(e)}"
+        )
+
+@app.delete("/api/projects/{project_id}")
+def delete_project(project_id: int, db: Session = Depends(get_db)):
+    db_project = db.query(models.Project).filter(models.Project.id == project_id).first()
+    if not db_project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    try:
+        db.delete(db_project)
+        db.commit()
+        return {"status": "success"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database project deletion failed: {str(e)}"
+        )
+
+@app.get("/api/projects/{project_id}/workspaces", response_model=List[WorkspaceResponse])
+def get_workspaces(project_id: int, db: Session = Depends(get_db)):
+    db_project = db.query(models.Project).filter(models.Project.id == project_id).first()
+    if not db_project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return db.query(models.Workspace).filter(models.Workspace.project_id == project_id).all()
+
+@app.post("/api/projects/{project_id}/workspaces", response_model=WorkspaceResponse, status_code=201)
+def create_workspace(project_id: int, workspace: WorkspaceCreate, db: Session = Depends(get_db)):
+    db_project = db.query(models.Project).filter(models.Project.id == project_id).first()
+    if not db_project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    try:
+        db_workspace = models.Workspace(project_id=project_id, name=workspace.name)
+        db.add(db_workspace)
+        db.commit()
+        db.refresh(db_workspace)
+        return db_workspace
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database workspace creation failed: {str(e)}"
+        )
+
+@app.delete("/api/workspaces/{workspace_id}")
+def delete_workspace(workspace_id: int, db: Session = Depends(get_db)):
+    db_workspace = db.query(models.Workspace).filter(models.Workspace.id == workspace_id).first()
+    if not db_workspace:
+        raise HTTPException(status_code=404, detail="Workspace not found")
+    try:
+        db.delete(db_workspace)
+        db.commit()
+        return {"status": "success"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database workspace deletion failed: {str(e)}"
+        )
+
+@app.get("/api/workspaces/{workspace_id}/latest-analysis")
+def get_latest_analysis(workspace_id: int, db: Session = Depends(get_db)):
+    db_workspace = db.query(models.Workspace).filter(models.Workspace.id == workspace_id).first()
+    if not db_workspace:
+        raise HTTPException(status_code=404, detail="Workspace not found")
+    
+    snapshot = db.query(models.AnalysisSnapshot).filter(
+        models.AnalysisSnapshot.workspace_id == workspace_id
+    ).order_by(models.AnalysisSnapshot.created_at.desc()).first()
+    
+    if not snapshot:
+        raise HTTPException(status_code=404, detail="No analysis snapshot found for this workspace")
+    
+    return json.loads(snapshot.upload_response_json)
+
+# --- Startup Seed Logic ---
+
+@app.on_event("startup")
+def startup_event():
+    # Ensure tables are created in the database
+    Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
+    try:
+        if db.query(models.Organization).count() == 0:
+            org = models.Organization(id=1, name="Louis India Pvt. Ltd.")
+            db.add(org)
+            db.commit()
+            
+            project = models.Project(id=1, org_id=1, name="Q3 Supply Chain Audit 2024")
+            db.add(project)
+            db.commit()
+            
+            workspace = models.Workspace(id=1, project_id=1, name="proj-1")
+            db.add(workspace)
+            db.commit()
+    except Exception as e:
+        print(f"Error seeding database: {e}")
+    finally:
+        db.close()
+
