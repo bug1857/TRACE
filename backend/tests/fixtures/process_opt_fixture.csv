@@ -1,0 +1,10 @@
+case_id,activity,timestamp
+CASE-001,Order Received,2026-06-20T10:00:00Z
+CASE-001,Warehouse Pick & Pack,2026-06-20T12:00:00Z
+CASE-001,Warehouse Pick & Pack,2026-06-20T13:00:00Z
+CASE-001,Road Transport Dispatch,2026-06-20T14:30:00Z
+CASE-002,Order Received,2026-06-20T10:15:00Z
+CASE-002,Warehouse Pick & Pack,2026-06-20T13:00:00Z
+CASE-002,Road Transport Dispatch,2026-06-20T15:00:00Z
+CASE-003,Order Received,2026-06-20T11:00:00Z
+CASE-003,Road Transport Dispatch,2026-06-20T12:00:00Z

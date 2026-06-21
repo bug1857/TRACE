@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, LayoutGrid, Trash2, Calendar, FileCode, PlaySquare } from 'lucide-react';
+import { Plus, LayoutGrid, Trash2, Calendar, FileCode } from 'lucide-react';
 import { mockWorkspaces } from '@/lib/mockData';
 import { Workspace } from '@/lib/types';
 import PageHeader from '@/components/shared/PageHeader';

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { usePathname } from 'next/navigation';
-import { ChevronRight, LogOut, User, FolderKanban } from 'lucide-react';
+import { ChevronRight, FolderKanban } from 'lucide-react';
 import {
   Select,
   SelectContent,

@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { AlertTriangle, FileCode, CheckCircle, Upload, Eye } from 'lucide-react';
+import { AlertTriangle, FileCode, Upload, Eye } from 'lucide-react';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable, { Column } from '@/components/shared/DataTable';
-import StatusBadge from '@/components/shared/StatusBadge';
+import DemoDataBanner from '@/components/shared/DemoDataBanner';
 import { mockViolations } from '@/lib/mockData';
 import { Violation } from '@/lib/types';
 import { Button } from '@/components/ui/button';
+import { useAnalysis } from '@/lib/AnalysisContext';
 import {
   Sheet,
   SheetContent,
@@ -17,10 +18,14 @@ import {
 } from '@/components/ui/sheet';
 
 export default function ConformancePage() {
-  const [violations, setViolations] = useState<Violation[]>(mockViolations);
+  const { analysis } = useAnalysis();
   const [selectedViolation, setSelectedViolation] = useState<Violation | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [modelFile, setModelFile] = useState<string>('decarbonization_policy_rules_v2.pnml');
+
+  const isReal = !!(analysis && analysis.cfsScores && analysis.cfsScores.length > 0);
+
+  const violations = isReal ? (analysis?.violations || []) : mockViolations;
 
   const handleRowClick = (violation: Violation) => {
     setSelectedViolation(violation);
@@ -33,83 +38,81 @@ export default function ConformancePage() {
     }
   };
 
-  // Helper to color code conformance scores
-  const getScoreColorClass = (val: number, isPercent = false) => {
-    const score = isPercent ? val * 100 : val;
-    if (score >= 70) return 'text-[#2D6A4F]';
-    if (score >= 50) return 'text-[#B45309]';
-    return 'text-[#C0392B]';
-  };
+  // Compute dynamic stats
+  const totalViolations = violations.length;
+  const totalExcessCarbon = violations.reduce((sum, v) => sum + v.carbonDeltaKg, 0);
+  const criticalCount = violations.filter(v => v.severity === 'critical').length;
 
   const columns: Column<Violation>[] = [
     {
       header: 'Case ID',
       accessorKey: 'caseId',
-      sortable: true
+      sortable: true,
+      cell: (row) => <span className="font-mono text-[12px]">{row.caseId}</span>
     },
     {
       header: 'Activity',
       accessorKey: 'activity',
-      sortable: true
-    },
-    {
-      header: 'Violation Type',
-      accessorKey: 'violationType',
-      sortable: true
-    },
-    {
-      header: 'Seq. Fit',
-      accessorKey: 'sequenceFit',
-      isNumeric: true,
       sortable: true,
       cell: (row) => (
-        <span className={getScoreColorClass(row.sequenceFit, true)}>
-          {row.sequenceFit.toFixed(2)}
+        <div className="flex items-center gap-2">
+          <span className="font-sans font-medium">{row.activity}</span>
+          {row.estimated && (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-sans font-semibold bg-[#FEF3C7] text-[#B45309] border border-[#B45309]/20 uppercase tracking-wider">
+              Estimated factor
+            </span>
+          )}
+        </div>
+      )
+    },
+    {
+      header: 'Mandated Alternative',
+      accessorKey: 'mandatedAlternative',
+      sortable: true,
+      cell: (row) => <span className="font-sans font-medium text-[#2D6A4F]">{row.mandatedAlternative}</span>
+    },
+    {
+      header: 'Category',
+      accessorKey: 'category',
+      sortable: true,
+      cell: (row) => (
+        <span className="font-mono text-[10px] uppercase text-[#6B6963] px-1.5 py-0.5 bg-[#F3F2EE] border border-[#E2E0D8] rounded">
+          {row.category}
         </span>
       )
     },
     {
-      header: 'Carbon Fit',
-      accessorKey: 'carbonFit',
+      header: 'Severity',
+      accessorKey: 'severity',
+      sortable: true,
+      cell: (row) => {
+        const severityStyles = {
+          critical: 'bg-[#FDECEA] text-[#C0392B] border-[#FCA5A5]/40',
+          warning: 'bg-[#FEF3C7] text-[#B45309] border-[#FDE68A]/40',
+          info: 'bg-[#FAFAF8] text-[#6B6963] border-[#E2E0D8]'
+        };
+        const style = severityStyles[row.severity] || severityStyles.info;
+        return (
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-sans font-semibold uppercase tracking-wider border ${style}`}>
+            {row.severity}
+          </span>
+        );
+      }
+    },
+    {
+      header: 'Carbon Delta (kg)',
+      accessorKey: 'carbonDeltaKg',
       isNumeric: true,
       sortable: true,
       cell: (row) => (
-        <span className={getScoreColorClass(row.carbonFit, true)}>
-          {row.carbonFit.toFixed(2)}
+        <span className="font-mono text-[12px] font-semibold text-[#C0392B]">
+          +{row.carbonDeltaKg.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kg
         </span>
-      )
-    },
-    {
-      header: 'CFS',
-      accessorKey: 'cfs',
-      isNumeric: true,
-      sortable: true,
-      cell: (row) => (
-        <span className={`font-medium ${getScoreColorClass(row.cfs)}`}>
-          {row.cfs}
-        </span>
-      )
-    },
-    {
-      header: 'Excess (kg)',
-      accessorKey: 'carbonExcess',
-      isNumeric: true,
-      sortable: true,
-      cell: (row) => (
-        <span>{row.carbonExcess.toLocaleString()} kg</span>
-      )
-    },
-    {
-      header: 'Status',
-      accessorKey: 'status',
-      sortable: true,
-      cell: (row) => (
-        <StatusBadge status={row.status} />
       )
     },
     {
       header: 'Actions',
-      accessorKey: 'actions',
+      accessorKey: 'id',
       cell: (row) => (
         <Button
           variant="outline"
@@ -131,53 +134,63 @@ export default function ConformancePage() {
         subtitle="Compare actual paths against normative ESG policies to flag compliance and emission loops."
       />
 
+      <DemoDataBanner show={!isReal} />
+
       {/* Top Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Sequence Fitness */}
+        {/* Active Gaps */}
         <div className="bg-[#FAFAF8] border border-[#E2E0D8] rounded-md p-5 flex flex-col justify-between shadow-sm min-h-[110px]">
           <span className="text-[11px] font-sans font-medium text-[#6B6963] uppercase tracking-wider block">
-            Sequence Fitness
+            Active Gaps
+          </span>
+          <div className="mt-3 flex items-baseline gap-2 select-all">
+            <span className="text-[32px] font-mono font-medium text-[#C0392B] leading-none">
+              {totalViolations}
+            </span>
+            {criticalCount > 0 && (
+              <span className="text-[12px] font-sans text-[#6B6963]">
+                ({criticalCount} Critical)
+              </span>
+            )}
+          </div>
+          <span className="text-[11px] text-[#6B6963] mt-2 font-sans">
+            Total detected policy non-conformance loops
+          </span>
+        </div>
+
+        {/* Excess Carbon */}
+        <div className="bg-[#FAFAF8] border border-[#E2E0D8] rounded-md p-5 flex flex-col justify-between shadow-sm min-h-[110px]">
+          <span className="text-[11px] font-sans font-medium text-[#6B6963] uppercase tracking-wider block">
+            Excess Emissions
+          </span>
+          <div className="mt-3 flex items-baseline gap-1 select-all">
+            <span className="text-[32px] font-mono font-medium text-[#B45309] leading-none">
+              {totalExcessCarbon.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+            </span>
+            <span className="text-[14px] font-sans text-[#6B6963] font-normal lowercase ml-0.5">
+              kg CO₂
+            </span>
+          </div>
+          <span className="text-[11px] text-[#6B6963] mt-2 font-sans">
+            Delta carbon compared to mandated alternatives
+          </span>
+        </div>
+
+        {/* Audited Process Rules */}
+        <div className="bg-[#FAFAF8] border border-[#E2E0D8] rounded-md p-5 flex flex-col justify-between shadow-sm min-h-[110px]">
+          <span className="text-[11px] font-sans font-medium text-[#6B6963] uppercase tracking-wider block">
+            Active Policy Rules
           </span>
           <div className="mt-3 flex items-baseline gap-1 select-all">
             <span className="text-[32px] font-mono font-medium text-[#2D6A4F] leading-none">
-              0.84
+              4
+            </span>
+            <span className="text-[12px] font-sans text-[#6B6963] ml-1">
+              Rules Policed
             </span>
           </div>
           <span className="text-[11px] text-[#6B6963] mt-2 font-sans">
-            Path routing matching rules. Target &gt; 0.90
-          </span>
-        </div>
-
-        {/* Carbon Fitness */}
-        <div className="bg-[#FAFAF8] border border-[#E2E0D8] rounded-md p-5 flex flex-col justify-between shadow-sm min-h-[110px]">
-          <span className="text-[11px] font-sans font-medium text-[#6B6963] uppercase tracking-wider block">
-            Carbon Fitness
-          </span>
-          <div className="mt-3 flex items-baseline gap-1 select-all">
-            <span className="text-[32px] font-mono font-medium text-[#B45309] leading-none">
-              0.61
-            </span>
-          </div>
-          <span className="text-[11px] text-[#6B6963] mt-2 font-sans">
-            Carbon compliance per route. Target &gt; 0.70
-          </span>
-        </div>
-
-        {/* Combined CFS */}
-        <div className="bg-[#FAFAF8] border border-[#E2E0D8] rounded-md p-5 flex flex-col justify-between shadow-sm min-h-[110px]">
-          <span className="text-[11px] font-sans font-medium text-[#6B6963] uppercase tracking-wider block">
-            Combined CFS
-          </span>
-          <div className="mt-3 flex items-baseline gap-1 select-all">
-            <span className="text-[32px] font-mono font-medium text-[#B45309] leading-none">
-              72
-            </span>
-            <span className="text-[14px] font-mono text-[#6B6963] font-normal lowercase ml-0.5">
-              / 100
-            </span>
-          </div>
-          <span className="text-[11px] text-[#6B6963] mt-2 font-sans">
-            Overall carbon fitness score. Status: Warning
+            Logistics & Waste categories audited automatically
           </span>
         </div>
       </div>
@@ -185,7 +198,7 @@ export default function ConformancePage() {
       {/* Violations Table Section */}
       <div className="space-y-3">
         <h3 className="text-[13px] font-sans font-medium text-[#1A1917] uppercase tracking-wider">
-          Active Conformance Violations ({violations.length})
+          Active Conformance Violations ({totalViolations})
         </h3>
         <DataTable
           columns={columns}
@@ -228,10 +241,10 @@ export default function ConformancePage() {
           <SheetHeader className="pb-4 border-b border-[#E2E0D8] mb-6">
             <SheetTitle className="text-[16px] font-sans font-medium text-[#1A1917] flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-[#C0392B]" />
-              <span>Violation Breakdown</span>
+              <span>Violation Audit Record</span>
             </SheetTitle>
             <SheetDescription className="text-[12px] text-[#6B6963]">
-              Details for compliance investigation of {selectedViolation?.caseId}
+              Details for compliance investigation of case {selectedViolation?.caseId}
             </SheetDescription>
           </SheetHeader>
 
@@ -253,25 +266,33 @@ export default function ConformancePage() {
                 </div>
                 <div className="mt-2">
                   <span className="text-[10px] text-[#6B6963] font-sans uppercase tracking-wider block">Violation Category</span>
-                  <span className="text-[13px] font-sans text-[#C0392B] font-medium">{selectedViolation.violationType}</span>
+                  <span className="text-[13px] font-mono text-[#C0392B] font-medium uppercase">{selectedViolation.category}</span>
                 </div>
               </div>
 
               {/* Conformance Metrics */}
               <div className="space-y-3">
-                <h4 className="text-[12px] font-sans font-medium text-[#1A1917] uppercase tracking-wider">Conformance Metrics</h4>
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="border border-[#E2E0D8] rounded-md p-2 bg-[#FAFAF8] text-center">
-                    <span className="text-[9px] text-[#6B6963] uppercase block">Sequence Fit</span>
-                    <span className="text-[15px] font-mono font-semibold text-[#1A1917]">{(selectedViolation.sequenceFit * 100).toFixed(0)}%</span>
+                <h4 className="text-[12px] font-sans font-medium text-[#1A1917] uppercase tracking-wider">Policy Requirement</h4>
+                <div className="border border-[#E2E0D8] rounded-md p-4 bg-[#FAFAF8] space-y-3">
+                  <div className="flex justify-between items-center text-[12px]">
+                    <span className="text-[#6B6963]">Mandated Alternative:</span>
+                    <span className="font-semibold text-[#2D6A4F]">{selectedViolation.mandatedAlternative}</span>
                   </div>
-                  <div className="border border-[#E2E0D8] rounded-md p-2 bg-[#FAFAF8] text-center">
-                    <span className="text-[9px] text-[#6B6963] uppercase block">Carbon Fit</span>
-                    <span className="text-[15px] font-mono font-semibold text-[#1A1917]">{(selectedViolation.carbonFit * 100).toFixed(0)}%</span>
+                  <div className="flex justify-between items-center text-[12px]">
+                    <span className="text-[#6B6963]">Severity Level:</span>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-sans font-semibold uppercase tracking-wider border ${
+                      selectedViolation.severity === 'critical' ? 'bg-[#FDECEA] text-[#C0392B] border-[#FCA5A5]/40' :
+                      selectedViolation.severity === 'warning' ? 'bg-[#FEF3C7] text-[#B45309] border-[#FDE68A]/40' :
+                      'bg-[#FAFAF8] text-[#6B6963] border-[#E2E0D8]'
+                    }`}>
+                      {selectedViolation.severity}
+                    </span>
                   </div>
-                  <div className="border border-[#E2E0D8] rounded-md p-2 bg-[#FAFAF8] text-center">
-                    <span className="text-[9px] text-[#6B6963] uppercase block">CFS Index</span>
-                    <span className="text-[15px] font-mono font-semibold text-[#1A1917]">{selectedViolation.cfs}</span>
+                  <div className="flex justify-between items-center text-[12px]">
+                    <span className="text-[#6B6963]">Emission Factor:</span>
+                    <span className="font-mono text-[#1A1917]">
+                      {selectedViolation.estimated ? 'Estimated' : 'Standard'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -279,26 +300,26 @@ export default function ConformancePage() {
               {/* Excess carbon stats */}
               <div className="border border-[#E2E0D8] rounded-md p-4 bg-[#FDECEA]/40 flex justify-between items-center">
                 <div>
-                  <span className="text-[10px] text-[#C0392B] font-sans font-medium uppercase tracking-wider block">Carbon Excess</span>
-                  <span className="text-[13px] text-[#6B6963] font-sans mt-0.5 block">Estimated overhead emissions</span>
+                  <span className="text-[10px] text-[#C0392B] font-sans font-medium uppercase tracking-wider block">Carbon Gaps Impact</span>
+                  <span className="text-[12px] text-[#6B6963] font-sans mt-0.5 block">Estimated excess overhead emissions</span>
                 </div>
                 <span className="text-[20px] font-mono font-bold text-[#C0392B]">
-                  +{selectedViolation.carbonExcess.toLocaleString()} kg
+                  +{selectedViolation.carbonDeltaKg.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kg
                 </span>
               </div>
 
-              {/* Description explanation */}
+              {/* Narrative explanation */}
               <div className="space-y-1.5 border border-[#E2E0D8] rounded-md p-3.5 bg-[#FAFAF8]">
-                <h5 className="text-[11px] font-sans font-medium text-[#6B6963] uppercase tracking-wider">Analysis Narrative</h5>
+                <h5 className="text-[11px] font-sans font-medium text-[#6B6963] uppercase tracking-wider">Audited Gaps Explanation</h5>
                 <p className="text-[13px] text-[#1A1917] font-sans leading-relaxed">
-                  {selectedViolation.explanation}
+                  Logistics policy breach detected: {selectedViolation.activity} was used instead of the mandated lower-carbon alternative {selectedViolation.mandatedAlternative}. This bypass {
+                    selectedViolation.category === 'transport'
+                      ? 'violates regional shipping/logistics policy'
+                      : selectedViolation.category === 'waste'
+                      ? 'violates waste management policy'
+                      : 'violates environmental policy'
+                  } and results in excess {selectedViolation.carbonDeltaKg.toLocaleString()} kg of CO₂ emissions.
                 </p>
-                {selectedViolation.expectedActivity && selectedViolation.expectedActivity !== 'N/A' && (
-                  <div className="mt-3 pt-3 border-t border-[#E2E0D8] text-[12px] font-sans text-[#6B6963]">
-                    Expected Reference Activity:{' '}
-                    <span className="font-semibold text-[#2D6A4F]">{selectedViolation.expectedActivity}</span>
-                  </div>
-                )}
               </div>
 
               <div className="flex gap-2">

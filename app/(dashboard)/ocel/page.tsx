@@ -3,44 +3,144 @@
 import React, { useState } from 'react';
 import ReactFlow, { Background, Controls } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Database, FileSpreadsheet, Play, CheckCircle } from 'lucide-react';
+import { Database, FileSpreadsheet, Play, CheckCircle, FlaskConical } from 'lucide-react';
 import PageHeader from '@/components/shared/PageHeader';
 import FileUpload from '@/components/shared/FileUpload';
 import StatCard from '@/components/shared/StatCard';
 import { mockOcelNodes, mockOcelEdges, mockOcelMetadata } from '@/lib/mockData';
 import { Button } from '@/components/ui/button';
+import { uploadOcelFile } from '@/lib/api';
+import { useAnalysis } from '@/lib/AnalysisContext';
+import { ColumnMapping } from '@/lib/types';
+import { AxiosError } from 'axios';
 
 export default function OcelPage() {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isAnalyzed, setIsAnalyzed] = useState(false);
+  const { analysis, setAnalysis } = useAnalysis();
+
+  // Real backend states / Derived states
+  const [isDemo, setIsDemo] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(() => {
+    if (analysis?.metadata) {
+      return new File([''], analysis.metadata.filename || 'uploaded_log.csv', { type: 'text/csv' });
+    }
+    return null;
+  });
+  const [isAnalyzed, setIsAnalyzed] = useState(() => !!analysis?.metadata);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const [errorType, setErrorType] = useState<'422' | '500' | null>(null);
+  const [errorDetails, setErrorDetails] = useState<{
+    missingFields: string[];
+    availableColumns: string[];
+    detectedMapping?: ColumnMapping;
+  } | null>(null);
+
+  const [selectedCaseId, setSelectedCaseId] = useState<string>('');
+  const [selectedActivity, setSelectedActivity] = useState<string>('');
+  const [selectedTimestamp, setSelectedTimestamp] = useState<string>('');
+  const [selectedResource, setSelectedResource] = useState<string>('');
+  const [selectedSupplier, setSelectedSupplier] = useState<string>('');
+
+  // Derived state directly from analysis or demo data
+  const nodes = isDemo ? mockOcelNodes : (analysis?.nodes || []);
+  const edges = isDemo ? mockOcelEdges : (analysis?.edges || []);
+  const metadata = isDemo ? mockOcelMetadata : (analysis?.metadata || null);
+
+  const isFieldMissing = (field: string) => {
+    return errorDetails?.missingFields?.includes(field) || false;
+  };
 
   const handleFileSelect = (file: File) => {
     setSelectedFile(file);
-    setIsAnalyzed(false); // reset state on new file
+    setIsAnalyzed(false);
+    setErrorType(null);
+    setErrorDetails(null);
   };
 
-  const handleRunAnalysis = () => {
+  const handleRunAnalysis = async (isManualOverride = false) => {
     if (!selectedFile) return;
     setIsAnalyzing(true);
-    setTimeout(() => {
-      setIsAnalyzing(false);
+    setIsAnalyzed(false);
+
+    let overrideStr: string | undefined = undefined;
+    if (isManualOverride) {
+      const overrideObj = {
+        case_id: selectedCaseId || null,
+        activity: selectedActivity || null,
+        timestamp: selectedTimestamp || null,
+        resource: selectedResource === '— None —' || !selectedResource ? null : selectedResource,
+        supplier: selectedSupplier === '— None —' || !selectedSupplier ? null : selectedSupplier
+      };
+      overrideStr = JSON.stringify(overrideObj);
+    } else {
+      setErrorType(null);
+      setErrorDetails(null);
+    }
+
+    try {
+      const result = await uploadOcelFile(selectedFile, overrideStr);
+      setAnalysis(result);
+      setIsDemo(false);
       setIsAnalyzed(true);
-    }, 1500); // simulate 1.5s analysis
+      setErrorType(null);
+      setErrorDetails(null);
+    } catch (error) {
+      console.error(error);
+      const err = error as AxiosError<{
+        detail?: {
+          available_columns?: string[];
+          detected_mapping?: ColumnMapping;
+          missing_fields?: string[];
+        };
+        available_columns?: string[];
+        detected_mapping?: ColumnMapping;
+        missing_fields?: string[];
+      }>;
+      const status = err.response?.status;
+      if (status === 422) {
+        const errData = err.response?.data?.detail || err.response?.data;
+        setErrorType('422');
+        const availableCols = errData?.available_columns || [];
+        const detectedMap = (errData?.detected_mapping || {}) as ColumnMapping;
+
+        setErrorDetails({
+          missingFields: errData?.missing_fields || [],
+          availableColumns: availableCols,
+          detectedMapping: detectedMap
+        });
+
+        // Pre-populate dropdown states from detected mapping
+        setSelectedCaseId(detectedMap.case_id?.column || '');
+        setSelectedActivity(detectedMap.activity?.column || '');
+        setSelectedTimestamp(detectedMap.timestamp?.column || '');
+        setSelectedResource(detectedMap.resource?.column || '— None —');
+        setSelectedSupplier(detectedMap.supplier?.column || '— None —');
+      } else {
+        setErrorType('500');
+      }
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
+
 
   const loadDemoData = () => {
+    setErrorType(null);
+    setErrorDetails(null);
+    setAnalysis(null);
     const file = new File([''], 'louis_india_q3_sc.csv', { type: 'text/csv' });
     setSelectedFile(file);
-    setIsAnalyzed(true);
+    setIsAnalyzing(true);
+    setTimeout(() => {
+      setIsDemo(true);
+      setIsAnalyzing(false);
+      setIsAnalyzed(true);
+    }, 1200);
   };
 
-  // Map nodes and edges for React Flow
-  const reactFlowNodes = mockOcelNodes.map((node, index) => {
-    // Basic linear horizontal flow layout
+  const reactFlowNodes = (isDemo ? mockOcelNodes : (nodes || [])).map((node, index) => {
     const xCoord = 50 + index * 200;
     const yCoord = 100 + (index % 2) * 90;
-
     return {
       id: node.id,
       data: {
@@ -64,13 +164,13 @@ export default function OcelPage() {
     };
   });
 
-  const reactFlowEdges = mockOcelEdges.map((edge) => ({
+  const reactFlowEdges = (isDemo ? mockOcelEdges : (edges || [])).map((edge) => ({
     id: edge.id,
     source: edge.source,
     target: edge.target,
     label: `${edge.frequency}x (${edge.avgDelay})`,
     labelStyle: { fill: '#6B6963', fontSize: 10, fontFamily: 'monospace', fontWeight: 500 },
-    labelBgPadding: [4, 2],
+    labelBgPadding: [4, 2] as [number, number],
     labelBgBorderRadius: 4,
     labelBgStyle: { fill: '#F3F2EE', color: '#6B6963' },
     style: { stroke: '#9B9891', strokeWidth: 1.5 },
@@ -83,27 +183,26 @@ export default function OcelPage() {
         title="OCEL 2.0 Process Mining"
         subtitle="Upload Object-Centric Event Logs to map process paths, throughput, and carbon footprints."
         action={
-          !isAnalyzed && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={loadDemoData}
-              className="h-[32px] text-[12px] text-[#2D6A4F] border-[#2D6A4F] hover:bg-[#E8F0EB] hover:text-[#2D6A4F] rounded-md"
-            >
-              Load Demo Event Log
-            </Button>
-          )
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={loadDemoData}
+            className="h-[32px] text-[12px] text-[#2D6A4F] border-[#2D6A4F] hover:bg-[#E8F0EB] hover:text-[#2D6A4F] rounded-md"
+          >
+            <FlaskConical className="w-3.5 h-3.5 mr-1.5" />
+            Load Demo Event Log
+          </Button>
         }
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 flex-1 items-start">
-        {/* Left Column: Upload Panel */}
+        {/* Left Column */}
         <div className="space-y-4">
           <div className="border border-[#E2E0D8] bg-[#FAFAF8] p-5 rounded-md shadow-sm">
             <h3 className="text-[13px] font-sans font-medium text-[#1A1917] uppercase tracking-wider mb-3">
               Event Log Upload
             </h3>
-            
+
             <FileUpload onFileSelect={handleFileSelect} placeholder="Drop OCEL 2.0 CSV/XML" />
 
             {selectedFile && (
@@ -115,27 +214,186 @@ export default function OcelPage() {
                       {selectedFile.name}
                     </p>
                     <p className="text-[10px] text-[#6B6963] font-mono">
-                      {(selectedFile.size / 1024).toFixed(1)} KB
+                      {selectedFile.size > 0 ? `${(selectedFile.size / 1024).toFixed(1)} KB` : isDemo ? 'Demo dataset' : 'Active log'}
                     </p>
                   </div>
                 </div>
 
-                {isAnalyzed ? (
+                {errorType === '422' && errorDetails && (
+                  <div className="p-3.5 border border-[#C0392B]/30 bg-[#FAFAF8] rounded-md text-[12px] font-sans space-y-4">
+                    <div className="space-y-1">
+                      <p className="font-medium text-[#C0392B]">
+                        Column Mapping Required
+                      </p>
+                      <p className="text-[11px] text-[#6B6963] leading-relaxed">
+                        We couldn&apos;t confidently detect your columns — please confirm them below.
+                      </p>
+                    </div>
+
+                    <div className="space-y-3.5 pt-1">
+                      {/* Case ID */}
+                      <div className="space-y-1">
+                        <label className={`block text-[11px] font-medium ${isFieldMissing('case_id') ? 'text-red-600' : 'text-[#1A1917]'}`}>
+                          Case ID (Required)
+                        </label>
+                        <select
+                          value={selectedCaseId}
+                          onChange={(e) => setSelectedCaseId(e.target.value)}
+                          className={`w-full h-8 px-2 bg-white border rounded text-[12px] font-sans focus:outline-none focus:ring-1 focus:ring-[#2D6A4F] ${
+                            isFieldMissing('case_id') ? 'border-red-500 bg-red-50 text-red-900 font-medium' : 'border-[#E2E0D8] text-[#1A1917]'
+                          }`}
+                        >
+                          <option value="">-- Select Column --</option>
+                          {errorDetails.availableColumns.map((col) => (
+                            <option key={col} value={col}>
+                              {col}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Activity */}
+                      <div className="space-y-1">
+                        <label className={`block text-[11px] font-medium ${isFieldMissing('activity') ? 'text-red-600' : 'text-[#1A1917]'}`}>
+                          Activity (Required)
+                        </label>
+                        <select
+                          value={selectedActivity}
+                          onChange={(e) => setSelectedActivity(e.target.value)}
+                          className={`w-full h-8 px-2 bg-white border rounded text-[12px] font-sans focus:outline-none focus:ring-1 focus:ring-[#2D6A4F] ${
+                            isFieldMissing('activity') ? 'border-red-500 bg-red-50 text-red-900 font-medium' : 'border-[#E2E0D8] text-[#1A1917]'
+                          }`}
+                        >
+                          <option value="">-- Select Column --</option>
+                          {errorDetails.availableColumns.map((col) => (
+                            <option key={col} value={col}>
+                              {col}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Timestamp */}
+                      <div className="space-y-1">
+                        <label className={`block text-[11px] font-medium ${isFieldMissing('timestamp') ? 'text-red-600' : 'text-[#1A1917]'}`}>
+                          Timestamp (Required)
+                        </label>
+                        <select
+                          value={selectedTimestamp}
+                          onChange={(e) => setSelectedTimestamp(e.target.value)}
+                          className={`w-full h-8 px-2 bg-white border rounded text-[12px] font-sans focus:outline-none focus:ring-1 focus:ring-[#2D6A4F] ${
+                            isFieldMissing('timestamp') ? 'border-red-500 bg-red-50 text-red-900 font-medium' : 'border-[#E2E0D8] text-[#1A1917]'
+                          }`}
+                        >
+                          <option value="">-- Select Column --</option>
+                          {errorDetails.availableColumns.map((col) => (
+                            <option key={col} value={col}>
+                              {col}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Resource */}
+                      <div className="space-y-1">
+                        <label className={`block text-[11px] font-medium ${isFieldMissing('resource') ? 'text-red-600' : 'text-[#1A1917]'}`}>
+                          Resource (Optional)
+                        </label>
+                        <select
+                          value={selectedResource}
+                          onChange={(e) => setSelectedResource(e.target.value)}
+                          className={`w-full h-8 px-2 bg-white border rounded text-[12px] font-sans focus:outline-none focus:ring-1 focus:ring-[#2D6A4F] ${
+                            isFieldMissing('resource') ? 'border-red-500 bg-red-50 text-red-900 font-medium' : 'border-[#E2E0D8] text-[#1A1917]'
+                          }`}
+                        >
+                          <option value="— None —">— None —</option>
+                          {errorDetails.availableColumns.map((col) => (
+                            <option key={col} value={col}>
+                              {col}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Supplier */}
+                      <div className="space-y-1">
+                        <label className={`block text-[11px] font-medium ${isFieldMissing('supplier') ? 'text-red-600' : 'text-[#1A1917]'}`}>
+                          Supplier (Optional)
+                        </label>
+                        <select
+                          value={selectedSupplier}
+                          onChange={(e) => setSelectedSupplier(e.target.value)}
+                          className={`w-full h-8 px-2 bg-white border rounded text-[12px] font-sans focus:outline-none focus:ring-1 focus:ring-[#2D6A4F] ${
+                            isFieldMissing('supplier') ? 'border-red-500 bg-red-50 text-red-900 font-medium' : 'border-[#E2E0D8] text-[#1A1917]'
+                          }`}
+                        >
+                          <option value="— None —">— None —</option>
+                          {errorDetails.availableColumns.map((col) => (
+                            <option key={col} value={col}>
+                              {col}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 flex gap-2">
+                      <Button
+                        onClick={() => handleRunAnalysis(true)}
+                        disabled={isAnalyzing || !selectedCaseId || !selectedActivity || !selectedTimestamp}
+                        className="flex-1 h-[36px] bg-[#2D6A4F] hover:bg-[#166534] disabled:bg-[#2D6A4F]/60 text-white font-sans text-[13px] font-medium rounded-md flex items-center justify-center gap-1.5 transition-colors"
+                      >
+                        {isAnalyzing ? 'Analyzing...' : 'Confirm & Upload'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setErrorType(null);
+                          setErrorDetails(null);
+                        }}
+                        className="h-[36px] px-3 text-[12px] text-[#6B6963] border-[#E2E0D8] hover:bg-[#F3F2EE] rounded-md"
+                      >
+                        Reset
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {errorType === '500' && (
+                  <div className="p-3 border border-[#C0392B] bg-[#FDECEA] rounded-md text-[12px] font-sans space-y-3">
+                    <div className="flex items-center gap-1.5 font-medium text-[#C0392B]">
+                      <span>Analysis Failed</span>
+                    </div>
+                    <p className="text-[#6B6963] leading-relaxed">
+                      A network error or internal server error occurred while processing the file.
+                    </p>
+                    <Button
+                      onClick={() => handleRunAnalysis()}
+                      className="w-full h-[32px] bg-[#C0392B] hover:bg-[#a82f24] text-white font-sans text-[12px] font-medium rounded-md"
+                    >
+                      Retry
+                    </Button>
+                  </div>
+                )}
+
+                {isAnalyzed && !errorType && (
                   <div className="space-y-2 p-2.5 border border-[#E2E0D8] bg-[#E8F0EB] text-[#2D6A4F] rounded-md text-[12px] font-sans">
                     <div className="flex items-center gap-1.5 font-medium">
                       <CheckCircle className="w-4 h-4 shrink-0" />
                       <span>Analysis Completed</span>
                     </div>
-                    <div className="mt-2 space-y-1 text-[#6B6963] font-mono text-[11px] leading-relaxed">
-                      <div>File: {mockOcelMetadata.filename}</div>
-                      <div>Events: {mockOcelMetadata.totalEvents.toLocaleString()}</div>
-                      <div>Cases: {mockOcelMetadata.caseCount}</div>
-                      <div>Activities: {mockOcelMetadata.activityCount}</div>
+                    <div className="mt-2 space-y-1 text-[#166534] font-mono text-[11px] leading-relaxed">
+                      <div>File: {isDemo ? mockOcelMetadata.filename : metadata?.filename}</div>
+                      <div>Events: {isDemo ? mockOcelMetadata.totalEvents.toLocaleString() : metadata?.totalEvents?.toLocaleString()}</div>
+                      <div>Cases: {isDemo ? mockOcelMetadata.caseCount : metadata?.caseCount}</div>
+                      <div>Activities: {isDemo ? mockOcelMetadata.activityCount : metadata?.activityCount}</div>
                     </div>
                   </div>
-                ) : (
+                )}
+
+                {!isAnalyzed && !errorType && (
                   <Button
-                    onClick={handleRunAnalysis}
+                    onClick={() => handleRunAnalysis()}
                     disabled={isAnalyzing}
                     className="w-full h-[36px] bg-[#2D6A4F] hover:bg-[#166534] disabled:bg-[#2D6A4F]/60 text-white font-sans text-[13px] font-medium rounded-md flex items-center justify-center gap-1.5 transition-colors"
                   >
@@ -148,10 +406,15 @@ export default function OcelPage() {
           </div>
         </div>
 
-        {/* Right Column: Process Graph Area */}
+        {/* Right Column */}
         <div className="flex flex-col gap-6">
           <div className="border border-[#E2E0D8] rounded-md bg-[#FAFAF8] h-[480px] w-full relative flex items-center justify-center overflow-hidden shadow-sm">
-            {isAnalyzed ? (
+            {isAnalyzing ? (
+              <div className="text-center p-8">
+                <div className="w-8 h-8 border-2 border-[#2D6A4F] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                <p className="text-[13px] text-[#6B6963] font-mono">Processing event log...</p>
+              </div>
+            ) : isAnalyzed ? (
               <ReactFlow
                 nodes={reactFlowNodes}
                 edges={reactFlowEdges}
@@ -167,20 +430,27 @@ export default function OcelPage() {
                 <h4 className="text-[14px] font-sans font-medium text-[#1A1917] mb-1">
                   Visualize Process Graph
                 </h4>
-                <p className="text-[13px] text-[#6B6963] max-w-xs leading-normal">
+                <p className="text-[13px] text-[#6B6963] max-w-xs leading-normal mb-4">
                   Upload an event log on the left or load demo data to view the interactive process map.
                 </p>
+                <Button
+                  onClick={loadDemoData}
+                  variant="outline"
+                  className="h-[32px] text-[12px] text-[#2D6A4F] border-[#2D6A4F] hover:bg-[#E8F0EB] rounded-md"
+                >
+                  <FlaskConical className="w-3.5 h-3.5 mr-1.5" />
+                  Load Demo Data
+                </Button>
               </div>
             )}
           </div>
 
-          {/* Stats Row */}
           {isAnalyzed && (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard label="Total Cases" value={89} />
-              <StatCard label="Unique Activities" value={12} />
-              <StatCard label="Process Variants" value={18} />
-              <StatCard label="Avg Case Duration" value="14.8" unit="h" />
+              <StatCard label="Total Cases" value={isDemo ? mockOcelMetadata.caseCount : (metadata?.caseCount ?? '—')} />
+              <StatCard label="Unique Activities" value={isDemo ? mockOcelMetadata.activityCount : (metadata?.activityCount ?? '—')} />
+              <StatCard label="Process Variants" value={isDemo ? 18 : '—'} />
+              <StatCard label="Avg Case Duration" value={isDemo ? '14.8' : '—'} unit={isDemo ? 'h' : undefined} />
             </div>
           )}
         </div>

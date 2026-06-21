@@ -18,7 +18,7 @@ export interface Column<T> {
   isNumeric?: boolean;
   sortable?: boolean;
   // custom accessor function if needed
-  accessorFn?: (row: T) => any;
+  accessorFn?: (row: T) => unknown;
 }
 
 interface DataTableProps<T> {
@@ -27,6 +27,7 @@ interface DataTableProps<T> {
   onRowClick?: (row: T) => void;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function DataTable<T extends Record<string, any>>({
   columns,
   data,
@@ -51,8 +52,8 @@ export default function DataTable<T extends Record<string, any>>({
     if (!column) return data;
 
     return [...data].sort((a, b) => {
-      let aValue = column.accessorFn ? column.accessorFn(a) : a[sortConfig.key];
-      let bValue = column.accessorFn ? column.accessorFn(b) : b[sortConfig.key];
+      const aValue = column.accessorFn ? column.accessorFn(a) : a[sortConfig.key];
+      const bValue = column.accessorFn ? column.accessorFn(b) : b[sortConfig.key];
 
       if (aValue == null) return 1;
       if (bValue == null) return -1;

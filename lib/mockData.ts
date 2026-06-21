@@ -16,7 +16,8 @@ import {
   SimulationScenario,
   AuditLog,
   EmissionFactor,
-  TeamMember
+  TeamMember,
+  CfsScore
 } from './types';
 
 export const mockOrganizations: Organization[] = [
@@ -68,76 +69,62 @@ export const mockOcelEdges: OcelEdge[] = [
 
 export const mockViolations: Violation[] = [
   {
-    id: 'v-101',
+    id: 'v-CASE-7289-AirFreightDispatch-4',
     caseId: 'CASE-7289',
     activity: 'Air Freight Dispatch',
-    violationType: 'Bypassed Rail Logistics Policy',
-    sequenceFit: 0.45,
-    carbonFit: 0.12,
-    cfs: 28,
-    carbonExcess: 2450.5,
-    status: 'critical',
-    timestamp: '2024-06-18 10:22',
-    expectedActivity: 'Rail Transport Dispatch',
-    explanation: 'Logistics bypass: Air Freight chosen instead of mandated Rail Transport for non-expedited cargo, exceeding emission target by 2,450.5 kg CO2e.'
+    mandatedAlternative: 'rail freight',
+    category: 'transport',
+    severity: 'critical',
+    carbonDeltaKg: 2450.5,
+    estimated: true,
+    timestamp: '2024-06-18T10:22:00Z'
   },
   {
-    id: 'v-102',
+    id: 'v-CASE-8390-TruckDelivery-2',
     caseId: 'CASE-8390',
-    activity: 'Customs Clearance',
-    violationType: 'Excessive Idle Time',
-    sequenceFit: 0.90,
-    carbonFit: 0.48,
-    cfs: 52,
-    carbonExcess: 890.2,
-    status: 'warning',
-    timestamp: '2024-06-18 08:15',
-    expectedActivity: 'N/A',
-    explanation: 'Container remained in customs yard under active diesel refrigeration for 78 hours, causing fuel-burn emissions excess.'
+    activity: 'Truck Delivery Transport',
+    mandatedAlternative: 'rail delivery',
+    category: 'transport',
+    severity: 'warning',
+    carbonDeltaKg: 890.2,
+    estimated: true,
+    timestamp: '2024-06-18T08:15:00Z'
   },
   {
-    id: 'v-103',
+    id: 'v-CASE-6112-IncinerationDisposal-3',
     caseId: 'CASE-6112',
-    activity: 'Road Transport Dispatch',
-    violationType: 'Non-Certified Supplier Vehicle',
-    sequenceFit: 0.82,
-    carbonFit: 0.35,
-    cfs: 45,
-    carbonExcess: 1200.0,
-    status: 'critical',
-    timestamp: '2024-06-17 16:45',
-    expectedActivity: 'Eco-Supplier Cargo Pick',
-    explanation: 'Supplier FastCargo Ltd. dispatched a non-Euro VI compliant heavy-duty vehicle, violating environmental freight agreements.'
+    activity: 'Incineration Disposal',
+    mandatedAlternative: 'recycling',
+    category: 'waste',
+    severity: 'info',
+    carbonDeltaKg: 150.8,
+    estimated: true,
+    timestamp: '2024-06-17T16:45:00Z'
   },
   {
-    id: 'v-104',
+    id: 'v-CASE-9021-LandfillDisposal-5',
     caseId: 'CASE-9021',
-    activity: 'Warehouse Pick & Pack',
-    violationType: 'Rework Loop Detected',
-    sequenceFit: 0.60,
-    carbonFit: 0.75,
-    cfs: 68,
-    carbonExcess: 150.8,
-    status: 'warning',
-    timestamp: '2024-06-17 11:30',
-    expectedActivity: 'Direct Packing',
-    explanation: 'Order package failed quality inspection 3 times, triggering repetitive packing cycles and excess cardboard scrap waste.'
+    activity: 'Landfill Disposal',
+    mandatedAlternative: 'recycling',
+    category: 'waste',
+    severity: 'info',
+    carbonDeltaKg: 120.5,
+    estimated: true,
+    timestamp: '2024-06-17T11:30:00Z'
   },
   {
-    id: 'v-105',
+    id: 'v-CASE-5541-AirFreight-1',
     caseId: 'CASE-5541',
-    activity: 'Last Mile Delivery',
-    violationType: 'Unoptimized Delivery Route',
-    sequenceFit: 0.95,
-    carbonFit: 0.80,
-    cfs: 86,
-    carbonExcess: 45.4,
-    status: 'pass',
-    timestamp: '2024-06-16 15:10',
-    expectedActivity: 'N/A',
-    explanation: 'Delivery path deviated slightly from eco-routes, but remained within acceptable Carbon Fitness limits.'
+    activity: 'Express Air Freight',
+    mandatedAlternative: 'rail freight',
+    category: 'transport',
+    severity: 'critical',
+    carbonDeltaKg: 1105.4,
+    estimated: true,
+    timestamp: '2024-06-16T15:10:00Z'
   }
 ];
+
 
 export const mockBottlenecks: BottleneckActivity[] = [
   { activity: 'Customs Clearance', avgWaitTime: 28.4, status: 'critical' },
@@ -194,12 +181,20 @@ export const mockCarbonFitnessActivities: CarbonFitnessItem[] = [
   { id: 'ACT-6', name: 'Last Mile Delivery', cfs: 88, carbonEmitted: 180.2 }
 ];
 
-export const mockSuppliers: SupplierFitness[] = [
-  { id: 'sup-1', name: 'Supplier A — GreenFreight Ltd.', country: 'India', scope3Factor: 0.12, sequenceFit: 0.94, carbonFit: 0.88, cfs: 91, trend: 4 },
-  { id: 'sup-2', name: 'Supplier B — FastCargo Ltd.', country: 'India', scope3Factor: 0.84, sequenceFit: 0.42, carbonFit: 0.26, cfs: 34, trend: -12 },
-  { id: 'sup-3', name: 'Supplier C — Deecan Roadlines', country: 'India', scope3Factor: 0.38, sequenceFit: 0.80, carbonFit: 0.62, cfs: 71, trend: -2 },
-  { id: 'sup-4', name: 'Supplier D — SpeedJet Air Cargo', country: 'India', scope3Factor: 0.98, sequenceFit: 0.72, carbonFit: 0.18, cfs: 45, trend: 1 },
-  { id: 'sup-5', name: 'Supplier E — EcoLink Carriers', country: 'India', scope3Factor: 0.18, sequenceFit: 0.96, carbonFit: 0.92, cfs: 94, trend: 8 }
+export const mockSupplierFitness: SupplierFitness[] = [
+  { supplier: 'Supplier E — EcoLink Carriers', totalCarbonKg: 890.4, violationCount: 0, avgCfsScore: 94.00, caseCount: 7, isResourceFallback: false },
+  { supplier: 'Supplier A — GreenFreight Ltd.', totalCarbonKg: 1450.2, violationCount: 1, avgCfsScore: 91.00, caseCount: 10, isResourceFallback: false },
+  { supplier: 'Supplier C — Deecan Roadlines', totalCarbonKg: 2350.2, violationCount: 4, avgCfsScore: 71.00, caseCount: 8, isResourceFallback: false },
+  { supplier: 'Supplier D — SpeedJet Air Cargo', totalCarbonKg: 3890.4, violationCount: 6, avgCfsScore: 45.00, caseCount: 9, isResourceFallback: false },
+  { supplier: 'Supplier B — FastCargo Ltd.', totalCarbonKg: 4890.5, violationCount: 8, avgCfsScore: 34.00, caseCount: 12, isResourceFallback: false }
+];
+
+export const mockCfsScores: CfsScore[] = [
+  { caseId: 'CASE-6112', actualCarbonKg: 890.4, idealCarbonKg: 890.4, cfsScore: 100.0, violationCount: 0 },
+  { caseId: 'CASE-9021', actualCarbonKg: 410.8, idealCarbonKg: 410.8, cfsScore: 100.0, violationCount: 0 },
+  { caseId: 'CASE-5541', actualCarbonKg: 2450.5, idealCarbonKg: 1345.1, cfsScore: 54.89, violationCount: 2 },
+  { caseId: 'CASE-8390', actualCarbonKg: 1250.2, idealCarbonKg: 360.0, cfsScore: 28.80, violationCount: 1 },
+  { caseId: 'CASE-7289', actualCarbonKg: 3120.5, idealCarbonKg: 670.0, cfsScore: 21.47, violationCount: 1 }
 ];
 
 export const mockRouteRecommendations: RouteRecommendation[] = [

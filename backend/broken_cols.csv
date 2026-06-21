@@ -1,0 +1,7 @@
+col_x,col_y,col_z,col_w
+CASE-001,Order Received,2024-06-20T10:00:00Z,Rajesh
+CASE-001,Warehouse Pick & Pack,2024-06-20T12:00:00Z,Priya
+CASE-001,Road Transport Dispatch,2024-06-20T14:30:00Z,Amit
+CASE-002,Order Received,2024-06-20T10:15:00Z,Rajesh
+CASE-002,Warehouse Pick & Pack,2024-06-20T13:00:00Z,Priya
+CASE-002,Road Transport Dispatch,2024-06-20T15:00:00Z,Amit

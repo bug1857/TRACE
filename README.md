@@ -2,16 +2,16 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+To run both the Next.js development server and the Python FastAPI backend server concurrently, use:
+
+```bash
+npm run dev:all
+```
+
+Alternatively, ensure that the FastAPI backend server is running on port 8000 (e.g. from the `backend/` directory with `uvicorn main:app --reload --port 8000` inside the virtual environment) before running the Next.js dev server with:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.

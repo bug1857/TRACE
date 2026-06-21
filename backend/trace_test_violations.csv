@@ -1,0 +1,24 @@
+case_id,activity,timestamp,resource,weight
+CASE-001,Order Received,2024-06-20T10:00:00Z,Amit,76
+CASE-001,Warehouse Pick & Pack,2024-06-20T11:00:00Z,Amit,123
+CASE-001,Air Freight Dispatch,2024-06-20T12:00:00Z,Rajesh,19
+CASE-001,Last Mile Delivery,2024-06-20T13:00:00Z,Amit,95
+CASE-002,Order Received,2024-06-20T10:10:00Z,Suresh,59
+CASE-002,Warehouse Pick & Pack,2024-06-20T11:10:00Z,Suresh,83
+CASE-002,Truck Delivery Transport Dispatch,2024-06-20T12:10:00Z,Rajesh,23
+CASE-002,Last Mile Delivery,2024-06-20T13:10:00Z,Suresh,52
+CASE-002,Last Mile Delivery,2024-06-20T14:10:00Z,Suresh,109
+CASE-003,Order Received,2024-06-20T10:20:00Z,Ramesh,75
+CASE-003,Warehouse Pick & Pack,2024-06-20T11:20:00Z,Ramesh,130
+CASE-003,Incineration Disposal,2024-06-20T12:20:00Z,Priya,20
+CASE-003,Last Mile Delivery,2024-06-20T13:20:00Z,Ramesh,117
+CASE-003,Last Mile Delivery,2024-06-20T14:20:00Z,Ramesh,86
+CASE-004,Order Received,2024-06-20T10:30:00Z,Amit,145
+CASE-004,Customs Clearance,2024-06-20T11:30:00Z,Amit,145
+CASE-004,Landfill Disposal,2024-06-20T12:30:00Z,Priya,22
+CASE-004,Last Mile Delivery,2024-06-20T13:30:00Z,Amit,114
+CASE-004,Last Mile Delivery,2024-06-20T14:30:00Z,Amit,77
+CASE-005,Customs Clearance,2024-06-20T10:40:00Z,Suresh,100
+CASE-005,Customs Clearance,2024-06-20T11:40:00Z,Suresh,120
+CASE-005,Last Mile Delivery,2024-06-20T12:40:00Z,Suresh,80
+CASE-005,Last Mile Delivery,2024-06-20T13:40:00Z,Suresh,90

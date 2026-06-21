@@ -50,21 +50,19 @@ export interface Violation {
   id: string;
   caseId: string;
   activity: string;
-  violationType: string;
-  sequenceFit: number;
-  carbonFit: number;
-  cfs: number;
-  carbonExcess: number; // in kg
-  status: 'critical' | 'warning' | 'pass';
+  mandatedAlternative: string;
+  category: string;
+  severity: 'critical' | 'warning' | 'info';
+  carbonDeltaKg: number;
+  estimated: boolean;
   timestamp: string;
-  expectedActivity?: string;
-  explanation?: string;
 }
 
 export interface BottleneckActivity {
   activity: string;
   avgWaitTime: number; // in hours
   status: 'critical' | 'warning' | 'pass';
+  occurrences?: number;
 }
 
 export interface ReworkActivity {
@@ -90,15 +88,21 @@ export interface CarbonFitnessItem {
   volume?: number;
 }
 
+export interface CfsScore {
+  caseId: string;
+  actualCarbonKg: number;
+  idealCarbonKg: number;
+  cfsScore: number;
+  violationCount: number;
+}
+
 export interface SupplierFitness {
-  id: string;
-  name: string;
-  country: string;
-  scope3Factor: number; // kg CO2e per USD or unit
-  sequenceFit: number;
-  carbonFit: number;
-  cfs: number;
-  trend: number; // positive or negative delta
+  supplier: string;
+  totalCarbonKg: number;
+  violationCount: number;
+  avgCfsScore: number;
+  caseCount: number;
+  isResourceFallback: boolean;
 }
 
 export interface RouteRecommendation {
@@ -150,6 +154,7 @@ export interface AuditLog {
   target: string;
   ip: string;
   status: 'success' | 'failed';
+  details?: string;
 }
 
 export interface EmissionFactor {
@@ -166,3 +171,52 @@ export interface TeamMember {
   email: string;
   role: 'admin' | 'editor' | 'viewer';
 }
+
+export interface MappingField {
+  column: string | null;
+  confidence: number;
+}
+
+export interface SupplierMappingField extends MappingField {
+  isResourceFallback: boolean;
+}
+
+export interface ColumnMapping {
+  case_id: MappingField;
+  activity: MappingField;
+  timestamp: MappingField;
+  resource: MappingField;
+  supplier: SupplierMappingField;
+  mappingSource: 'auto' | 'manual';
+}
+
+export interface ActivityCarbonBreakdownItem {
+  activity: string;
+  category: string;
+  estimated: boolean;
+  frequency: number;
+  totalCarbon: number;
+}
+
+export interface ProcessOptimization {
+  bottlenecks: {
+    activity: string;
+    avgWaitHours: number;
+    occurrences: number;
+    status: 'critical' | 'moderate' | 'optimized';
+  }[];
+  rework: {
+    activity: string;
+    reworkCount: number;
+    reworkPercentage: number;
+    carbonImpactKg: number;
+  }[];
+  caseDurationDistribution: {
+    bucket: string;
+    count: number;
+    percentage: number;
+  }[];
+  totalCasesAnalyzed: number;
+}
+
+

@@ -1,0 +1,8 @@
+case_id,activity,timestamp,resource,weight
+CASE-001,Order Received,2024-06-20T10:00:00Z,Rajesh,100
+CASE-001,Warehouse Pick & Pack,2024-06-20T12:00:00Z,Priya,100
+CASE-001,Warehouse Pick & Pack,2024-06-20T12:30:00Z,Priya,100
+CASE-001,Air Freight Dispatch,2024-06-20T14:30:00Z,Amit,100
+CASE-002,Order Received,2024-06-20T10:15:00Z,Rajesh,100
+CASE-002,Warehouse Pick & Pack,2024-06-20T13:00:00Z,Priya,100
+CASE-002,Road Transport Dispatch,2024-06-20T15:00:00Z,Amit,100
