@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { FileText, Download, HelpCircle } from 'lucide-react';
+import React from 'react';
+import { Download } from 'lucide-react';
 import PageHeader from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import DemoDataBanner from '@/components/shared/DemoDataBanner';
@@ -134,17 +134,10 @@ const mockBrsrReportData: BrsrReport = {
 
 export default function BrsrReportPage() {
   const { analysis } = useAnalysis();
-  const [exporting, setExporting] = useState(false);
-  const [downloaded, setDownloaded] = useState(false);
-
   const handleExportPDF = () => {
-    setExporting(true);
-    setTimeout(() => {
-      setExporting(false);
-      setDownloaded(true);
-      setTimeout(() => setDownloaded(false), 3000);
-    }, 2000);
+    window.print();
   };
+
 
   const isReal = !!(analysis && analysis.brsrReport);
   const brsrReport = isReal ? analysis.brsrReport! : mockBrsrReportData;
@@ -171,12 +164,11 @@ export default function BrsrReportPage() {
         action={
           <Button
             onClick={handleExportPDF}
-            disabled={exporting}
             variant="outline"
-            className="h-[32px] text-[12px] font-sans font-medium border-[#2D6A4F] text-[#2D6A4F] hover:bg-[#E8F0EB] hover:text-[#2D6A4F] flex items-center gap-1.5 rounded-md"
+            className="h-[32px] text-[12px] font-sans font-medium border-[#2D6A4F] text-[#2D6A4F] hover:bg-[#E8F0EB] hover:text-[#2D6A4F] flex items-center gap-1.5 rounded-md no-print"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>{exporting ? 'Generating PDF...' : downloaded ? 'Downloaded!' : 'Export PDF'}</span>
+            <span>Export PDF</span>
           </Button>
         }
       />

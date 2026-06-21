@@ -83,7 +83,7 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <div className="w-[220px] fixed top-0 bottom-0 left-0 bg-[#F3F2EE] border-r border-[#E2E0D8] flex flex-col z-20">
+    <div className="w-[220px] fixed top-0 bottom-0 left-0 bg-[#F3F2EE] border-r border-[#E2E0D8] flex flex-col z-20 no-print">
       {/* Header / Logo */}
       <div className="p-4 border-b border-[#E2E0D8] flex flex-col justify-center h-[56px]">
         <Link href="/organizations" className="font-mono text-lg font-bold tracking-tight text-[#1A1917] hover:opacity-80">

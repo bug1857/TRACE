@@ -13,7 +13,7 @@ export default function DemoDataBanner({ show }: DemoDataBannerProps) {
   if (!show || !visible) return null;
 
   return (
-    <div className="flex justify-between items-center p-3 bg-[#F3F2EE] border border-[#E2E0D8] rounded-md text-[12px] text-[#1A1917] font-sans select-none">
+    <div className="no-print flex justify-between items-center p-3 bg-[#F3F2EE] border border-[#E2E0D8] rounded-md text-[12px] text-[#1A1917] font-sans select-none">
       <div className="flex items-center gap-2">
         <AlertTriangle className="w-4 h-4 text-[#6B6963] shrink-0" />
         <span className="text-[#6B6963]">

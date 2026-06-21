@@ -93,3 +93,56 @@ body {
     font-family: var(--font-inter), sans-serif;
   }
 }
+
+@media print {
+  /* Hide sidebar, topbar, buttons, and demo banner */
+  aside,
+  nav,
+  header,
+  .no-print,
+  button,
+  .btn,
+  .DemoDataBanner,
+  div[class*="fixed"],
+  div[class*="w-[220px]"],
+  div[class*="h-[48px]"] {
+    display: none !important;
+  }
+
+  /* Reset layout layout pl-[220px] and pt-[48px] */
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  
+  main,
+  div[class*="pl-[220px]"],
+  div[class*="pt-[48px]"],
+  .pl-\[220px\],
+  .pt-\[48px\] {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    position: static !important;
+  }
+
+  /* Avoid page breaks inside cards or tables */
+  .card,
+  table,
+  tr,
+  blockquote,
+  pre,
+  .border,
+  .shadow-sm,
+  .rounded-md {
+    page-break-inside: avoid !important;
+  }
+
+  /* Force print background colors */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    box-shadow: none !important;
+  }
+}

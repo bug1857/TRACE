@@ -54,7 +54,7 @@ export default function Topbar() {
   const breadcrumbs = getBreadcrumbs();
 
   return (
-    <div className="h-[48px] border-b border-[#E2E0D8] bg-[#FAFAF8] flex items-center justify-between px-4 fixed top-0 right-0 left-[220px] z-15">
+    <div className="h-[48px] border-b border-[#E2E0D8] bg-[#FAFAF8] flex items-center justify-between px-4 fixed top-0 right-0 left-[220px] z-15 no-print">
       {/* Left: Breadcrumbs */}
       <div className="flex items-center gap-1.5 text-[13px] text-[#6B6963] select-none">
         {breadcrumbs.map((segment, index) => (
