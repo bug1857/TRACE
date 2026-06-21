@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CheckCircle, Save, Upload, Users, Cpu, Database } from 'lucide-react';
 import PageHeader from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,15 @@ import { mockEmissionFactors, mockTeamMembers } from '@/lib/mockData';
 import { EmissionFactor, TeamMember } from '@/lib/types';
 import DataTable, { Column } from '@/components/shared/DataTable';
 import StatusBadge from '@/components/shared/StatusBadge';
+import api from '@/lib/api';
+
+const activityToCategory: Record<string, string> = {
+  'Air Freight Dispatch': 'air_freight',
+  'Road Transport Dispatch': 'road_transport',
+  'Warehouse Pick & Pack': 'warehouse',
+  'Customs Clearance Yard': 'customs',
+  'Last Mile Delivery': 'last_mile'
+};
 
 export default function SettingsPage() {
   const [feedbackMsg, setFeedbackMsg] = useState('');
@@ -45,8 +54,43 @@ export default function SettingsPage() {
     setFactors(factors.map(f => f.id === id ? { ...f, factor: value } : f));
   };
 
-  const handleSaveFactors = () => {
-    triggerFeedback('Emission factors database saved and synced.');
+  // Load emission factors from backend on mount
+  useEffect(() => {
+    const fetchFactors = async () => {
+      try {
+        const response = await api.get('/api/emission-factors');
+        const overrides = response.data;
+        setFactors(prev => prev.map(f => {
+          const cat = activityToCategory[f.activity];
+          if (cat && overrides[cat] !== undefined) {
+            return { ...f, factor: overrides[cat] };
+          }
+          return f;
+        }));
+      } catch (err) {
+        console.error('Error fetching emission factors:', err);
+      }
+    };
+    fetchFactors();
+  }, []);
+
+  const handleSaveFactors = async () => {
+    try {
+      const payload: Record<string, number> = {};
+      factors.forEach(f => {
+        const cat = activityToCategory[f.activity];
+        if (cat) {
+          payload[cat] = f.factor;
+        }
+      });
+      const response = await api.post('/api/emission-factors', payload);
+      if (response.status === 200) {
+        triggerFeedback('Emission factors database saved and synced.');
+      }
+    } catch (err) {
+      console.error('Error saving emission factors:', err);
+      triggerFeedback('Failed to save emission factors.');
+    }
   };
 
   const handleModelUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -205,9 +249,14 @@ export default function SettingsPage() {
         {/* Tab 2: Emission Factors */}
         <TabsContent value="factors" className="outline-none focus:outline-none space-y-4">
           <div className="flex justify-between items-center select-none">
-            <h3 className="text-[13px] font-sans font-medium text-[#1A1917] uppercase tracking-wider">
-              Activity Carbon Coefficients Database
-            </h3>
+            <div>
+              <h3 className="text-[13px] font-sans font-medium text-[#1A1917] uppercase tracking-wider">
+                Activity Carbon Coefficients Database
+              </h3>
+              <p className="text-[11px] text-[#6B6963] font-sans mt-0.5">
+                Changes apply to all future uploads — already-analyzed data is not retroactively recalculated.
+              </p>
+            </div>
             <Button
               onClick={handleSaveFactors}
               className="h-[32px] bg-[#2D6A4F] hover:bg-[#166534] text-white text-[12px] rounded-md flex items-center gap-1.5 transition-colors"

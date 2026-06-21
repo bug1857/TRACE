@@ -12,7 +12,7 @@ EMISSION_CATEGORIES = {
 DEFAULT_FACTOR = 0.5
 DEFAULT_MONTHLY_BUDGET_KG = 10000
 
-def classify_activity(activity: str) -> tuple[str, float, bool]:
+def classify_activity(activity: str, custom_factors: dict = None) -> tuple[str, float, bool]:
     """
     Classify an activity name based on keyword matches.
     Returns: (category_name, factor, estimated)
@@ -25,7 +25,14 @@ def classify_activity(activity: str) -> tuple[str, float, bool]:
     best_factor = DEFAULT_FACTOR
     best_keyword_len = -1
     
+    # Merge custom factors locally to avoid modifying the global dict
+    categories = {}
     for cat_name, info in EMISSION_CATEGORIES.items():
+        categories[cat_name] = info.copy()
+        if custom_factors and cat_name in custom_factors:
+            categories[cat_name].update(custom_factors[cat_name])
+            
+    for cat_name, info in categories.items():
         for kw in info["keywords"]:
             if kw in activity_lower:
                 if len(kw) > best_keyword_len:
@@ -38,7 +45,13 @@ def classify_activity(activity: str) -> tuple[str, float, bool]:
     else:
         return "uncategorized", DEFAULT_FACTOR, True
 
-def calculate_carbon_budget(df: pd.DataFrame, case_col: str, activity_col: str, ts_col: str) -> Dict[str, Any]:
+def calculate_carbon_budget(
+    df: pd.DataFrame, 
+    case_col: str, 
+    activity_col: str, 
+    ts_col: str, 
+    custom_factors: dict = None
+) -> Dict[str, Any]:
     """
     Calculate monthly carbon budget and activity breakdown from event log dataframe.
     """
@@ -69,7 +82,7 @@ def calculate_carbon_budget(df: pd.DataFrame, case_col: str, activity_col: str, 
     estimated_flags = []
     
     for act in df_clean[activity_col]:
-        cat, factor, est = classify_activity(act)
+        cat, factor, est = classify_activity(act, custom_factors=custom_factors)
         categories.append(cat)
         factors.append(factor)
         estimated_flags.append(est)

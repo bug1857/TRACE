@@ -39,7 +39,8 @@ def health_check():
 @app.post("/api/ocel/upload")
 async def upload_ocel_log(
     file: UploadFile = File(...),
-    mapping_override: Optional[str] = Form(None)
+    mapping_override: Optional[str] = Form(None),
+    db: Session = Depends(get_db)
 ):
     filename = file.filename or "unknown.csv"
     
@@ -138,11 +139,14 @@ async def upload_ocel_log(
 
     # Calculate carbon budget
     try:
+        overrides = db.query(models.EmissionFactorOverride).all()
+        custom_factors = {ov.category: {"factor": ov.factor} for ov in overrides}
         carbon_data = calculate_carbon_budget(
             df,
             case_col=mapping["case_id"]["column"],
             activity_col=mapping["activity"]["column"],
-            ts_col=mapping["timestamp"]["column"]
+            ts_col=mapping["timestamp"]["column"],
+            custom_factors=custom_factors
         )
     except Exception as e:
         raise HTTPException(
@@ -339,6 +343,39 @@ def get_audit_logs(db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=500,
             detail=f"Database query failed: {str(e)}"
+        )
+
+
+@app.get("/api/emission-factors")
+def get_emission_factors(db: Session = Depends(get_db)):
+    try:
+        overrides = db.query(models.EmissionFactorOverride).all()
+        return {ov.category: ov.factor for ov in overrides}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database query failed: {str(e)}"
+        )
+
+
+@app.post("/api/emission-factors")
+def update_emission_factors(factors: Dict[str, float], db: Session = Depends(get_db)):
+    try:
+        for category, factor in factors.items():
+            # Check if override already exists
+            override = db.query(models.EmissionFactorOverride).filter(models.EmissionFactorOverride.category == category).first()
+            if override:
+                override.factor = factor
+            else:
+                override = models.EmissionFactorOverride(category=category, factor=factor)
+                db.add(override)
+        db.commit()
+        return {"status": "success"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database upsert failed: {str(e)}"
         )
 
 
