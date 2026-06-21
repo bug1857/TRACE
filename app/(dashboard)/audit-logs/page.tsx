@@ -63,6 +63,43 @@ export default function AuditLogsPage() {
   }, []);
 
   const handleExportCSV = () => {
+    if (filteredLogs.length === 0) return;
+
+    const escapeCSV = (val: string | number | undefined | null) => {
+      if (val === undefined || val === null) return '""';
+      const str = String(val);
+      if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
+    const headers = ['Timestamp', 'User', 'Action', 'Target/Entity', 'Details', 'IP Address', 'Status'];
+    const rows = filteredLogs.map((log) => [
+      log.timestamp,
+      log.user,
+      log.action,
+      log.target,
+      log.details || '',
+      log.ip,
+      log.status
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map((row) => row.map(escapeCSV).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `audit_logs_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
     setFeedbackMsg('Audit logs exported to CSV successfully.');
     setTimeout(() => setFeedbackMsg(''), 4000);
   };
