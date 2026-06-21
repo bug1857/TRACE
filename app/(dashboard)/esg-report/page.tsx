@@ -256,6 +256,16 @@ export default function EsgReportPage() {
 
             <p className="text-[11px] text-[#6B6963] leading-relaxed italic bg-[#F3F2EE] border border-[#E2E0D8] p-2.5 rounded text-left">
               {esgReport.governance.note}
+              {isReal && esgReport.governance.violationCount === 0 && (
+                <span className="block mt-1.5 font-sans not-italic text-[#6B6963]">
+                  <strong>Note on rule scope:</strong> Conformance checking was conducted against limited rules targeting:{" "}
+                  <span className="font-semibold text-[#2D6A4F]">
+                    {analysis?.conformanceRuleScope
+                      ? analysis.conformanceRuleScope.flatMap((r) => r.disallowed_activities).join(", ")
+                      : "Air Freight Dispatch, Truck Delivery Transport Dispatch, Incineration Disposal, Landfill Disposal"}
+                  </span>.
+                </span>
+              )}
             </p>
           </div>
 

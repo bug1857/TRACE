@@ -201,6 +201,16 @@ export default function CopilotPage() {
                 <span className="text-[10px] text-[#9B9891] uppercase block">Active Violations</span>
                 <span className="font-mono text-[#C0392B] font-semibold">{violationsDisplay}</span>
               </div>
+              {analysis && analysis.violations && analysis.violations.length === 0 && (
+                <div className="text-[10px] text-[#6B6963] leading-relaxed bg-[#F3F2EE] border border-[#E2E0D8] p-2 rounded text-left mt-2">
+                  <strong>Note:</strong> Conformance checking is limited to:{" "}
+                  <span className="font-semibold text-[#2D6A4F]">
+                    {analysis?.conformanceRuleScope
+                      ? analysis.conformanceRuleScope.flatMap((r) => r.disallowed_activities).join(", ")
+                      : "Air Freight Dispatch, Truck Delivery Transport Dispatch, Incineration Disposal, Landfill Disposal"}
+                  </span>.
+                </div>
+              )}
             </div>
           </div>
 

@@ -143,3 +143,14 @@ def detect_violations(events_df: pd.DataFrame, case_id_col: str, activity_col: s
                     
     return violations
 
+
+def get_rule_scope_summary() -> List[Dict[str, Any]]:
+    summary = []
+    for rule in CONFORMANCE_RULES:
+        summary.append({
+            "disallowed_activities": rule["disallowed_activities"],
+            "mandated_alternative": rule["mandated_alternative"]
+        })
+    return summary
+
+

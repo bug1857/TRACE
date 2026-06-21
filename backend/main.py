@@ -11,7 +11,7 @@ from process_mining import extract_dfg
 from database import engine, Base, get_db
 import models
 from carbon_budget import calculate_carbon_budget
-from conformance import detect_violations
+from conformance import detect_violations, get_rule_scope_summary
 from carbon_fitness import calculate_cfs, calculate_supplier_fitness
 from process_optimization import compute_process_optimization
 from brsr_report import assemble_brsr_report
@@ -313,6 +313,8 @@ async def upload_ocel_log(
         "esgReport": esg_report_result,
         "greenRoutes": green_routes_result
     }
+    if not violations:
+        response_payload["conformanceRuleScope"] = get_rule_scope_summary()
     if total_cost is not None:
         response_payload["totalOperationalCostUSD"] = round(total_cost, 2)
     return response_payload
@@ -464,6 +466,20 @@ def query_copilot(payload: CopilotQuery):
             f"- Conformance Gaps/Violations: {v_count} detected ({critical_v} critical)\n"
             f"- Suppliers Monitored: {s_count} (Average Carrier CFS: {avg_cfs})\n"
         )
+        if v_count == 0:
+            rule_scope = payload.context.get("conformanceRuleScope", [])
+            if rule_scope:
+                all_disallowed = []
+                for entry in rule_scope:
+                    all_disallowed.extend(entry.get("disallowed_activities", []))
+                disallowed_str = ", ".join(all_disallowed)
+            else:
+                disallowed_str = "Air Freight Dispatch, Truck Delivery Transport Dispatch, Incineration Disposal, Landfill Disposal"
+            context_str += (
+                f"- Note on conformance rule scope: Conformance checking was conducted against limited rules targeting: "
+                f"[{disallowed_str}]. A count of 0 violations indicates no matches for these specific activities "
+                f"were found, and does not imply complete compliance across other unmonitored activities.\n"
+            )
     else:
         context_str = "No active project data loaded yet. User has not uploaded any event log."
 

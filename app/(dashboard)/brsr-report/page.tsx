@@ -331,6 +331,16 @@ export default function BrsrReportPage() {
               <span className="text-[13px] font-sans text-[#1A1917] mt-1 block capitalize font-semibold">{brsrReport.sectionB.conformanceMethodology.replace(/_/g, ' ')}</span>
             </div>
           </div>
+          {isReal && brsrReport.sectionB.nonConformingTraces === 0 && (
+            <div className="p-3 border border-[#E2E0D8] bg-[#FAFAF8] text-[#6B6963] rounded-md text-[11px] font-sans">
+              <span className="font-semibold text-[#1A1917]">Note on rule scope:</span> Conformance checking was conducted against limited rules targeting:{" "}
+              <span className="font-semibold text-[#2D6A4F]">
+                {analysis?.conformanceRuleScope
+                  ? analysis.conformanceRuleScope.flatMap((r) => r.disallowed_activities).join(", ")
+                  : "Air Freight Dispatch, Truck Delivery Transport Dispatch, Incineration Disposal, Landfill Disposal"}
+              </span>.
+            </div>
+          )}
 
           <div className="w-full border border-[#E2E0D8] rounded-md overflow-hidden bg-[#FAFAF8]">
             <table className="min-w-full divide-y divide-[#E2E0D8] text-[13px]">

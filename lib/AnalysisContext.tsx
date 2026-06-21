@@ -19,6 +19,10 @@ export interface UploadResponse {
   esgReport?: EsgReport;
   greenRoutes?: RouteRecommendation[];
   totalOperationalCostUSD?: number;
+  conformanceRuleScope?: {
+    disallowed_activities: string[];
+    mandated_alternative: string;
+  }[];
 }
 
 interface AnalysisContextType {

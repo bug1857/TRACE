@@ -205,6 +205,21 @@ export default function ConformancePage() {
           data={violations}
           onRowClick={handleRowClick}
         />
+        {isReal && violations.length === 0 && (
+          <div className="p-4 border border-[#E2E0D8] bg-[#FAFAF8] text-[#6B6963] rounded-md text-[12px] font-sans space-y-1">
+            <p className="font-semibold text-[#1A1917]">
+              0 violations detected
+            </p>
+            <p className="text-[11px] leading-relaxed">
+              Current rules check for these activity names:{" "}
+              <span className="font-semibold text-[#2D6A4F]">
+                {analysis?.conformanceRuleScope
+                  ? analysis.conformanceRuleScope.flatMap((r) => r.disallowed_activities).join(", ")
+                  : "Air Freight Dispatch, Truck Delivery Transport Dispatch, Incineration Disposal, Landfill Disposal"}
+              </span>.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Bottom: Normative Model Upload */}
