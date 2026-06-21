@@ -43,3 +43,11 @@ backend/venv/
 backend/trace.db
 backend/__pycache__/
 **/__pycache__/
+
+# large datasets
+DataCoSupplyChainDataset.csv
+Delivery_Logistics.csv
+
+# e2e scratch files
+backend/test_override_e2e.py
+backend/verify_reset.py
