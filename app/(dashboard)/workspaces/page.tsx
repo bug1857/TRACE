@@ -57,16 +57,6 @@ export default function WorkspacesPage() {
         subtitle="Logical partitions containing event logs, configs, and reports."
         action={
           <div className="flex gap-2">
-            {workspaces.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setWorkspaces([])}
-                className="h-[32px] text-[12px] text-[#C0392B] border-[#C0392B] hover:bg-[#FDECEA] hover:text-[#C0392B] rounded-md"
-              >
-                Clear All (Test Empty State)
-              </Button>
-            )}
             <Button
               onClick={() => setIsDialogOpen(true)}
               variant="outline"

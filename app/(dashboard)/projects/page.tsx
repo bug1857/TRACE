@@ -117,16 +117,6 @@ export default function ProjectsPage() {
         subtitle="Operational audits and carbon-fitness monitors."
         action={
           <div className="flex gap-2">
-            {projects.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setProjects([])}
-                className="h-[32px] text-[12px] text-[#C0392B] border-[#C0392B] hover:bg-[#FDECEA] hover:text-[#C0392B] rounded-md"
-              >
-                Clear All (Test Empty State)
-              </Button>
-            )}
             <Button
               onClick={() => setIsDialogOpen(true)}
               variant="outline"
