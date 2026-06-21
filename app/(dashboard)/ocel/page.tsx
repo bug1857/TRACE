@@ -11,7 +11,7 @@ import { mockOcelNodes, mockOcelEdges, mockOcelMetadata } from '@/lib/mockData';
 import { Button } from '@/components/ui/button';
 import { uploadOcelFile } from '@/lib/api';
 import { useAnalysis } from '@/lib/AnalysisContext';
-import { ColumnMapping } from '@/lib/types';
+import { ColumnMapping, MappingField } from '@/lib/types';
 import { AxiosError } from 'axios';
 
 export default function OcelPage() {
@@ -44,6 +44,31 @@ export default function OcelPage() {
   const [selectedElectricity, setSelectedElectricity] = useState<string>('');
   const [selectedCost, setSelectedCost] = useState<string>('');
 
+  const [isAdjustingMapping, setIsAdjustingMapping] = useState(false);
+  const [parsedHeaders, setParsedHeaders] = useState<string[]>([]);
+
+  // Helper to read headers from selected file
+  const getHeadersFromFile = (file: File): Promise<string[]> => {
+    return new Promise((resolve) => {
+      if (file.size === 0) {
+        resolve([]);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = e.target?.result as string;
+        const firstLine = text.split('\n')[0];
+        const headers = firstLine
+          .split(',')
+          .map((h) => h.trim().replace(/^["']|["']$/g, ''))
+          .filter((h) => h.length > 0);
+        resolve(headers);
+      };
+      reader.onerror = () => resolve([]);
+      reader.readAsText(file.slice(0, 10000));
+    });
+  };
+
   // Derived state directly from analysis or demo data
   const nodes = isDemo ? mockOcelNodes : (analysis?.nodes || []);
   const edges = isDemo ? mockOcelEdges : (analysis?.edges || []);
@@ -53,11 +78,18 @@ export default function OcelPage() {
     return errorDetails?.missingFields?.includes(field) || false;
   };
 
-  const handleFileSelect = (file: File) => {
+  const handleFileSelect = async (file: File) => {
     setSelectedFile(file);
     setIsAnalyzed(false);
     setErrorType(null);
     setErrorDetails(null);
+    setIsAdjustingMapping(false);
+    try {
+      const headers = await getHeadersFromFile(file);
+      setParsedHeaders(headers);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const handleRunAnalysis = async (isManualOverride = false) => {
@@ -90,6 +122,7 @@ export default function OcelPage() {
       setIsAnalyzed(true);
       setErrorType(null);
       setErrorDetails(null);
+      setIsAdjustingMapping(false);
     } catch (error) {
       console.error(error);
       const err = error as AxiosError<{
@@ -124,12 +157,29 @@ export default function OcelPage() {
         setSelectedWater(detectedMap.water?.column || '— None —');
         setSelectedElectricity(detectedMap.electricity?.column || '— None —');
         setSelectedCost(detectedMap.cost?.column || '— None —');
+        setIsAdjustingMapping(false);
       } else {
         setErrorType('500');
       }
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  const handleAdjustMappingClick = () => {
+    if (!analysis?.columnMapping) return;
+    const mapping = analysis.columnMapping;
+    
+    setSelectedCaseId(mapping.case_id?.column || '');
+    setSelectedActivity(mapping.activity?.column || '');
+    setSelectedTimestamp(mapping.timestamp?.column || '');
+    setSelectedResource(mapping.resource?.column || '— None —');
+    setSelectedSupplier(mapping.supplier?.column || '— None —');
+    setSelectedWater(mapping.water?.column || '— None —');
+    setSelectedElectricity(mapping.electricity?.column || '— None —');
+    setSelectedCost(mapping.cost?.column || '— None —');
+    
+    setIsAdjustingMapping(true);
   };
 
 
@@ -186,6 +236,28 @@ export default function OcelPage() {
     animated: true
   }));
 
+  // Get all columns for dropdowns
+  const getDropdownColumns = () => {
+    if (parsedHeaders && parsedHeaders.length > 0) return parsedHeaders;
+    if (errorDetails?.availableColumns && errorDetails.availableColumns.length > 0) {
+      return errorDetails.availableColumns;
+    }
+    if (analysis?.columnMapping) {
+      const cols: string[] = [];
+      const mapping = analysis.columnMapping;
+      const fields: (keyof Omit<ColumnMapping, 'mappingSource'>)[] = ['case_id', 'activity', 'timestamp', 'resource', 'supplier', 'water', 'electricity', 'cost'];
+      for (const field of fields) {
+        const col = (mapping[field] as MappingField)?.column;
+        if (col && !cols.includes(col)) {
+          cols.push(col);
+        }
+      }
+      return cols;
+    }
+    return [];
+  };
+  const availableColumns = getDropdownColumns();
+
   return (
     <div className="flex flex-col flex-1">
       <PageHeader
@@ -228,14 +300,16 @@ export default function OcelPage() {
                   </div>
                 </div>
 
-                {errorType === '422' && errorDetails && (
-                  <div className="p-3.5 border border-[#C0392B]/30 bg-[#FAFAF8] rounded-md text-[12px] font-sans space-y-4">
+                {(((errorType === '422' && errorDetails) || isAdjustingMapping)) && (
+                  <div className={`p-3.5 border ${isAdjustingMapping ? 'border-[#E2E0D8]' : 'border-[#C0392B]/30'} bg-[#FAFAF8] rounded-md text-[12px] font-sans space-y-4`}>
                     <div className="space-y-1">
-                      <p className="font-medium text-[#C0392B]">
-                        Column Mapping Required
+                      <p className={`font-medium ${isAdjustingMapping ? 'text-[#1A1917]' : 'text-[#C0392B]'}`}>
+                        {isAdjustingMapping ? 'Adjust Column Mapping' : 'Column Mapping Required'}
                       </p>
                       <p className="text-[11px] text-[#6B6963] leading-relaxed">
-                        We couldn&apos;t confidently detect your columns — please confirm them below.
+                        {isAdjustingMapping 
+                          ? 'Review and adjust your column mappings below.' 
+                          : "We couldn't confidently detect your columns — please confirm them below."}
                       </p>
                     </div>
 
@@ -253,7 +327,7 @@ export default function OcelPage() {
                           }`}
                         >
                           <option value="">-- Select Column --</option>
-                          {errorDetails.availableColumns.map((col) => (
+                          {availableColumns.map((col) => (
                             <option key={col} value={col}>
                               {col}
                             </option>
@@ -274,7 +348,7 @@ export default function OcelPage() {
                           }`}
                         >
                           <option value="">-- Select Column --</option>
-                          {errorDetails.availableColumns.map((col) => (
+                          {availableColumns.map((col) => (
                             <option key={col} value={col}>
                               {col}
                             </option>
@@ -295,7 +369,7 @@ export default function OcelPage() {
                           }`}
                         >
                           <option value="">-- Select Column --</option>
-                          {errorDetails.availableColumns.map((col) => (
+                          {availableColumns.map((col) => (
                             <option key={col} value={col}>
                               {col}
                             </option>
@@ -316,7 +390,7 @@ export default function OcelPage() {
                           }`}
                         >
                           <option value="— None —">— None —</option>
-                          {errorDetails.availableColumns.map((col) => (
+                          {availableColumns.map((col) => (
                             <option key={col} value={col}>
                               {col}
                             </option>
@@ -337,7 +411,7 @@ export default function OcelPage() {
                           }`}
                         >
                           <option value="— None —">— None —</option>
-                          {errorDetails.availableColumns.map((col) => (
+                          {availableColumns.map((col) => (
                             <option key={col} value={col}>
                               {col}
                             </option>
@@ -358,7 +432,7 @@ export default function OcelPage() {
                           }`}
                         >
                           <option value="— None —">— None —</option>
-                          {errorDetails.availableColumns.map((col) => (
+                          {availableColumns.map((col) => (
                             <option key={col} value={col}>
                               {col}
                             </option>
@@ -379,7 +453,7 @@ export default function OcelPage() {
                           }`}
                         >
                           <option value="— None —">— None —</option>
-                          {errorDetails.availableColumns.map((col) => (
+                          {availableColumns.map((col) => (
                             <option key={col} value={col}>
                               {col}
                             </option>
@@ -400,7 +474,7 @@ export default function OcelPage() {
                           }`}
                         >
                           <option value="— None —">— None —</option>
-                          {errorDetails.availableColumns.map((col) => (
+                          {availableColumns.map((col) => (
                             <option key={col} value={col}>
                               {col}
                             </option>
@@ -420,12 +494,16 @@ export default function OcelPage() {
                       <Button
                         variant="outline"
                         onClick={() => {
-                          setErrorType(null);
-                          setErrorDetails(null);
+                          if (isAdjustingMapping) {
+                            setIsAdjustingMapping(false);
+                          } else {
+                            setErrorType(null);
+                            setErrorDetails(null);
+                          }
                         }}
                         className="h-[36px] px-3 text-[12px] text-[#6B6963] border-[#E2E0D8] hover:bg-[#F3F2EE] rounded-md"
                       >
-                        Reset
+                        {isAdjustingMapping ? 'Cancel' : 'Reset'}
                       </Button>
                     </div>
                   </div>
@@ -448,11 +526,21 @@ export default function OcelPage() {
                   </div>
                 )}
 
-                {isAnalyzed && !errorType && (
+                {isAnalyzed && !errorType && !isAdjustingMapping && (
                   <div className="space-y-2 p-2.5 border border-[#E2E0D8] bg-[#E8F0EB] text-[#2D6A4F] rounded-md text-[12px] font-sans">
-                    <div className="flex items-center gap-1.5 font-medium">
-                      <CheckCircle className="w-4 h-4 shrink-0" />
-                      <span>Analysis Completed</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 font-medium">
+                        <CheckCircle className="w-4 h-4 shrink-0" />
+                        <span>Analysis Completed</span>
+                      </div>
+                      {!isDemo && (
+                        <button
+                          onClick={handleAdjustMappingClick}
+                          className="text-[11px] font-medium text-[#2D6A4F] underline hover:text-[#166534] transition-colors focus:outline-none"
+                        >
+                          Adjust Column Mapping
+                        </button>
+                      )}
                     </div>
                     <div className="mt-2 space-y-1 text-[#166534] font-mono text-[11px] leading-relaxed">
                       <div>File: {isDemo ? mockOcelMetadata.filename : metadata?.filename}</div>
