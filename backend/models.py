@@ -76,3 +76,10 @@ class TeamMember(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     organization = relationship("Organization", back_populates="members")
 
+class ConformanceRuleOverride(Base):
+    __tablename__ = "conformance_rule_overrides"
+    id = Column(Integer, primary_key=True, index=True)
+    rules_json = Column(Text, nullable=False)
+    filename = Column(String, nullable=False)
+    uploaded_at = Column(DateTime, default=datetime.datetime.utcnow)
+

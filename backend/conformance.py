@@ -2,6 +2,53 @@ import pandas as pd
 from typing import List, Dict, Any
 from carbon_budget import classify_activity
 
+def parse_csv_rules(csv_content: str) -> list:
+    import io
+    import csv
+    
+    # Read using csv.DictReader
+    f = io.StringIO(csv_content)
+    reader = csv.DictReader(f)
+    
+    # Strip whitespace from headers
+    headers = [h.strip() if h else "" for h in reader.fieldnames or []]
+    required_cols = ["disallowed_activity", "mandated_alternative", "category", "reduction_factor"]
+    for col in required_cols:
+        if col not in headers:
+            raise ValueError(f"Missing required CSV column: {col}")
+            
+    groups = {}
+    for row_idx, row in enumerate(reader, start=2):
+        disallowed = (row.get("disallowed_activity") or "").strip()
+        mandated = (row.get("mandated_alternative") or "").strip()
+        category = (row.get("category") or "").strip()
+        factor_str = (row.get("reduction_factor") or "").strip()
+        
+        if not disallowed or not mandated or not category or not factor_str:
+            raise ValueError(f"Row {row_idx} contains empty fields")
+            
+        try:
+            factor = float(factor_str)
+        except ValueError:
+            raise ValueError(f"Row {row_idx}: invalid reduction_factor '{factor_str}' (must be a float)")
+            
+        if not (0.0 <= factor <= 1.0):
+            raise ValueError(f"Row {row_idx}: reduction_factor {factor} must be between 0 and 1")
+            
+        key = (mandated, category)
+        if key not in groups:
+            groups[key] = {
+                "disallowed_activities": [],
+                "mandated_alternative": mandated,
+                "category": category,
+                "reduction_factors": {}
+            }
+            
+        groups[key]["disallowed_activities"].append(disallowed)
+        groups[key]["reduction_factors"][disallowed] = factor
+        
+    return list(groups.values())
+
 CONFORMANCE_RULES = [
     {
         "disallowed_activities": ["Air Freight Dispatch", "Truck Delivery Transport Dispatch"],
@@ -58,7 +105,7 @@ for rule in CONFORMANCE_RULES:
             "reduction_factor": reduction_factor
         })
 
-def detect_violations(events_df: pd.DataFrame, case_id_col: str, activity_col: str, timestamp_col: str) -> List[Dict[str, Any]]:
+def detect_violations(events_df: pd.DataFrame, case_id_col: str, activity_col: str, timestamp_col: str, override_rules=None) -> List[Dict[str, Any]]:
     """
     Detect process conformance violations and calculate estimated carbon deltas.
     """
@@ -84,7 +131,8 @@ def detect_violations(events_df: pd.DataFrame, case_id_col: str, activity_col: s
             ts_str = str(row[timestamp_col])
             
         # Check against rules
-        for rule in CONFORMANCE_RULES:
+        rules_to_use = override_rules if override_rules is not None else CONFORMANCE_RULES
+        for rule in rules_to_use:
             for disallowed in rule["disallowed_activities"]:
                 if disallowed.lower() in activity_lower:
                     mandated = rule["mandated_alternative"]
@@ -144,9 +192,10 @@ def detect_violations(events_df: pd.DataFrame, case_id_col: str, activity_col: s
     return violations
 
 
-def get_rule_scope_summary() -> List[Dict[str, Any]]:
+def get_rule_scope_summary(override_rules=None) -> List[Dict[str, Any]]:
     summary = []
-    for rule in CONFORMANCE_RULES:
+    rules_to_use = override_rules if override_rules is not None else CONFORMANCE_RULES
+    for rule in rules_to_use:
         summary.append({
             "disallowed_activities": rule["disallowed_activities"],
             "mandated_alternative": rule["mandated_alternative"]

@@ -285,3 +285,57 @@ def test_team_members():
     # Cleanup: delete org
     del_org = client.delete(f"/api/organizations/{org_id}")
     assert del_org.status_code == 200
+
+
+def test_conformance_rules():
+    # 1. GET /api/conformance-rules -> assert active=false, rule_count > 0
+    get_res = client.get("/api/conformance-rules")
+    assert get_res.status_code == 200
+    data = get_res.json()
+    assert data["active"] is False
+    assert data["rule_count"] > 0
+    assert len(data["rules"]) > 0
+
+    # 2. POST /api/conformance-rules/upload with valid CSV bytes -> assert 200, active=true, rule_count==1
+    valid_csv = (
+        "disallowed_activity,mandated_alternative,category,reduction_factor\n"
+        "Air Freight Dispatch,Rail,transport,0.85\n"
+        "Truck Delivery Transport Dispatch,Rail,transport,0.75"
+    )
+    payload = ("test_rules.csv", io.BytesIO(valid_csv.encode("utf-8")), "text/csv")
+    upload_res = client.post(
+        "/api/conformance-rules/upload",
+        files={"file": payload}
+    )
+    assert upload_res.status_code == 200
+    upload_data = upload_res.json()
+    assert upload_data["active"] is True
+    assert upload_data["filename"] == "test_rules.csv"
+    assert upload_data["rule_count"] == 1
+    assert len(upload_data["rules"]) == 1
+
+    # 3. GET /api/conformance-rules -> assert active=true, filename matches
+    get_active = client.get("/api/conformance-rules")
+    assert get_active.status_code == 200
+    active_data = get_active.json()
+    assert active_data["active"] is True
+    assert active_data["filename"] == "test_rules.csv"
+
+    # 4. POST with invalid CSV (missing columns) -> assert 422
+    invalid_csv = "bad_col1,bad_col2\nvalue1,value2"
+    bad_payload = ("bad_rules.csv", io.BytesIO(invalid_csv.encode("utf-8")), "text/csv")
+    upload_bad_res = client.post(
+        "/api/conformance-rules/upload",
+        files={"file": bad_payload}
+    )
+    assert upload_bad_res.status_code == 422
+
+    # 5. DELETE /api/conformance-rules -> assert status=="reset"
+    del_res = client.delete("/api/conformance-rules")
+    assert del_res.status_code == 200
+    assert del_res.json()["status"] == "reset"
+
+    # 6. GET /api/conformance-rules -> assert active=false
+    get_reset = client.get("/api/conformance-rules")
+    assert get_reset.status_code == 200
+    assert get_reset.json()["active"] is False

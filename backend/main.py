@@ -164,13 +164,23 @@ async def upload_ocel_log(
             detail=f"Failed during carbon budget calculation: {str(e)}"
         )
 
+    # Load conformance rules override if exists
+    override_rules = None
+    try:
+        rule_override = db.query(models.ConformanceRuleOverride).order_by(models.ConformanceRuleOverride.id.desc()).first()
+        if rule_override:
+            override_rules = json.loads(rule_override.rules_json)
+    except Exception as e:
+        print(f"Error loading conformance rule overrides: {e}")
+
     # Detect process violations
     try:
         violations = detect_violations(
             df,
             case_id_col=mapping["case_id"]["column"],
             activity_col=mapping["activity"]["column"],
-            timestamp_col=mapping["timestamp"]["column"]
+            timestamp_col=mapping["timestamp"]["column"],
+            override_rules=override_rules
         )
     except Exception:
         violations = []
@@ -335,7 +345,7 @@ async def upload_ocel_log(
         "forecasting": forecasting_result
     }
     if not violations:
-        response_payload["conformanceRuleScope"] = get_rule_scope_summary()
+        response_payload["conformanceRuleScope"] = get_rule_scope_summary(override_rules=override_rules)
     if total_cost is not None:
         response_payload["totalOperationalCostUSD"] = round(total_cost, 2)
 
@@ -442,6 +452,87 @@ def update_emission_factors(factors: Dict[str, float], db: Session = Depends(get
         raise HTTPException(
             status_code=500,
             detail=f"Database upsert failed: {str(e)}"
+        )
+
+
+@app.get("/api/conformance-rules")
+def get_conformance_rules(db: Session = Depends(get_db)):
+    try:
+        from conformance import CONFORMANCE_RULES
+        override = db.query(models.ConformanceRuleOverride).order_by(models.ConformanceRuleOverride.id.desc()).first()
+        if override:
+            rules = json.loads(override.rules_json)
+            return {
+                "active": True,
+                "filename": override.filename,
+                "rule_count": len(rules),
+                "rules": rules
+            }
+        else:
+            return {
+                "active": False,
+                "filename": "decarbonization_policy_rules_v2.pnml (default)",
+                "rule_count": len(CONFORMANCE_RULES),
+                "rules": CONFORMANCE_RULES
+            }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch conformance rules: {str(e)}"
+        )
+
+@app.post("/api/conformance-rules/upload")
+async def upload_conformance_rules(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    try:
+        from conformance import parse_csv_rules
+        contents = await file.read()
+        csv_text = contents.decode("utf-8")
+        
+        try:
+            parsed_rules = parse_csv_rules(csv_text)
+        except ValueError as ve:
+            raise HTTPException(status_code=422, detail=str(ve))
+            
+        # Delete all existing overrides
+        db.query(models.ConformanceRuleOverride).delete()
+        
+        # Insert new override
+        override = models.ConformanceRuleOverride(
+            rules_json=json.dumps(parsed_rules),
+            filename=file.filename or "uploaded_rules.csv"
+        )
+        db.add(override)
+        db.commit()
+        
+        return {
+            "active": True,
+            "filename": override.filename,
+            "rule_count": len(parsed_rules),
+            "rules": parsed_rules
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to upload conformance rules: {str(e)}"
+        )
+
+@app.delete("/api/conformance-rules")
+def delete_conformance_rules(db: Session = Depends(get_db)):
+    try:
+        db.query(models.ConformanceRuleOverride).delete()
+        db.commit()
+        return {
+            "status": "reset",
+            "message": "Reverted to default conformance rules"
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to reset conformance rules: {str(e)}"
         )
 
 
