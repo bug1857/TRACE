@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { mockEmissionFactors, mockTeamMembers } from '@/lib/mockData';
-import { EmissionFactor, TeamMember } from '@/lib/types';
+import { mockEmissionFactors } from '@/lib/mockData';
+import { EmissionFactor, BackendTeamMember } from '@/lib/types';
 import DataTable, { Column } from '@/components/shared/DataTable';
 import StatusBadge from '@/components/shared/StatusBadge';
 import api from '@/lib/api';
@@ -49,9 +49,27 @@ export default function SettingsPage() {
   const [modelFile, setModelFile] = useState('decarbonization_policy_rules_v2.pnml');
 
   // Team State
-  const [team, setTeam] = useState<TeamMember[]>(mockTeamMembers);
+  const [team, setTeam] = useState<BackendTeamMember[]>([]);
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [newMemberRole, setNewMemberRole] = useState<'admin' | 'editor' | 'viewer'>('viewer');
+
+  // Load team members when activeOrgId changes
+  useEffect(() => {
+    const fetchTeam = async () => {
+      if (activeOrgId === null) {
+        setTeam([]);
+        return;
+      }
+      try {
+        const response = await api.get(`/api/organizations/${activeOrgId}/members`);
+        setTeam(response.data);
+      } catch (err) {
+        console.error('Error fetching team members:', err);
+        setTeam([]);
+      }
+    };
+    fetchTeam();
+  }, [activeOrgId]);
 
   const triggerFeedback = (msg: string) => {
     setFeedbackMsg(msg);
@@ -129,27 +147,37 @@ export default function SettingsPage() {
     }
   };
 
-  const handleAddMember = (e: React.FormEvent) => {
+  const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMemberEmail.trim()) return;
+    if (activeOrgId === null) {
+      triggerFeedback('No active organization selected.');
+      return;
+    }
 
     const email = newMemberEmail.trim();
     const name = email.split('@')[0].split('.').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
 
-    const newMemb: TeamMember = {
-      id: `t-${Date.now()}`,
-      name,
-      email,
-      role: newMemberRole
-    };
-
-    setTeam([...team, newMemb]);
-    setNewMemberEmail('');
-    triggerFeedback(`Added team member ${name} as ${newMemberRole}.`);
+    try {
+      const response = await api.post(`/api/organizations/${activeOrgId}/members`, {
+        name,
+        email,
+        role: newMemberRole
+      });
+      setTeam([...team, response.data]);
+      setNewMemberEmail('');
+      triggerFeedback(`Added ${name} as ${newMemberRole}.`);
+    } catch (err: any) {
+      if (err.response && err.response.status === 400) {
+        triggerFeedback('A member with this email already exists.');
+      } else {
+        triggerFeedback('Failed to add member.');
+      }
+    }
   };
 
   // Team Columns for DataTable
-  const teamColumns: Column<TeamMember>[] = [
+  const teamColumns: Column<BackendTeamMember>[] = [
     {
       header: 'Name',
       accessorKey: 'name',
@@ -182,9 +210,15 @@ export default function SettingsPage() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => {
-            setTeam(team.filter(t => t.id !== row.id));
-            triggerFeedback(`Removed ${row.name} from project.`);
+          onClick={async () => {
+            if (activeOrgId === null) return;
+            try {
+              await api.delete(`/api/organizations/${activeOrgId}/members/${row.id}`);
+              setTeam(team.filter(t => t.id !== row.id));
+              triggerFeedback(`Removed ${row.name}.`);
+            } catch (err) {
+              triggerFeedback('Failed to remove member.');
+            }
           }}
           className="h-[28px] text-[#C0392B] hover:bg-[#FDECEA] hover:text-[#C0392B] rounded-md"
         >

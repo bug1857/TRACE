@@ -346,3 +346,33 @@ export interface EsgReport {
   overallScore: number;
 }
 
+export interface ForecastingBaseline {
+  name: string;
+  applicable: boolean;
+  predictions: number[] | null;
+  mae: number | null;
+  mape: number | null;
+}
+
+export interface Forecasting {
+  dataAvailable: boolean;
+  insufficientDataNote: string | null;
+  trainMonths: number;
+  holdoutMonths: number;
+  baselines: ForecastingBaseline[];
+  bestBaseline: string | null;
+  forecastNextMonth: {
+    usingBaseline: string;
+    predictedActualKg: number;
+  } | null;
+}
+
+export interface BackendTeamMember {
+  id: number;
+  org_id: number;
+  name: string;
+  email: string;
+  role: 'admin' | 'editor' | 'viewer';
+  created_at: string;
+}
+
