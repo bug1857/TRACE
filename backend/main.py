@@ -633,6 +633,21 @@ class WorkspaceResponse(WorkspaceBase):
         from_attributes = True
         orm_mode = True
 
+class TeamMemberCreate(BaseModel):
+    name: str
+    email: str
+    role: str = "viewer"
+
+class TeamMemberResponse(BaseModel):
+    id: int
+    org_id: int
+    name: str
+    email: str
+    role: str
+    created_at: datetime.datetime
+    class Config:
+        from_attributes = True
+
 # --- Multi-Tenancy Endpoints ---
 
 @app.get("/api/organizations", response_model=List[OrganizationResponse])
@@ -693,6 +708,69 @@ def delete_organization(org_id: int, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=500,
             detail=f"Database organization deletion failed: {str(e)}"
+        )
+
+@app.get("/api/organizations/{org_id}/members", response_model=List[TeamMemberResponse])
+def get_team_members(org_id: int, db: Session = Depends(get_db)):
+    db_org = db.query(models.Organization).filter(models.Organization.id == org_id).first()
+    if not db_org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    return db.query(models.TeamMember).filter(models.TeamMember.org_id == org_id).all()
+
+@app.post("/api/organizations/{org_id}/members", response_model=TeamMemberResponse, status_code=201)
+def create_team_member(org_id: int, member: TeamMemberCreate, db: Session = Depends(get_db)):
+    db_org = db.query(models.Organization).filter(models.Organization.id == org_id).first()
+    if not db_org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    
+    # Check if email already exists in that org
+    existing = db.query(models.TeamMember).filter(
+        models.TeamMember.org_id == org_id,
+        models.TeamMember.email == member.email
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Team member with this email already exists in this organization")
+    
+    try:
+        db_member = models.TeamMember(
+            org_id=org_id,
+            name=member.name,
+            email=member.email,
+            role=member.role
+        )
+        db.add(db_member)
+        db.commit()
+        db.refresh(db_member)
+        return db_member
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database team member creation failed: {str(e)}"
+        )
+
+@app.delete("/api/organizations/{org_id}/members/{member_id}")
+def delete_team_member(org_id: int, member_id: int, db: Session = Depends(get_db)):
+    db_org = db.query(models.Organization).filter(models.Organization.id == org_id).first()
+    if not db_org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    
+    db_member = db.query(models.TeamMember).filter(
+        models.TeamMember.id == member_id,
+        models.TeamMember.org_id == org_id
+    ).first()
+    if not db_member:
+        raise HTTPException(status_code=404, detail="Team member not found in this organization")
+    
+    try:
+        db.delete(db_member)
+        db.commit()
+        return {"status": "success"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database team member deletion failed: {str(e)}"
         )
 
 @app.get("/api/organizations/{org_id}/projects", response_model=List[ProjectResponse])

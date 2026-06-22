@@ -233,3 +233,55 @@ def test_organization_patch():
     # Clean up org
     del_res = client.delete(f"/api/organizations/{org_id}")
     assert del_res.status_code == 200
+
+
+def test_team_members():
+    # 1. Create org
+    org_res = client.post("/api/organizations", json={"name": "Team Test Org"})
+    assert org_res.status_code == 201
+    org_id = org_res.json()["id"]
+
+    # 2. POST member (name, email, role)
+    member_res = client.post(
+        f"/api/organizations/{org_id}/members",
+        json={"name": "Alice Auditor", "email": "alice@audit.com", "role": "editor"}
+    )
+    assert member_res.status_code == 201
+    member_data = member_res.json()
+    assert member_data["name"] == "Alice Auditor"
+    assert member_data["email"] == "alice@audit.com"
+    assert member_data["role"] == "editor"
+    member_id = member_data["id"]
+
+    # 3. GET members -> verify member appears
+    get_res = client.get(f"/api/organizations/{org_id}/members")
+    assert get_res.status_code == 200
+    members = get_res.json()
+    assert len(members) == 1
+    assert members[0]["id"] == member_id
+    assert members[0]["email"] == "alice@audit.com"
+
+    # 4. POST duplicate email in same org -> assert 400
+    dup_res = client.post(
+        f"/api/organizations/{org_id}/members",
+        json={"name": "Alice Two", "email": "alice@audit.com", "role": "viewer"}
+    )
+    assert dup_res.status_code == 400
+    assert "already exists" in dup_res.json()["detail"]
+
+    # 5. DELETE member -> assert 200
+    del_mem_res = client.delete(f"/api/organizations/{org_id}/members/{member_id}")
+    assert del_mem_res.status_code == 200
+
+    # 6. GET members -> verify empty
+    get_empty = client.get(f"/api/organizations/{org_id}/members")
+    assert get_empty.status_code == 200
+    assert len(get_empty.json()) == 0
+
+    # 7. GET members for non-existent org -> assert 404
+    get_non_existent = client.get("/api/organizations/99999/members")
+    assert get_non_existent.status_code == 404
+
+    # Cleanup: delete org
+    del_org = client.delete(f"/api/organizations/{org_id}")
+    assert del_org.status_code == 200

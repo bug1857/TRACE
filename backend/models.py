@@ -32,6 +32,7 @@ class Organization(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     projects = relationship("Project", back_populates="organization", cascade="all, delete-orphan")
+    members = relationship("TeamMember", back_populates="organization", cascade="all, delete-orphan")
 
 class Project(Base):
     __tablename__ = "projects"
@@ -64,4 +65,14 @@ class AnalysisSnapshot(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     workspace = relationship("Workspace", back_populates="snapshots")
+
+class TeamMember(Base):
+    __tablename__ = "team_members"
+    id = Column(Integer, primary_key=True, index=True)
+    org_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    name = Column(String, nullable=False)
+    email = Column(String, nullable=False)
+    role = Column(String, nullable=False, default="viewer")  # "admin" | "editor" | "viewer"
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    organization = relationship("Organization", back_populates="members")
 
