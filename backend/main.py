@@ -299,6 +299,16 @@ async def upload_ocel_log(
     except Exception:
         green_routes_result = []
 
+    # Calculate forecasting benchmarking
+    try:
+        from forecasting import benchmark_forecasts
+        forecasting_result = benchmark_forecasts(carbon_data["carbonBudget"], holdout_months=3)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed during forecasting calculation: {str(e)}"
+        )
+
     # Return output contract
     # metadata keys exactly: filename, rowCount, caseCount, activityCount, totalEvents
     response_payload = {
@@ -321,7 +331,8 @@ async def upload_ocel_log(
         "processOptimization": process_optimization_result,
         "brsrReport": brsr_report_result,
         "esgReport": esg_report_result,
-        "greenRoutes": green_routes_result
+        "greenRoutes": green_routes_result,
+        "forecasting": forecasting_result
     }
     if not violations:
         response_payload["conformanceRuleScope"] = get_rule_scope_summary()
@@ -573,9 +584,16 @@ def query_copilot(payload: CopilotQuery):
 
 class OrganizationBase(BaseModel):
     name: str
+    country: Optional[str] = None
+    fiscal_year: Optional[str] = None
 
 class OrganizationCreate(OrganizationBase):
     pass
+
+class OrganizationUpdate(BaseModel):
+    name: Optional[str] = None
+    country: Optional[str] = None
+    fiscal_year: Optional[str] = None
 
 class OrganizationResponse(OrganizationBase):
     id: int
@@ -624,7 +642,11 @@ def get_organizations(db: Session = Depends(get_db)):
 @app.post("/api/organizations", response_model=OrganizationResponse, status_code=201)
 def create_organization(org: OrganizationCreate, db: Session = Depends(get_db)):
     try:
-        db_org = models.Organization(name=org.name)
+        db_org = models.Organization(
+            name=org.name,
+            country=org.country,
+            fiscal_year=org.fiscal_year
+        )
         db.add(db_org)
         db.commit()
         db.refresh(db_org)
@@ -634,6 +656,27 @@ def create_organization(org: OrganizationCreate, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=500,
             detail=f"Database organization creation failed: {str(e)}"
+        )
+
+@app.patch("/api/organizations/{org_id}", response_model=OrganizationResponse)
+def update_organization(org_id: int, org_update: OrganizationUpdate, db: Session = Depends(get_db)):
+    db_org = db.query(models.Organization).filter(models.Organization.id == org_id).first()
+    if not db_org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    
+    update_data = org_update.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_org, key, value)
+    
+    try:
+        db.commit()
+        db.refresh(db_org)
+        return db_org
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database organization update failed: {str(e)}"
         )
 
 @app.delete("/api/organizations/{org_id}")
@@ -755,6 +798,21 @@ def get_latest_analysis(workspace_id: int, db: Session = Depends(get_db)):
 def startup_event():
     # Ensure tables are created in the database
     Base.metadata.create_all(bind=engine)
+    
+    # Run dynamic SQLite migrations to add nullable country and fiscal_year columns if missing
+    try:
+        from sqlalchemy import inspect, text
+        inspector = inspect(engine)
+        columns = [col["name"] for col in inspector.get_columns("organizations")]
+        if "country" not in columns:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE organizations ADD COLUMN country TEXT"))
+        if "fiscal_year" not in columns:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE organizations ADD COLUMN fiscal_year TEXT"))
+    except Exception as e:
+        print(f"Error running organization schema migration: {e}")
+
     db = SessionLocal()
     try:
         if db.query(models.Organization).count() == 0:
