@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, Save, Upload, Users, Cpu, Database } from 'lucide-react';
+import { CheckCircle, Save, Upload, Users } from 'lucide-react';
 import PageHeader from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,7 @@ import { EmissionFactor, TeamMember } from '@/lib/types';
 import DataTable, { Column } from '@/components/shared/DataTable';
 import StatusBadge from '@/components/shared/StatusBadge';
 import api from '@/lib/api';
+import { useWorkspace } from '@/lib/WorkspaceContext';
 
 const activityToCategory: Record<string, string> = {
   'Air Freight Dispatch': 'air_freight',
@@ -23,11 +24,23 @@ const activityToCategory: Record<string, string> = {
 
 export default function SettingsPage() {
   const [feedbackMsg, setFeedbackMsg] = useState('');
+  const { activeOrgId, organizations, refreshOrganizations } = useWorkspace();
   
   // General State
   const [orgName, setOrgName] = useState('Louis India Pvt. Ltd.');
   const [orgCountry, setOrgCountry] = useState('India');
   const [fiscalYear, setFiscalYear] = useState('2024-2025');
+
+  useEffect(() => {
+    if (activeOrgId !== null && organizations.length > 0) {
+      const org = organizations.find(o => o.id === activeOrgId);
+      if (org) {
+        setOrgName(org.name);
+        setOrgCountry(org.country ?? '');
+        setFiscalYear(org.fiscal_year ?? '2024-2025');
+      }
+    }
+  }, [activeOrgId, organizations]);
 
   // Emission Factors State
   const [factors, setFactors] = useState<EmissionFactor[]>(mockEmissionFactors);
@@ -45,9 +58,24 @@ export default function SettingsPage() {
     setTimeout(() => setFeedbackMsg(''), 4000);
   };
 
-  const handleSaveGeneral = (e: React.FormEvent) => {
+  const handleSaveGeneral = async (e: React.FormEvent) => {
     e.preventDefault();
-    triggerFeedback('General organizational settings updated successfully.');
+    if (activeOrgId === null) {
+      triggerFeedback('No active organization selected.');
+      return;
+    }
+    try {
+      await api.patch(`/api/organizations/${activeOrgId}`, {
+        name: orgName,
+        country: orgCountry,
+        fiscal_year: fiscalYear
+      });
+      await refreshOrganizations();
+      triggerFeedback('General organizational settings updated successfully.');
+    } catch (err) {
+      console.error('Failed to save settings:', err);
+      triggerFeedback('Failed to save settings.');
+    }
   };
 
   const handleFactorChange = (id: string, value: number) => {
@@ -187,7 +215,6 @@ export default function SettingsPage() {
           <TabsTrigger value="factors" className="text-[12px] font-sans px-4 h-[28px] rounded-sm data-[state=active]:bg-[#FAFAF8] text-[#6B6963] focus-visible:ring-0">Emission Factors</TabsTrigger>
           <TabsTrigger value="model" className="text-[12px] font-sans px-4 h-[28px] rounded-sm data-[state=active]:bg-[#FAFAF8] text-[#6B6963] focus-visible:ring-0">Normative Model</TabsTrigger>
           <TabsTrigger value="team" className="text-[12px] font-sans px-4 h-[28px] rounded-sm data-[state=active]:bg-[#FAFAF8] text-[#6B6963] focus-visible:ring-0">Team Access</TabsTrigger>
-          <TabsTrigger value="integrations" className="text-[12px] font-sans px-4 h-[28px] rounded-sm data-[state=active]:bg-[#FAFAF8] text-[#6B6963] focus-visible:ring-0">Integrations</TabsTrigger>
         </TabsList>
 
         {/* Tab 1: General Settings */}
@@ -395,55 +422,6 @@ export default function SettingsPage() {
                 Auditor Roster Access Ledger
               </h3>
               <DataTable columns={teamColumns} data={team} />
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* Tab 5: Integrations */}
-        <TabsContent value="integrations" className="outline-none focus:outline-none select-none">
-          <div className="max-w-[600px] border border-[#E2E0D8] bg-[#FAFAF8] p-6 rounded-md shadow-sm space-y-6">
-            <h3 className="text-[13px] font-sans font-medium text-[#1A1917] uppercase tracking-wider border-b border-[#E2E0D8] pb-2">
-              External System Integrations
-            </h3>
-
-            <div className="space-y-4">
-              {/* Integration 1: SAP ERP */}
-              <div className="border border-[#E2E0D8] rounded-md p-4 bg-[#F3F2EE] flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <Database className="w-8 h-8 text-[#2D6A4F]" strokeWidth={1.5} />
-                  <div>
-                    <h4 className="text-[14px] font-sans font-semibold text-[#1A1917]">SAP ERP Connector</h4>
-                    <p className="text-[12px] text-[#6B6963] font-sans mt-0.5">Automate log pulling from SAP logistics modules.</p>
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => triggerFeedback('SAP ERP credentials requested. Connection pending.')}
-                  className="h-[28px] text-[11px] font-sans border-[#2D6A4F] text-[#2D6A4F] hover:bg-[#E8F0EB] rounded-md"
-                >
-                  Configure
-                </Button>
-              </div>
-
-              {/* Integration 2: AWS S3 */}
-              <div className="border border-[#E2E0D8] rounded-md p-4 bg-[#F3F2EE] flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <Cpu className="w-8 h-8 text-[#2D6A4F]" strokeWidth={1.5} />
-                  <div>
-                    <h4 className="text-[14px] font-sans font-semibold text-[#1A1917]">Amazon Web Services (S3)</h4>
-                    <p className="text-[12px] text-[#6B6963] font-sans mt-0.5">Stream live carbon telemetry directly to TRACE buckets.</p>
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => triggerFeedback('Amazon S3 bucket sync enabled.')}
-                  className="h-[28px] text-[11px] font-sans border-[#2D6A4F] text-[#2D6A4F] hover:bg-[#E8F0EB] rounded-md"
-                >
-                  Configure
-                </Button>
-              </div>
             </div>
           </div>
         </TabsContent>

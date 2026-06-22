@@ -7,6 +7,8 @@ import { useAnalysis } from './AnalysisContext';
 export interface BackendOrganization {
   id: number;
   name: string;
+  country: string | null;
+  fiscal_year: string | null;
   created_at: string;
 }
 
