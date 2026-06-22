@@ -47,6 +47,23 @@ export default function SettingsPage() {
 
   // Model State
   const [modelFile, setModelFile] = useState('decarbonization_policy_rules_v2.pnml');
+  const [ruleStatus, setRuleStatus] = useState<{ active: boolean; filename: string; rule_count: number } | null>(null);
+
+  useEffect(() => {
+    const fetchRules = async () => {
+      try {
+        const { data } = await api.get('/api/conformance-rules');
+        setRuleStatus({
+          active: data.active,
+          filename: data.filename,
+          rule_count: data.rule_count
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchRules();
+  }, []);
 
   // Team State
   const [team, setTeam] = useState<BackendTeamMember[]>([]);
@@ -139,11 +156,37 @@ export default function SettingsPage() {
     }
   };
 
-  const handleModelUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const fileName = e.target.files[0].name;
-      setModelFile(fileName);
-      triggerFeedback(`Normative process model updated to ${fileName}`);
+  const handleModelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) {
+      return;
+    }
+    const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const response = await api.post('/api/conformance-rules/upload', formData);
+      setRuleStatus({
+        active: true,
+        filename: file.name,
+        rule_count: response.data.rule_count
+      });
+      triggerFeedback(`Normative model updated: ${file.name} (${response.data.rule_count} rule group(s) loaded)`);
+    } catch (err: any) {
+      if (err.response && err.response.status === 422) {
+        triggerFeedback(`Invalid CSV: ${err.response.data.detail}`);
+      } else {
+        triggerFeedback('Failed to upload model file.');
+      }
+    }
+  };
+
+  const handleResetRules = async () => {
+    try {
+      await api.delete('/api/conformance-rules');
+      setRuleStatus(prev => prev ? { ...prev, active: false, filename: 'decarbonization_policy_rules_v2.pnml (default)' } : null);
+      triggerFeedback('Reverted to default conformance rules.');
+    } catch (err) {
+      triggerFeedback('Failed to reset rules.');
     }
   };
 
@@ -370,11 +413,15 @@ export default function SettingsPage() {
               <div className="p-3.5 bg-[#F3F2EE] border border-[#E2E0D8] rounded-md text-[13px] space-y-2">
                 <div>
                   <span className="text-[10px] text-[#6B6963] uppercase block">Currently Active Policy ruleset</span>
-                  <span className="font-mono text-[12px] font-semibold text-[#1A1917]">{modelFile}</span>
+                  <span className="font-mono text-[12px] font-semibold text-[#1A1917]">
+                    {ruleStatus?.filename ?? modelFile}
+                  </span>
                 </div>
                 <div>
                   <span className="text-[10px] text-[#6B6963] uppercase block">Rules Count</span>
-                  <span className="font-sans font-medium text-[#2D6A4F]">4 Active ESG constraints</span>
+                  <span className="font-sans font-medium text-[#2D6A4F]">
+                    {ruleStatus ? `${ruleStatus.rule_count} rule group(s) — ${ruleStatus.active ? 'custom' : 'default'}` : '4 Active ESG constraints'}
+                  </span>
                 </div>
               </div>
 
@@ -393,6 +440,9 @@ export default function SettingsPage() {
                   <span className="text-[12px] font-sans font-medium text-[#1A1917] block">Drop PNML model file here, or click to upload</span>
                   <span className="text-[10px] text-[#6B6963] block mt-1">Accepts standard PNML or structured CSV rulesets</span>
                 </div>
+                {ruleStatus?.active === true && (
+                  <Button variant="outline" onClick={handleResetRules} className="w-full h-[32px] text-[11px] border-[#E2E0D8] text-[#6B6963] hover:bg-[#F3F2EE] rounded-md">Revert to Default Rules</Button>
+                )}
               </div>
             </div>
           </div>
