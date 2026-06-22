@@ -179,3 +179,57 @@ def test_latest_analysis_errors():
 
     # Clean up
     client.delete(f"/api/organizations/{org_id}")
+
+
+def test_organization_patch():
+    # 1. Create a new organization
+    org_res = client.post("/api/organizations", json={"name": "Patch Test Org"})
+    assert org_res.status_code == 201
+    org_data = org_res.json()
+    org_id = org_data["id"]
+    assert org_data["name"] == "Patch Test Org"
+    assert org_data["country"] is None
+    assert org_data["fiscal_year"] is None
+
+    # 2. PATCH it with country and fiscal_year values
+    patch_res = client.patch(
+        f"/api/organizations/{org_id}",
+        json={"country": "India", "fiscal_year": "2024-2025"}
+    )
+    assert patch_res.status_code == 200
+    patched_data = patch_res.json()
+    assert patched_data["name"] == "Patch Test Org"
+    assert patched_data["country"] == "India"
+    assert patched_data["fiscal_year"] == "2024-2025"
+
+    # 3. GET all organizations, find this org, and verify persistence
+    get_res = client.get("/api/organizations")
+    assert get_res.status_code == 200
+    org_list = get_res.json()
+    found_org = next((o for o in org_list if o["id"] == org_id), None)
+    assert found_org is not None
+    assert found_org["name"] == "Patch Test Org"
+    assert found_org["country"] == "India"
+    assert found_org["fiscal_year"] == "2024-2025"
+
+    # 4. PATCH with only one field (e.g., just country), verify name and fiscal_year are unchanged
+    patch_single_res = client.patch(
+        f"/api/organizations/{org_id}",
+        json={"country": "Germany"}
+    )
+    assert patch_single_res.status_code == 200
+    patched_single_data = patch_single_res.json()
+    assert patched_single_data["name"] == "Patch Test Org"
+    assert patched_single_data["country"] == "Germany"
+    assert patched_single_data["fiscal_year"] == "2024-2025"
+
+    # 5. PATCH a non-existent org_id, assert 404
+    non_existent_patch = client.patch(
+        "/api/organizations/99999",
+        json={"country": "USA"}
+    )
+    assert non_existent_patch.status_code == 404
+
+    # Clean up org
+    del_res = client.delete(f"/api/organizations/{org_id}")
+    assert del_res.status_code == 200

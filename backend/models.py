@@ -27,6 +27,8 @@ class Organization(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
+    country = Column(String, nullable=True)
+    fiscal_year = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     projects = relationship("Project", back_populates="organization", cascade="all, delete-orphan")
