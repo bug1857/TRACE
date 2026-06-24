@@ -23,20 +23,20 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   
-  --color-trace-bg: #FAFAF8;
-  --color-trace-surface: #F3F2EE;
-  --color-trace-border: #E2E0D8;
-  --color-trace-text: #1A1917;
-  --color-trace-muted: #6B6963;
-  --color-trace-subtle: #9B9891;
-  --color-trace-accent: #2D6A4F;
-  --color-trace-accent-light: #E8F0EB;
-  --color-trace-danger: #C0392B;
-  --color-trace-danger-light: #FDECEA;
-  --color-trace-warning: #B45309;
-  --color-trace-warning-light: #FEF3C7;
-  --color-trace-success: #166534;
-  --color-trace-success-light: #DCFCE7;
+  --color-trace-bg: #0A0A0A;
+  --color-trace-surface: rgba(255, 255, 255, 0.03);
+  --color-trace-border: rgba(255, 255, 255, 0.07);
+  --color-trace-text: #E6EDF3;
+  --color-trace-muted: #7D8590;
+  --color-trace-subtle: #484F58;
+  --color-trace-accent: #2DD4BF;
+  --color-trace-accent-light: rgba(45, 212, 191, 0.08);
+  --color-trace-danger: #F85149;
+  --color-trace-danger-light: rgba(248, 81, 73, 0.1);
+  --color-trace-warning: #D29922;
+  --color-trace-warning-light: rgba(210, 153, 34, 0.1);
+  --color-trace-success: #3FB950;
+  --color-trace-success-light: rgba(63, 185, 80, 0.1);
 
   --radius-sm: 2px;
   --radius-md: 6px;
@@ -47,25 +47,25 @@
 }
 
 :root {
-  --background: #FAFAF8;
-  --foreground: #1A1917;
-  --card: #F3F2EE;
-  --card-foreground: #1A1917;
-  --popover: #F3F2EE;
-  --popover-foreground: #1A1917;
-  --primary: #2D6A4F;
-  --primary-foreground: #FAFAF8;
-  --secondary: #F3F2EE;
-  --secondary-foreground: #1A1917;
-  --muted: #F3F2EE;
-  --muted-foreground: #6B6963;
-  --accent: #E8F0EB;
-  --accent-foreground: #2D6A4F;
-  --destructive: #C0392B;
-  --destructive-foreground: #FAFAF8;
-  --border: #E2E0D8;
-  --input: #E2E0D8;
-  --ring: #2D6A4F;
+  --background: #0A0A0A;
+  --foreground: #F8FAFC;
+  --card: rgba(255, 255, 255, 0.03);
+  --card-foreground: #F8FAFC;
+  --popover: #0A0A0A;
+  --popover-foreground: #F8FAFC;
+  --primary: #2DD4BF;
+  --primary-foreground: #0B1120;
+  --secondary: rgba(255, 255, 255, 0.05);
+  --secondary-foreground: #F8FAFC;
+  --muted: rgba(255, 255, 255, 0.05);
+  --muted-foreground: #94A3B8;
+  --accent: rgba(56, 189, 248, 0.1);
+  --accent-foreground: #2DD4BF;
+  --destructive: #EF4444;
+  --destructive-foreground: #F8FAFC;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.1);
+  --ring: #2DD4BF;
   --radius: 0.375rem;
   --font-sans: var(--font-inter);
   --font-mono: var(--font-jetbrains-mono);
@@ -145,4 +145,91 @@ body {
     print-color-adjust: exact !important;
     box-shadow: none !important;
   }
+}
+
+/* ----------------------------------
+   Custom Micro-Animations
+------------------------------------- */
+
+/* Page Transition */
+@keyframes pageEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-page-enter {
+  animation: pageEnter 400ms ease-out forwards;
+}
+
+/* Badge Pop */
+@keyframes badgePop {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.animate-badge-pop {
+  animation: badgePop 300ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Data Table Row Fade Up */
+@keyframes rowFadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-row-fade-up {
+  opacity: 0;
+  animation: rowFadeUp 300ms ease-out forwards;
+}
+
+/* File Upload Border Pulse */
+@keyframes borderPulse {
+  0% { border-color: var(--color-trace-border); }
+  50% { border-color: var(--color-trace-accent); }
+  100% { border-color: var(--color-trace-border); }
+}
+.animate-border-pulse {
+  animation: borderPulse 3s infinite ease-in-out;
+}
+
+/* File Upload Scale Pulse on Drag Over */
+.drag-active-scale {
+  transform: scale(1.02);
+  transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Sidebar Ripple */
+@keyframes rippleAnim {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0;
+  }
+}
+
+/* Generic Fade In */
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fadeIn 600ms ease-out forwards;
 }
