@@ -1,36 +1,112 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TRACE — Carbon Intelligence Platform
 
-## Getting Started
+**Process Mining × Carbon Accounting for Enterprise Supply Chains**
 
-To run both the Next.js development server and the Python FastAPI backend server concurrently, use:
+TRACE is an enterprise-grade platform that reconstructs supply chain operations from Object-Centric Event Logs (OCEL) and computes precise Scope 3 carbon emissions in real-time. Built under the **Indo-Swiss Joint Research Programme** at Manipal University Jaipur.
 
+> We don't estimate. We compute.
+
+---
+
+## 🔬 What It Does
+
+| Module | Description |
+|--------|-------------|
+| **OCEL Upload Engine** | Drag-and-drop CSV ingestion with intelligent column mapping and fuzzy schema detection |
+| **Executive Command Center** | Real-time KPIs — total emissions, process violations, Carbon Fitness Score |
+| **Process Mining Graph** | Directed graph visualization of actual vs. intended freight routes with Carbon Delta annotations |
+| **Supplier Fitness** | Per-vendor carbon efficiency scoring and risk flagging |
+| **Carbon Budget Tracker** | Set and monitor emission limits across operational scopes |
+| **Conformance Ledger** | Immutable, timestamped audit log of every process violation |
+| **Forecasting Engine** | Predictive emissions modeling using ARIMA and linear trend analysis |
+| **What-If Simulator** | Run modal shift scenarios (Air → Ocean) with sub-100ms recalculation |
+| **AI Copilot** | Natural language querying over supply chain data using privacy-preserving local LLMs |
+| **BRSR Report Generator** | One-click, audit-ready BRSR compliance reports with SHA-256 cryptographic sealing |
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Frontend | Next.js 16, React 19, Tailwind CSS, Recharts, React Flow |
+| Backend | Python, FastAPI, SQLite |
+| AI | Local LLM integration via privacy-preserving inference |
+| Design | Dark glassmorphism UI with light/dark theme support |
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+
+- Python 3.10+
+
+### 1. Clone the repo
+```bash
+git clone https://github.com/bug1857/TRACE.git
+cd TRACE
+```
+
+### 2. Install frontend dependencies
+```bash
+npm install
+```
+
+### 3. Set up the backend
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cd ..
+```
+
+### 4. Run everything
 ```bash
 npm run dev:all
 ```
 
-Alternatively, ensure that the FastAPI backend server is running on port 8000 (e.g. from the `backend/` directory with `uvicorn main:app --reload --port 8000` inside the virtual environment) before running the Next.js dev server with:
+This starts both the Next.js frontend on `http://localhost:3000` and the FastAPI backend on `http://localhost:8000`.
 
-```bash
-npm run dev
+### 5. Upload the demo dataset
+Open the app, navigate to the Upload page, and drag in `trace_demo_dataset.csv`.
+
+---
+
+## 📂 Project Structure
+
+```
+TRACE/
+├── app/                  # Next.js pages and routes
+├── backend/              # FastAPI server, carbon computation engine
+├── components/           # Reusable React UI components
+├── hooks/                # Custom React hooks
+├── lib/                  # Utility functions and helpers
+├── public/               # Static assets
+├── trace_demo_dataset.csv # Sample logistics event log (800 cases)
+├── package.json
+└── README.md
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📊 Demo Dataset
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The included `trace_demo_dataset.csv` contains **800 logistics cases** with columns for Case ID, Activity, Timestamp, Supplier, Transport Mode, and more. Upload it to instantly populate all dashboards and reports.
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 🏛️ Research Context
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+TRACE was developed as part of the **Indo-Swiss Joint Research Programme** investigating the application of process mining techniques to environmental sustainability in global supply chains. The platform bridges the gap between operational process data and regulatory carbon reporting frameworks (BRSR, CSRD).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 📜 License
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+This project is part of an academic research initiative at Manipal University Jaipur.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+**Built with 🌍 by the TRACE Team**
