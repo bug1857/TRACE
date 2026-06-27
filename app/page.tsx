@@ -40,7 +40,7 @@ export default function LandingPage() {
         </h1>
         <p className="text-lg text-[#7D8590] max-w-xl leading-relaxed mb-10">
           Upload an OCEL 2.0 event log. Get violations, carbon budgets, BRSR reports, 
-          and supplier fitness scores — in under 90 seconds.
+          and supplier fitness scores instantly.
         </p>
         <div className="flex items-center gap-4 mb-16">
           <button
@@ -82,7 +82,7 @@ export default function LandingPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[
             ['Overview', 'OCEL 2.0 object-centric event log ingestion with automatic column mapping and DFG extraction.'],
-            ['Quick Start', 'Upload a CSV with case ID, activity, and timestamp columns. Analysis completes in under 90 seconds.'],
+            ['Quick Start', 'Upload a CSV with case ID, activity, and timestamp columns. Analysis completes instantly.'],
             ['Architecture', 'Next.js 16 frontend, FastAPI backend, SQLite storage. Single upload populates all modules.'],
             ['CSV Upload', 'Accepts OCEL 2.0 CSV and XML. Required columns: case ID, activity name, timestamp. All others optional.'],
             ['Modules', 'Process Mining, Carbon Budget, Carbon Fitness, Supplier Fitness, Conformance, Forecasting, ESG/BRSR Reports.'],

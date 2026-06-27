@@ -112,53 +112,52 @@
   --trace-border: #E2E0D8;
   --trace-text: #1A1917;
   --trace-muted: #6B6963;
-  --trace-subtle: #A3A19A;
+  --trace-subtle: #9E9C97;
   --trace-accent: #2D6A4F;
   --trace-accent-light: #E8F0EB;
   --trace-danger: #C0392B;
   --trace-danger-light: #F9EBEA;
   --trace-warning: #D35400;
-  --trace-warning-light: #FBEEE6;
+  --trace-warning-light: #FDF2E9;
   --trace-success: #27AE60;
   --trace-success-light: #E9F7EF;
 }
 
 .dark {
-  /* Deep sleek dark aesthetic from screenshot */
-  --background: #080B12;
-  --foreground: #E6EDF3;
-  --card: rgba(255, 255, 255, 0.03);
-  --card-foreground: #E6EDF3;
-  --popover: #0F172A;
-  --popover-foreground: #E6EDF3;
-  --primary: #2DD4BF;
-  --primary-foreground: #000000;
-  --secondary: rgba(255, 255, 255, 0.05);
-  --secondary-foreground: #E6EDF3;
-  --muted: rgba(255, 255, 255, 0.05);
-  --muted-foreground: #7D8590;
-  --accent: rgba(45, 212, 191, 0.1);
-  --accent-foreground: #2DD4BF;
-  --destructive: #F85149;
-  --destructive-foreground: #FFFFFF;
-  --border: rgba(255, 255, 255, 0.08);
-  --input: rgba(255, 255, 255, 0.08);
-  --ring: #2DD4BF;
+  --background: #0D0E12;
+  --foreground: #EAEBEE;
+  --card: #16181D;
+  --card-foreground: #EAEBEE;
+  --popover: #16181D;
+  --popover-foreground: #EAEBEE;
+  --primary: #8B9BB4;
+  --primary-foreground: #0D0E12;
+  --secondary: #21232B;
+  --secondary-foreground: #EAEBEE;
+  --muted: #21232B;
+  --muted-foreground: #888C99;
+  --accent: #21232B;
+  --accent-foreground: #EAEBEE;
+  --destructive: #BA6A6A;
+  --destructive-foreground: #EAEBEE;
+  --border: #282A33;
+  --input: #282A33;
+  --ring: #8B9BB4;
 
-  --trace-bg: #080B12;
-  --trace-surface: rgba(255, 255, 255, 0.03);
-  --trace-border: rgba(255, 255, 255, 0.08);
-  --trace-text: #E6EDF3;
-  --trace-muted: #7D8590;
-  --trace-subtle: #484F58;
-  --trace-accent: #2DD4BF;
-  --trace-accent-light: rgba(45, 212, 191, 0.1);
-  --trace-danger: #F85149;
-  --trace-danger-light: rgba(248, 81, 73, 0.1);
-  --trace-warning: #D29922;
-  --trace-warning-light: rgba(210, 153, 34, 0.1);
-  --trace-success: #3FB950;
-  --trace-success-light: rgba(63, 185, 80, 0.1);
+  --trace-bg: #0D0E12;
+  --trace-surface: #16181D;
+  --trace-border: #282A33;
+  --trace-text: #EAEBEE;
+  --trace-muted: #888C99;
+  --trace-subtle: #525560;
+  --trace-accent: #8B9BB4;
+  --trace-accent-light: rgba(139, 155, 180, 0.1);
+  --trace-danger: #BA6A6A;
+  --trace-danger-light: rgba(186, 106, 106, 0.1);
+  --trace-warning: #B48C5F;
+  --trace-warning-light: rgba(180, 140, 95, 0.1);
+  --trace-success: #6D9F71;
+  --trace-success-light: rgba(109, 159, 113, 0.1);
 }
 
 h1, h2, h3, h4, h5, h6 {
