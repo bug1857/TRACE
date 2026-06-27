@@ -65,3 +65,21 @@ test_custom_mapping.csv
 *.bin
 *.sh
 TRACE_Cinematic_Script.md
+
+# Unnecessary files
+*.pdf
+*.pptx
+*.csv
+!trace_demo_dataset.csv
+ee.csv
+fix-colors.js
+replace-colors.js
+to-semantic.js
+@.md
+HANDOFF.md
+TRACE_Context_Export.md
+Procfile
+render.yaml
+vercel.json
+scratch/
+presentation/
