@@ -2,7 +2,8 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
-  headers: { 'Content-Type': 'application/json' }
+  headers: { 'Content-Type': 'application/json' },
+  timeout: 300000 // 5 minutes for large file processing
 });
 
 export async function uploadOcelFile(file: File, mappingOverride?: string, workspaceId?: number) {

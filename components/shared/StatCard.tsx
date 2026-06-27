@@ -26,7 +26,7 @@ export default function StatCard({
     // Normal: up = green (good), down = red (bad)
     // Inverse: up = red (bad), down = green (good)
     const isPositiveOutcome = trendInverse ? !isUp : isUp;
-    const colorClass = isPositiveOutcome ? 'text-[#166534] bg-[#DCFCE7]' : 'text-[#C0392B] bg-[#FDECEA]';
+    const colorClass = isPositiveOutcome ? 'text-[var(--trace-success)] bg-[var(--trace-success-light)]' : 'text-[var(--destructive)] bg-[var(--trace-danger-light)]';
     const Icon = isUp ? ArrowUpRight : ArrowDownRight;
 
     return (
@@ -38,20 +38,20 @@ export default function StatCard({
   };
 
   return (
-    <div className="bg-[#FAFAF8] border border-[#E2E0D8] rounded-md p-5 flex flex-col justify-between shadow-sm min-h-[110px] w-full">
+    <div className="bg-[var(--background)] border border-[var(--border)] rounded-md p-5 flex flex-col justify-between shadow-sm min-h-[110px] w-full hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 ease-out cursor-default">
       <div className="flex justify-between items-start gap-4">
-        <span className="text-[11px] font-sans font-medium text-[#6B6963] uppercase tracking-wider">
+        <span className="text-[11px] font-sans font-medium text-[var(--muted-foreground)] uppercase tracking-wider">
           {label}
         </span>
         {renderTrend()}
       </div>
 
       <div className="mt-3 flex items-baseline gap-1 select-all">
-        <span className="text-[28px] font-mono font-medium text-[#1A1917] leading-none">
+        <span className="text-[28px] font-mono font-medium text-[var(--foreground)] leading-none">
           {value}
         </span>
         {unit && (
-          <span className="text-[14px] font-mono text-[#6B6963] font-normal lowercase ml-0.5">
+          <span className="text-[14px] font-mono text-[var(--muted-foreground)] font-normal lowercase ml-0.5">
             {unit}
           </span>
         )}

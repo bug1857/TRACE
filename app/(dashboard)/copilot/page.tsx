@@ -164,47 +164,47 @@ export default function CopilotPage() {
       <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6 flex-1 items-stretch min-h-0">
         
         {/* Left Column: Context Panel */}
-        <div className="border border-[#E2E0D8] bg-[#FAFAF8] p-5 rounded-md shadow-sm flex flex-col justify-between select-none">
+        <div className="border border-[var(--border)] bg-[var(--background)] p-5 rounded-md shadow-sm flex flex-col justify-between select-none">
           <div className="space-y-4">
-            <h3 className="text-[11px] font-sans font-medium text-[#6B6963] uppercase tracking-wider block border-b border-[#E2E0D8] pb-2">
+            <h3 className="text-[11px] font-sans font-medium text-[var(--muted-foreground)] uppercase tracking-wider block border-b border-[var(--border)] pb-2">
               Current Context
             </h3>
 
             {isDemoMode && (
-              <div className="bg-[#FEF3C7] border border-[#FCD34D] text-[#D97706] text-[10px] p-2 rounded text-center font-medium font-sans">
+              <div className="bg-[var(--trace-warning-light)] border border-[#FCD34D] text-[#D97706] text-[10px] p-2 rounded text-center font-medium font-sans">
                 Demo Baseline Mode
               </div>
             )}
 
             <div className="space-y-3 text-[12px] font-sans">
               <div>
-                <span className="text-[10px] text-[#9B9891] uppercase block">Active Project</span>
-                <span className="font-medium text-[#1A1917]">
+                <span className="text-[10px] text-[var(--trace-subtle)] uppercase block">Active Project</span>
+                <span className="font-medium text-[var(--foreground)]">
                   {isDemoMode ? 'Q3 Supply Chain Audit 2024' : 'Active Project Context'}
                 </span>
               </div>
               <div>
-                <span className="text-[10px] text-[#9B9891] uppercase block">Loaded Log file</span>
-                <span className="font-mono text-[11px] text-[#1A1917] truncate block">{filename}</span>
+                <span className="text-[10px] text-[var(--trace-subtle)] uppercase block">Loaded Log file</span>
+                <span className="font-mono text-[11px] text-[var(--foreground)] truncate block">{filename}</span>
               </div>
               <div>
-                <span className="text-[10px] text-[#9B9891] uppercase block">Carbon Budget Used</span>
-                <span className={`font-mono font-semibold ${isDemoMode ? 'text-[#C0392B]' : 'text-[#2D6A4F]'}`}>
+                <span className="text-[10px] text-[var(--trace-subtle)] uppercase block">Carbon Budget Used</span>
+                <span className={`font-mono font-semibold ${isDemoMode ? 'text-[var(--destructive)]' : 'text-[var(--primary)]'}`}>
                   {totalCarbon}
                 </span>
               </div>
               <div>
-                <span className="text-[10px] text-[#9B9891] uppercase block">Combined CFS Index</span>
-                <span className="font-mono text-[#B45309] font-semibold">{cfsDisplay}</span>
+                <span className="text-[10px] text-[var(--trace-subtle)] uppercase block">Combined CFS Index</span>
+                <span className="font-mono text-[var(--trace-warning)] font-semibold">{cfsDisplay}</span>
               </div>
               <div>
-                <span className="text-[10px] text-[#9B9891] uppercase block">Active Violations</span>
-                <span className="font-mono text-[#C0392B] font-semibold">{violationsDisplay}</span>
+                <span className="text-[10px] text-[var(--trace-subtle)] uppercase block">Active Violations</span>
+                <span className="font-mono text-[var(--destructive)] font-semibold">{violationsDisplay}</span>
               </div>
               {analysis && analysis.violations && analysis.violations.length === 0 && (
-                <div className="text-[10px] text-[#6B6963] leading-relaxed bg-[#F3F2EE] border border-[#E2E0D8] p-2 rounded text-left mt-2">
+                <div className="text-[10px] text-[var(--muted-foreground)] leading-relaxed bg-[var(--card)] border border-[var(--border)] p-2 rounded text-left mt-2">
                   <strong>Note:</strong> Conformance checking is limited to:{" "}
-                  <span className="font-semibold text-[#2D6A4F]">
+                  <span className="font-semibold text-[var(--primary)]">
                     {analysis?.conformanceRuleScope
                       ? analysis.conformanceRuleScope.flatMap((r) => r.disallowed_activities).join(", ")
                       : "Air Freight Dispatch, Truck Delivery Transport Dispatch, Incineration Disposal, Landfill Disposal"}
@@ -214,14 +214,14 @@ export default function CopilotPage() {
             </div>
           </div>
 
-          <div className="pt-4 border-t border-[#E2E0D8] flex flex-col gap-2">
-            <div className="flex items-center gap-1.5 text-[11px] text-[#6B6963]">
-              <Cpu className="w-3.5 h-3.5 text-[#2D6A4F]" />
+          <div className="pt-4 border-t border-[var(--border)] flex flex-col gap-2">
+            <div className="flex items-center gap-1.5 text-[11px] text-[var(--muted-foreground)]">
+              <Cpu className="w-3.5 h-3.5 text-[var(--primary)]" />
               <span>Local Context Active</span>
             </div>
-            <div className="flex items-center gap-1.5 text-[11px] text-[#6B6963]">
-              <span className={`w-2 h-2 rounded-full ${status.online ? 'bg-[#2D6A4F]' : 'bg-red-500 animate-pulse'}`} />
-              <span className="font-sans font-medium text-[#1A1917]">
+            <div className="flex items-center gap-1.5 text-[11px] text-[var(--muted-foreground)]">
+              <span className={`w-2 h-2 rounded-full ${status.online ? 'bg-[var(--primary)]' : 'bg-red-500 animate-pulse'}`} />
+              <span className="font-sans font-medium text-[var(--foreground)]">
                 {status.online ? 'Ollama Online' : 'Ollama Offline'}
               </span>
             </div>
@@ -229,7 +229,7 @@ export default function CopilotPage() {
         </div>
 
         {/* Right Column: Main Chat Window */}
-        <div className="border border-[#E2E0D8] bg-[#FAFAF8] rounded-md shadow-sm flex flex-col justify-between overflow-hidden">
+        <div className="border border-[var(--border)] bg-[var(--background)] rounded-md shadow-sm flex flex-col justify-between overflow-hidden">
           
           {/* Scrollable messages container */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -245,8 +245,8 @@ export default function CopilotPage() {
                   >
                     <div className={`p-3.5 rounded-md text-[13px] leading-relaxed max-w-[580px] border ${
                       isUser
-                        ? 'bg-[#E8F0EB] border-[#2D6A4F]/10 text-[#1A1917]'
-                        : 'bg-[#F3F2EE] border-[#E2E0D8] text-[#1A1917]'
+                        ? 'bg-[var(--accent)] border-[var(--primary)]/10 text-[var(--foreground)]'
+                        : 'bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]'
                     }`}>
                       {/* Standard text content */}
                       {msg.content && (
@@ -255,30 +255,30 @@ export default function CopilotPage() {
 
                       {/* Structured Card Section (Assistant ONLY) */}
                       {!isUser && msg.structured && (
-                        <div className={`${msg.content ? 'mt-4 border-t border-[#E2E0D8] pt-4' : ''} space-y-3`}>
+                        <div className={`${msg.content ? 'mt-4 border-t border-[var(--border)] pt-4' : ''} space-y-3`}>
                           {/* ANSWER section (slightly darker card) */}
-                          <div className="p-2.5 bg-[#FAFAF8] border border-[#E2E0D8] rounded-[3px]">
-                            <span className="text-[9px] text-[#9B9891] font-sans uppercase tracking-wider font-semibold block">ANSWER</span>
-                            <p className="text-[12px] font-sans font-medium text-[#1A1917] mt-0.5">{msg.structured.answer}</p>
+                          <div className="p-2.5 bg-[var(--background)] border border-[var(--border)] rounded-[3px]">
+                            <span className="text-[9px] text-[var(--trace-subtle)] font-sans uppercase tracking-wider font-semibold block">ANSWER</span>
+                            <p className="text-[12px] font-sans font-medium text-[var(--foreground)] mt-0.5">{msg.structured.answer}</p>
                           </div>
 
                           {/* WHY section */}
                           {msg.structured.why && (
                             <div>
-                              <span className="text-[9px] text-[#9B9891] font-sans uppercase tracking-wider font-semibold block">WHY</span>
-                              <p className="text-[12px] text-[#6B6963] font-sans mt-0.5 leading-relaxed">{msg.structured.why}</p>
+                              <span className="text-[9px] text-[var(--trace-subtle)] font-sans uppercase tracking-wider font-semibold block">WHY</span>
+                              <p className="text-[12px] text-[var(--muted-foreground)] font-sans mt-0.5 leading-relaxed">{msg.structured.why}</p>
                             </div>
                           )}
 
                           {/* EVIDENCE section */}
                           {msg.structured.evidence && msg.structured.evidence.length > 0 && (
                             <div>
-                              <span className="text-[9px] text-[#9B9891] font-sans uppercase tracking-wider font-semibold block">EVIDENCE</span>
+                              <span className="text-[9px] text-[var(--trace-subtle)] font-sans uppercase tracking-wider font-semibold block">EVIDENCE</span>
                               <div className="grid grid-cols-3 gap-2 mt-1 select-all">
                                 {msg.structured.evidence.map((ev, evIdx) => (
-                                  <div key={evIdx} className="bg-[#FAFAF8] border border-[#E2E0D8] p-2 rounded-[3px] text-center">
-                                    <span className="text-[9px] text-[#6B6963] block truncate">{ev.label}</span>
-                                    <span className="font-mono text-[13px] font-bold text-[#1A1917] mt-0.5 block">{ev.value}</span>
+                                  <div key={evIdx} className="bg-[var(--background)] border border-[var(--border)] p-2 rounded-[3px] text-center">
+                                    <span className="text-[9px] text-[var(--muted-foreground)] block truncate">{ev.label}</span>
+                                    <span className="font-mono text-[13px] font-bold text-[var(--foreground)] mt-0.5 block">{ev.value}</span>
                                   </div>
                                 ))}
                               </div>
@@ -292,7 +292,7 @@ export default function CopilotPage() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="h-[28px] text-[11px] font-sans border-[#2D6A4F] text-[#2D6A4F] hover:bg-[#E8F0EB] hover:text-[#2D6A4F] flex items-center gap-1 rounded-md"
+                                  className="h-[28px] text-[11px] font-sans border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--accent)] hover:text-[var(--primary)] flex items-center gap-1 rounded-md"
                                 >
                                   <span>{msg.structured.action.label}</span>
                                   <ArrowRight className="w-3 h-3" />
@@ -304,7 +304,7 @@ export default function CopilotPage() {
                       )}
                     </div>
                     
-                    <span className="text-[9px] text-[#9B9891] font-mono mt-1 px-1">
+                    <span className="text-[9px] text-[var(--trace-subtle)] font-mono mt-1 px-1">
                       {msg.timestamp}
                     </span>
                   </div>
@@ -314,7 +314,7 @@ export default function CopilotPage() {
               {/* Typing Indicator */}
               {isTyping && (
                 <div className="flex flex-col items-start animate-pulse">
-                  <div className="p-3 bg-[#F3F2EE] border border-[#E2E0D8] rounded-md text-[13px] text-[#6B6963] font-sans">
+                  <div className="p-3 bg-[var(--card)] border border-[var(--border)] rounded-md text-[13px] text-[var(--muted-foreground)] font-sans">
                     Copilot is calculating ESG indicators with {selectedModel}...
                   </div>
                 </div>
@@ -324,7 +324,7 @@ export default function CopilotPage() {
           </div>
 
           {/* Bottom input area */}
-          <div className="border-t border-[#E2E0D8] p-3 bg-[#FAFAF8]">
+          <div className="border-t border-[var(--border)] p-3 bg-[var(--background)]">
             
             {/* Suggested Chips (Horizontal Scrollable Pill Buttons) */}
             <div className="flex gap-2 max-w-[760px] mx-auto overflow-x-auto pb-2.5 select-none no-scrollbar">
@@ -334,7 +334,7 @@ export default function CopilotPage() {
                   type="button"
                   onClick={() => handleChipClick(chip)}
                   disabled={!status.online || isTyping}
-                  className="h-[28px] px-3 border border-[#E2E0D8] bg-[#F3F2EE] hover:bg-[#ECEAE4] disabled:opacity-50 text-[#1A1917] text-[11px] font-sans rounded-full whitespace-nowrap transition-colors shrink-0 focus:outline-none"
+                  className="h-[28px] px-3 border border-[var(--border)] bg-[var(--card)] hover:bg-[#ECEAE4] disabled:opacity-50 text-[var(--foreground)] text-[11px] font-sans rounded-full whitespace-nowrap transition-colors shrink-0 focus:outline-none"
                 >
                   {chip}
                 </button>
@@ -344,12 +344,12 @@ export default function CopilotPage() {
             {/* Model & Style Selectors */}
             <div className="flex gap-4 max-w-[760px] mx-auto mb-2.5 text-[11px] font-sans">
               <div className="flex items-center gap-1.5">
-                <span className="text-[#6B6963] font-semibold uppercase tracking-wider">Model:</span>
+                <span className="text-[var(--muted-foreground)] font-semibold uppercase tracking-wider">Model:</span>
                 <select
                   value={selectedModel}
                   onChange={(e) => setSelectedModel(e.target.value)}
                   disabled={!status.online}
-                  className="h-[26px] px-2 py-0.5 border border-[#E2E0D8] bg-[#F3F2EE] disabled:opacity-50 disabled:bg-gray-100 rounded text-[11px] font-medium text-[#1A1917] focus:outline-none focus:border-[#2D6A4F]"
+                  className="h-[26px] px-2 py-0.5 border border-[var(--border)] bg-[var(--card)] disabled:opacity-50 disabled:bg-gray-100 rounded text-[11px] font-medium text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)]"
                 >
                   {status.availableModels.length > 0 ? (
                     status.availableModels.map((m) => (
@@ -362,12 +362,12 @@ export default function CopilotPage() {
               </div>
 
               <div className="flex items-center gap-1.5">
-                <span className="text-[#6B6963] font-semibold uppercase tracking-wider">Style:</span>
+                <span className="text-[var(--muted-foreground)] font-semibold uppercase tracking-wider">Style:</span>
                 <select
                   value={selectedStyle}
                   onChange={(e) => setSelectedStyle(e.target.value)}
                   disabled={!status.online}
-                  className="h-[26px] px-2 py-0.5 border border-[#E2E0D8] bg-[#F3F2EE] disabled:opacity-50 disabled:bg-gray-100 rounded text-[11px] font-medium text-[#1A1917] focus:outline-none focus:border-[#2D6A4F]"
+                  className="h-[26px] px-2 py-0.5 border border-[var(--border)] bg-[var(--card)] disabled:opacity-50 disabled:bg-gray-100 rounded text-[11px] font-medium text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)]"
                 >
                   <option value="balanced">Balanced</option>
                   <option value="numerical">Numerical</option>
@@ -389,18 +389,18 @@ export default function CopilotPage() {
                 value={inputVal}
                 onChange={(e) => setInputVal(e.target.value)}
                 disabled={!status.online || isTyping}
-                className="h-[36px] text-[13px] bg-[#F3F2EE] border-[#E2E0D8] text-[#1A1917] rounded-md focus:border-[#2D6A4F]"
+                className="h-[36px] text-[13px] bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] rounded-md focus:border-[var(--primary)]"
               />
               <Button
                 type="submit"
                 disabled={!status.online || !inputVal.trim() || isTyping}
-                className="h-[36px] w-[36px] p-0 bg-[#2D6A4F] hover:bg-[#166534] disabled:bg-gray-300 disabled:text-gray-500 text-white rounded-md shrink-0 flex items-center justify-center transition-colors"
+                className="h-[36px] w-[36px] p-0 bg-[var(--primary)] hover:bg-[var(--trace-success)] disabled:bg-gray-300 disabled:text-gray-500 text-white rounded-md shrink-0 flex items-center justify-center transition-colors"
               >
                 <Send className="w-4 h-4" />
               </Button>
             </form>
 
-            <div className="text-center text-[10px] text-[#9B9891] font-mono mt-2 select-none">
+            <div className="text-center text-[10px] text-[var(--trace-subtle)] font-mono mt-2 select-none">
               Powered by Ollama (local)
             </div>
           </div>

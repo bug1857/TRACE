@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { CheckCircle, Leaf, ArrowRight } from 'lucide-react';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable, { Column } from '@/components/shared/DataTable';
@@ -21,11 +21,7 @@ export default function GreenRoutesPage() {
   const { analysis } = useAnalysis();
   
   // Use real backend recommendations when analysis is present, else fall back to mock data
-  const [recommendations, setRecommendations] = useState<RouteRecommendation[]>([]);
-
-  useEffect(() => {
-    setRecommendations(analysis?.greenRoutes || mockRouteRecommendations);
-  }, [analysis]);
+  const recommendations = analysis?.greenRoutes || mockRouteRecommendations;
 
   const [activeRec, setActiveRec] = useState<RouteRecommendation | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -40,8 +36,7 @@ export default function GreenRoutesPage() {
     if (!activeRec) return;
     setIsModalOpen(false);
 
-    // Remove the applied recommendation from the list for simulated real-time impact
-    setRecommendations(recommendations.filter(r => r.id !== activeRec.id));
+    // (Simulated real-time impact skipped since recommendations are derived from context)
     setFeedbackMsg(`Route Optimization Applied: Changed path to "${activeRec.recommendedRoute}". Saved ${activeRec.carbonSaving.toLocaleString()} kg CO₂e.`);
     
     setTimeout(() => {
@@ -63,20 +58,20 @@ export default function GreenRoutesPage() {
       header: 'Current Route',
       accessorKey: 'currentRoute',
       sortable: true,
-      cell: (row) => <span className="text-[#C0392B] font-medium">{row.currentRoute}</span>
+      cell: (row) => <span className="text-[var(--destructive)] font-medium">{row.currentRoute}</span>
     },
     {
       header: 'Recommended Route',
       accessorKey: 'recommendedRoute',
       sortable: true,
-      cell: (row) => <span className="text-[#166534] font-medium">{row.recommendedRoute}</span>
+      cell: (row) => <span className="text-[var(--trace-success)] font-medium">{row.recommendedRoute}</span>
     },
     {
       header: 'Carbon Saving',
       accessorKey: 'carbonSaving',
       isNumeric: true,
       sortable: true,
-      cell: (row) => <span className="font-mono text-[#166534] font-bold">-{row.carbonSaving.toLocaleString()} kg</span>
+      cell: (row) => <span className="font-mono text-[var(--trace-success)] font-bold">-{row.carbonSaving.toLocaleString()} kg</span>
     },
     {
       header: 'Cost Delta',
@@ -86,7 +81,7 @@ export default function GreenRoutesPage() {
       cell: (row) => {
         const isSaving = row.costDelta <= 0;
         return (
-          <span className={`font-mono ${isSaving ? 'text-[#166534]' : 'text-[#B45309]'}`}>
+          <span className={`font-mono ${isSaving ? 'text-[var(--trace-success)]' : 'text-[var(--trace-warning)]'}`}>
             {isSaving ? '-' : '+'}${Math.abs(row.costDelta).toLocaleString()}
           </span>
         );
@@ -107,7 +102,7 @@ export default function GreenRoutesPage() {
           variant="outline"
           size="sm"
           onClick={() => handleApplyRec(row)}
-          className="h-[28px] text-[11px] font-sans border-[#2D6A4F] text-[#2D6A4F] hover:bg-[#E8F0EB] hover:text-[#2D6A4F] flex items-center gap-1 rounded-md"
+          className="h-[28px] text-[11px] font-sans border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--accent)] hover:text-[var(--primary)] flex items-center gap-1 rounded-md"
         >
           <span>Apply</span>
           <ArrowRight className="w-3 h-3" />
@@ -125,28 +120,28 @@ export default function GreenRoutesPage() {
 
       {/* Feedback Banner */}
       {feedbackMsg && (
-        <div className="p-3 bg-[#DCFCE7] border border-[#166534]/10 text-[#166534] text-[13px] rounded-md font-sans flex items-center gap-2 select-none">
+        <div className="p-3 bg-[var(--trace-success-light)] border border-[var(--trace-success)]/10 text-[var(--trace-success)] text-[13px] rounded-md font-sans flex items-center gap-2 select-none">
           <CheckCircle className="w-4 h-4 shrink-0" />
           <span>{feedbackMsg}</span>
         </div>
       )}
 
       {/* Top Summary Banner */}
-      <div className="flex items-start gap-3 bg-[#DCFCE7] border border-[#166534]/10 p-4 rounded-md select-none">
-        <Leaf className="w-5 h-5 text-[#166534] shrink-0 mt-0.5" />
+      <div className="flex items-start gap-3 bg-[var(--trace-success-light)] border border-[var(--trace-success)]/10 p-4 rounded-md select-none">
+        <Leaf className="w-5 h-5 text-[var(--trace-success)] shrink-0 mt-0.5" />
         <div>
-          <h4 className="text-[13px] font-sans font-semibold text-[#166534]">
+          <h4 className="text-[13px] font-sans font-semibold text-[var(--trace-success)]">
             Emissions Optimization Potential
           </h4>
-          <p className="text-[12px] text-[#6B6963] font-sans mt-0.5">
-            Applying all recommendations saves <span className="font-mono font-bold text-[#166534]">{totalCarbonSavingT} tCO₂e</span> this quarter. Cumulative shipping costs are <span className="font-mono font-bold text-[#166534]">{costText}</span>.
+          <p className="text-[12px] text-[var(--muted-foreground)] font-sans mt-0.5">
+            Applying all recommendations saves <span className="font-mono font-bold text-[var(--trace-success)]">{totalCarbonSavingT} tCO₂e</span> this quarter. Cumulative shipping costs are <span className="font-mono font-bold text-[var(--trace-success)]">{costText}</span>.
           </p>
         </div>
       </div>
 
       {/* Recommendations Ledger */}
       <div className="space-y-3">
-        <h3 className="text-[13px] font-sans font-medium text-[#1A1917] uppercase tracking-wider">
+        <h3 className="text-[13px] font-sans font-medium text-[var(--foreground)] uppercase tracking-wider">
           Alternative Pathway Recommendations
         </h3>
         <DataTable columns={columns} data={recommendations} />
@@ -154,14 +149,14 @@ export default function GreenRoutesPage() {
 
       {/* Apply Confirmation Dialog */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-[400px] bg-[#FAFAF8] border border-[#E2E0D8] rounded-md shadow-sm">
+        <DialogContent className="max-w-[400px] bg-[var(--background)] border border-[var(--border)] rounded-md shadow-sm">
           <DialogHeader>
-            <DialogTitle className="text-[16px] font-sans font-medium text-[#1A1917]">
+            <DialogTitle className="text-[16px] font-sans font-medium text-[var(--foreground)]">
               Apply Route Recommendation
             </DialogTitle>
-            <DialogDescription className="text-[12px] text-[#6B6963] pt-1">
+            <DialogDescription className="text-[12px] text-[var(--muted-foreground)] pt-1">
               Confirm applying the route optimization plan. This changes active logistics templates to use the recommended route:
-              <span className="block mt-2 font-semibold text-[#166534]">&quot;{activeRec?.recommendedRoute}&quot;</span>
+              <span className="block mt-2 font-semibold text-[var(--trace-success)]">&quot;{activeRec?.recommendedRoute}&quot;</span>
             </DialogDescription>
           </DialogHeader>
 
@@ -169,13 +164,13 @@ export default function GreenRoutesPage() {
             <Button
               variant="ghost"
               onClick={() => setIsModalOpen(false)}
-              className="h-[32px] text-[12px] text-[#6B6963] hover:bg-[#F3F2EE] rounded-md"
+              className="h-[32px] text-[12px] text-[var(--muted-foreground)] hover:bg-[var(--card)] rounded-md"
             >
               Cancel
             </Button>
             <Button
               onClick={confirmApplyRec}
-              className="h-[32px] text-[12px] bg-[#2D6A4F] hover:bg-[#166534] text-white rounded-md"
+              className="h-[32px] text-[12px] bg-[var(--primary)] hover:bg-[var(--trace-success)] text-white rounded-md"
             >
               Confirm Optimization
             </Button>

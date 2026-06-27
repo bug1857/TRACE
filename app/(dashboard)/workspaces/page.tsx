@@ -101,7 +101,7 @@ export default function WorkspacesPage() {
             <Button
               onClick={() => setIsDialogOpen(true)}
               variant="outline"
-              className="h-[32px] text-[12px] font-sans font-medium border-[#2D6A4F] text-[#2D6A4F] hover:bg-[#E8F0EB] hover:text-[#2D6A4F] flex items-center gap-1.5 rounded-md"
+              className="h-[32px] text-[12px] font-sans font-medium border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--accent)] hover:text-[var(--primary)] flex items-center gap-1.5 rounded-md"
             >
               <Plus className="w-4 h-4" />
               <span>New Workspace</span>
@@ -120,14 +120,14 @@ export default function WorkspacesPage() {
                 onClick={() => setActiveWorkspaceId(w.id)}
                 className={`border rounded-md p-5 flex flex-col justify-between h-[150px] relative cursor-pointer transition-colors ${
                   isActive 
-                    ? 'bg-[#E8F0EB] border-[#2D6A4F]' 
-                    : 'bg-[#F3F2EE] border-[#E2E0D8] hover:bg-[#ECEAE4]'
+                    ? 'bg-[var(--accent)] border-[var(--primary)]' 
+                    : 'bg-[var(--card)] border-[var(--border)] hover:bg-[#ECEAE4]'
                 }`}
               >
                 {/* Header Info */}
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-start pr-6">
-                    <h3 className="text-[14px] font-sans font-medium text-[#1A1917] tracking-tight">
+                    <h3 className="text-[14px] font-sans font-medium text-[var(--foreground)] tracking-tight">
                       {w.name}
                     </h3>
                     <Button
@@ -139,21 +139,21 @@ export default function WorkspacesPage() {
                           handleDeleteWorkspace(w.id);
                         }
                       }}
-                      className="h-[24px] w-[24px] p-0 text-[#C0392B] hover:bg-[#FDECEA] hover:text-[#C0392B] rounded-md absolute top-3 right-3 animate-none"
+                      className="h-[24px] w-[24px] p-0 text-[var(--destructive)] hover:bg-[var(--trace-danger-light)] hover:text-[var(--destructive)] rounded-md absolute top-3 right-3 animate-none"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
                   </div>
                   
                   {isActive && (
-                    <span className="text-[10px] font-medium text-[#2D6A4F] bg-[#E8F0EB] border border-[#2D6A4F]/20 px-2 py-0.5 rounded block w-fit">
+                    <span className="text-[10px] font-medium text-[var(--primary)] bg-[var(--accent)] border border-[var(--primary)]/20 px-2 py-0.5 rounded block w-fit">
                       Active Workspace
                     </span>
                   )}
                 </div>
 
                 {/* Bottom modified stamp */}
-                <div className="flex items-center gap-1 text-[11px] text-[#9B9891] font-mono border-t border-[#E2E0D8] pt-2">
+                <div className="flex items-center gap-1 text-[11px] text-[var(--trace-subtle)] font-mono border-t border-[var(--border)] pt-2">
                   <Calendar className="w-3 h-3" />
                   <span>Created: {new Date(w.created_at).toLocaleDateString()}</span>
                 </div>
@@ -173,29 +173,29 @@ export default function WorkspacesPage() {
 
       {/* New Workspace Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-[400px] bg-[#FAFAF8] border border-[#E2E0D8] rounded-md shadow-sm">
+        <DialogContent className="max-w-[400px] bg-[var(--background)] border border-[var(--border)] rounded-md shadow-sm">
           <DialogHeader>
-            <DialogTitle className="text-[16px] font-sans font-medium text-[#1A1917]">
+            <DialogTitle className="text-[16px] font-sans font-medium text-[var(--foreground)]">
               New Workspace
             </DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleCreateWorkspace} className="space-y-4 py-2">
             {validationError && (
-              <div className="p-2 bg-[#FDECEA] text-[#C0392B] text-[11px] font-sans rounded-md border border-[#C0392B]/10">
+              <div className="p-2 bg-[var(--trace-danger-light)] text-[var(--destructive)] text-[11px] font-sans rounded-md border border-[var(--destructive)]/10">
                 {validationError}
               </div>
             )}
             
             <div className="space-y-1">
-              <label className="text-[10px] font-sans font-medium text-[#6B6963] uppercase tracking-wider block">
+              <label className="text-[10px] font-sans font-medium text-[var(--muted-foreground)] uppercase tracking-wider block">
                 Workspace Name
               </label>
               <Input
                 placeholder="e.g. Primary SC Logs"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                className="h-[34px] text-[13px] bg-[#F3F2EE] border-[#E2E0D8] text-[#1A1917] rounded-md focus:border-[#2D6A4F]"
+                className="h-[34px] text-[13px] bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] rounded-md focus:border-[var(--primary)]"
               />
             </div>
 
@@ -207,13 +207,13 @@ export default function WorkspacesPage() {
                   setIsDialogOpen(false);
                   setValidationError('');
                 }}
-                className="h-[32px] text-[12px] text-[#6B6963] hover:bg-[#F3F2EE] rounded-md"
+                className="h-[32px] text-[12px] text-[var(--muted-foreground)] hover:bg-[var(--card)] rounded-md"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                className="h-[32px] text-[12px] bg-[#2D6A4F] hover:bg-[#166534] text-white rounded-md"
+                className="h-[32px] text-[12px] bg-[var(--primary)] hover:bg-[var(--trace-success)] text-white rounded-md"
               >
                 Create
               </Button>

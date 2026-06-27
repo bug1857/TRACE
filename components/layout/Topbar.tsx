@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ThemeSwitcher } from '@/components/shared/ThemeSwitcher';
 
 export default function Topbar() {
   const pathname = usePathname();
@@ -67,13 +68,13 @@ export default function Topbar() {
   const breadcrumbs = getBreadcrumbs();
 
   return (
-    <div className="h-[48px] border-b border-[#E2E0D8] bg-[#FAFAF8] flex items-center justify-between px-4 fixed top-0 right-0 left-[220px] z-15 no-print">
+    <div className="h-[48px] border-b border-[var(--border)] bg-[var(--background)] flex items-center justify-between px-4 fixed top-0 right-0 left-[220px] z-15 no-print">
       {/* Left: Breadcrumbs */}
-      <div className="flex items-center gap-1.5 text-[13px] text-[#6B6963] select-none">
+      <div className="flex items-center gap-1.5 text-[13px] text-[var(--muted-foreground)] select-none">
         {breadcrumbs.map((segment, index) => (
           <React.Fragment key={segment}>
-            {index > 0 && <ChevronRight className="w-3.5 h-3.5 text-[#9B9891] shrink-0" />}
-            <span className={index === breadcrumbs.length - 1 ? 'text-[#1A1917] font-medium' : 'text-[#6B6963]'}>
+            {index > 0 && <ChevronRight className="w-3.5 h-3.5 text-[var(--trace-subtle)] shrink-0" />}
+            <span className={index === breadcrumbs.length - 1 ? 'text-[var(--foreground)] font-medium' : 'text-[var(--muted-foreground)]'}>
               {segment}
             </span>
           </React.Fragment>
@@ -88,15 +89,15 @@ export default function Topbar() {
             value={activeWorkspaceId !== null ? activeWorkspaceId.toString() : ''}
             onValueChange={(val) => setActiveWorkspaceId(val ? parseInt(val) : null)}
           >
-            <SelectTrigger className="h-[28px] text-[12px] bg-[#F3F2EE] border-[#E2E0D8] text-[#1A1917] font-sans px-2.5 rounded-md focus:ring-0 focus:ring-offset-0">
-              <FolderKanban className="w-3.5 h-3.5 mr-1 text-[#6B6963]" />
+            <SelectTrigger className="h-[28px] text-[12px] bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] font-sans px-2.5 rounded-md focus:ring-0 focus:ring-offset-0">
+              <FolderKanban className="w-3.5 h-3.5 mr-1 text-[var(--muted-foreground)]" />
               <SelectValue placeholder="Select Workspace">
                 {workspaces.find((w) => w.id === activeWorkspaceId)?.name}
               </SelectValue>
             </SelectTrigger>
-            <SelectContent className="bg-[#FAFAF8] border-[#E2E0D8] rounded-md shadow-sm">
+            <SelectContent className="bg-[var(--background)] border-[var(--border)] rounded-md shadow-sm">
               {workspaces.map((w) => (
-                <SelectItem key={w.id} value={w.id.toString()} className="text-[12px] font-sans text-[#1A1917]">
+                <SelectItem key={w.id} value={w.id.toString()} className="text-[12px] font-sans text-[var(--foreground)]">
                   {w.name}
                 </SelectItem>
               ))}
@@ -104,8 +105,11 @@ export default function Topbar() {
           </Select>
         </div>
 
+        {/* Theme Switcher */}
+        <ThemeSwitcher />
+
         {/* User initials avatar */}
-        <div className="w-[28px] h-[28px] rounded-md bg-[#2D6A4F] text-[#E8F0EB] text-[11px] font-mono font-bold flex items-center justify-center border border-[#E2E0D8] select-none">
+        <div className="w-[28px] h-[28px] rounded-md bg-[var(--primary)] text-[var(--primary-foreground)] text-[11px] font-mono font-bold flex items-center justify-center border border-[var(--border)] select-none">
           RS
         </div>
       </div>

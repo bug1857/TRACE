@@ -61,19 +61,19 @@ export default function ProcessOptimizationPage() {
   const getWaitTimeStyle = (row: BottleneckActivity) => {
     if (row.status === 'critical') {
       return {
-        bg: 'bg-[#FDECEA]',
-        text: 'text-[#C0392B]',
+        bg: 'bg-[var(--trace-danger-light)]',
+        text: 'text-[var(--destructive)]',
       };
     }
     if (row.status === 'warning') {
       return {
-        bg: 'bg-[#FEF3C7]',
-        text: 'text-[#B45309]',
+        bg: 'bg-[var(--trace-warning-light)]',
+        text: 'text-[var(--trace-warning)]',
       };
     }
     return {
-      bg: 'bg-[#DCFCE7]',
-      text: 'text-[#166534]',
+      bg: 'bg-[var(--trace-success-light)]',
+      text: 'text-[var(--trace-success)]',
     };
   };
 
@@ -146,7 +146,7 @@ export default function ProcessOptimizationPage() {
       isNumeric: true,
       sortable: true,
       cell: (row) => (
-        <span className="text-[#C0392B]">+{row.carbonImpact.toLocaleString()} kg CO₂e</span>
+        <span className="text-[var(--destructive)]">+{row.carbonImpact.toLocaleString()} kg CO₂e</span>
       ),
     },
   ];
@@ -162,7 +162,7 @@ export default function ProcessOptimizationPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         {/* Left Column: Bottleneck Heatmap */}
         <div className="space-y-3">
-          <h3 className="text-[13px] font-sans font-medium text-[#1A1917] uppercase tracking-wider">
+          <h3 className="text-[13px] font-sans font-medium text-[var(--foreground)] uppercase tracking-wider">
             Bottleneck Queue Heatmap
           </h3>
           <DataTable columns={bottleneckColumns} data={bottlenecks} />
@@ -170,7 +170,7 @@ export default function ProcessOptimizationPage() {
 
         {/* Right Column: Rework Rate */}
         <div className="space-y-3">
-          <h3 className="text-[13px] font-sans font-medium text-[#1A1917] uppercase tracking-wider">
+          <h3 className="text-[13px] font-sans font-medium text-[var(--foreground)] uppercase tracking-wider">
             Rework Rates & Carbon Overhead
           </h3>
           <DataTable columns={reworkColumns} data={reworks} />
@@ -182,43 +182,43 @@ export default function ProcessOptimizationPage() {
       {/* Bottom Section: Duration Distribution Chart */}
       <div className="space-y-4">
         <div className="space-y-1">
-          <h3 className="text-[13px] font-sans font-medium text-[#1A1917] uppercase tracking-wider">
+          <h3 className="text-[13px] font-sans font-medium text-[var(--foreground)] uppercase tracking-wider">
             Case Duration Distribution
           </h3>
-          <p className="text-[12px] text-[#6B6963] font-sans">
+          <p className="text-[12px] text-[var(--muted-foreground)] font-sans">
             Distribution showing the elapsed duration range across all {totalCases} analyzed cases.
           </p>
         </div>
 
-        <div className="border border-[#E2E0D8] bg-[#FAFAF8] p-6 rounded-md shadow-sm">
+        <div className="border border-[var(--border)] bg-[var(--background)] p-6 rounded-md shadow-sm">
           {/* Observable Plot Mock Chart */}
           <div className="space-y-4 max-w-[700px] select-none">
             {durationBuckets.map((bucket) => (
               <div key={bucket.range} className="flex items-center gap-4 text-[13px]">
                 {/* Bucket label */}
-                <div className="w-[100px] text-right text-[#6B6963] font-sans shrink-0 font-medium">
+                <div className="w-[100px] text-right text-[var(--muted-foreground)] font-sans shrink-0 font-medium">
                   {bucket.range}
                 </div>
 
                 {/* Horizontal Bar */}
-                <div className="flex-1 bg-[#F3F2EE] h-[22px] border border-[#E2E0D8] rounded-[3px] overflow-hidden flex items-center">
+                <div className="flex-1 bg-[var(--card)] h-[22px] border border-[var(--border)] rounded-[3px] overflow-hidden flex items-center">
                   <div
                     style={{ width: `${bucket.percentage}%` }}
-                    className="bg-[#2D6A4F] h-full flex items-center justify-end px-2 text-[10px] font-mono font-medium text-white transition-all"
+                    className="bg-[var(--primary)] h-full flex items-center justify-end px-2 text-[10px] font-mono font-medium text-white transition-all"
                   >
                     {bucket.percentage}%
                   </div>
                 </div>
 
                 {/* Numeric value */}
-                <div className="w-[80px] font-mono text-[#1A1917] text-left shrink-0">
+                <div className="w-[80px] font-mono text-[var(--foreground)] text-left shrink-0">
                   {bucket.count} cases
                 </div>
               </div>
             ))}
 
             {/* X-Axis labels */}
-            <div className="flex justify-between text-[10px] text-[#9B9891] border-t border-[#E2E0D8] pt-1.5 pl-[116px] font-mono">
+            <div className="flex justify-between text-[10px] text-[var(--trace-subtle)] border-t border-[var(--border)] pt-1.5 pl-[116px] font-mono">
               <span>0%</span>
               <span>25%</span>
               <span>50%</span>

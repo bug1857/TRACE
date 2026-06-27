@@ -18,16 +18,16 @@ export default function EmptyState({
   onAction
 }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center text-center p-8 border border-[#E2E0D8] bg-[#FAFAF8] rounded-md min-h-[300px] w-full select-none">
-      <div className="mb-4 text-[#E2E0D8] bg-[#F3F2EE] p-4 rounded-md border border-[#E2E0D8]">
+    <div className="flex flex-col items-center justify-center text-center p-8 border border-[var(--border)] bg-[var(--background)] rounded-md min-h-[300px] w-full select-none">
+      <div className="mb-4 text-[var(--border)] bg-[var(--card)] p-4 rounded-md border border-[var(--border)]">
         <Icon className="w-12 h-12" strokeWidth={1.5} />
       </div>
       
-      <h3 className="text-[16px] font-sans font-medium text-[#1A1917] mb-1">
+      <h3 className="text-[16px] font-sans font-medium text-[var(--foreground)] mb-1">
         {title}
       </h3>
       
-      <p className="text-[14px] text-[#6B6963] font-sans max-w-sm mb-5 leading-normal">
+      <p className="text-[14px] text-[var(--muted-foreground)] font-sans max-w-sm mb-5 leading-normal">
         {description}
       </p>
       
@@ -35,7 +35,7 @@ export default function EmptyState({
         <Button
           onClick={onAction}
           variant="outline"
-          className="h-[32px] text-[13px] font-sans font-medium border-[#2D6A4F] text-[#2D6A4F] hover:bg-[#E8F0EB] hover:text-[#2D6A4F] rounded-md transition-colors"
+          className="h-[32px] text-[13px] font-sans font-medium border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--accent)] hover:text-[var(--primary)] rounded-md transition-colors"
         >
           {actionText}
         </Button>

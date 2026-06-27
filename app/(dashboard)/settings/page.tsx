@@ -27,26 +27,16 @@ export default function SettingsPage() {
   const { activeOrgId, organizations, refreshOrganizations } = useWorkspace();
   
   // General State
-  const [orgName, setOrgName] = useState('Louis India Pvt. Ltd.');
-  const [orgCountry, setOrgCountry] = useState('India');
-  const [fiscalYear, setFiscalYear] = useState('2024-2025');
-
-  useEffect(() => {
-    if (activeOrgId !== null && organizations.length > 0) {
-      const org = organizations.find(o => o.id === activeOrgId);
-      if (org) {
-        setOrgName(org.name);
-        setOrgCountry(org.country ?? '');
-        setFiscalYear(org.fiscal_year ?? '2024-2025');
-      }
-    }
-  }, [activeOrgId, organizations]);
+  const activeOrg = organizations.find(o => o.id === activeOrgId) ?? null;
+  const orgName = activeOrg?.name ?? 'Louis India Pvt. Ltd.';
+  const orgCountry = activeOrg?.country ?? 'India';
+  const fiscalYear = activeOrg?.fiscal_year ?? '2024-2025';
 
   // Emission Factors State
   const [factors, setFactors] = useState<EmissionFactor[]>(mockEmissionFactors);
 
   // Model State
-  const [modelFile, setModelFile] = useState('decarbonization_policy_rules_v2.pnml');
+  const [modelFile] = useState('decarbonization_policy_rules_v2.pnml');
   const [ruleStatus, setRuleStatus] = useState<{ active: boolean; filename: string; rule_count: number } | null>(null);
 
   useEffect(() => {
@@ -171,9 +161,10 @@ export default function SettingsPage() {
         rule_count: response.data.rule_count
       });
       triggerFeedback(`Normative model updated: ${file.name} (${response.data.rule_count} rule group(s) loaded)`);
-    } catch (err: any) {
-      if (err.response && err.response.status === 422) {
-        triggerFeedback(`Invalid CSV: ${err.response.data.detail}`);
+    } catch (err) {
+      const apiErr = err as { response?: { status: number, data: { detail: string } } };
+      if (apiErr.response && apiErr.response.status === 422) {
+        triggerFeedback(`Invalid CSV: ${apiErr.response.data.detail}`);
       } else {
         triggerFeedback('Failed to upload model file.');
       }
@@ -185,7 +176,7 @@ export default function SettingsPage() {
       await api.delete('/api/conformance-rules');
       setRuleStatus(prev => prev ? { ...prev, active: false, filename: 'decarbonization_policy_rules_v2.pnml (default)' } : null);
       triggerFeedback('Reverted to default conformance rules.');
-    } catch (err) {
+    } catch {
       triggerFeedback('Failed to reset rules.');
     }
   };
@@ -210,8 +201,9 @@ export default function SettingsPage() {
       setTeam([...team, response.data]);
       setNewMemberEmail('');
       triggerFeedback(`Added ${name} as ${newMemberRole}.`);
-    } catch (err: any) {
-      if (err.response && err.response.status === 400) {
+    } catch (err) {
+      const apiErr = err as { response?: { status: number } };
+      if (apiErr.response && apiErr.response.status === 400) {
         triggerFeedback('A member with this email already exists.');
       } else {
         triggerFeedback('Failed to add member.');
@@ -225,13 +217,13 @@ export default function SettingsPage() {
       header: 'Name',
       accessorKey: 'name',
       sortable: true,
-      cell: (row) => <span className="font-medium text-[#1A1917]">{row.name}</span>
+      cell: (row) => <span className="font-medium text-[var(--foreground)]">{row.name}</span>
     },
     {
       header: 'Email Address',
       accessorKey: 'email',
       sortable: true,
-      cell: (row) => <span className="font-mono text-[#6B6963]">{row.email}</span>
+      cell: (row) => <span className="font-mono text-[var(--muted-foreground)]">{row.email}</span>
     },
     {
       header: 'Access Role',
@@ -259,11 +251,11 @@ export default function SettingsPage() {
               await api.delete(`/api/organizations/${activeOrgId}/members/${row.id}`);
               setTeam(team.filter(t => t.id !== row.id));
               triggerFeedback(`Removed ${row.name}.`);
-            } catch (err) {
+            } catch {
               triggerFeedback('Failed to remove member.');
             }
           }}
-          className="h-[28px] text-[#C0392B] hover:bg-[#FDECEA] hover:text-[#C0392B] rounded-md"
+          className="h-[28px] text-[var(--destructive)] hover:bg-[var(--trace-danger-light)] hover:text-[var(--destructive)] rounded-md"
         >
           Remove
         </Button>
@@ -280,59 +272,59 @@ export default function SettingsPage() {
 
       {/* Feedback Banner */}
       {feedbackMsg && (
-        <div className="p-3 bg-[#DCFCE7] border border-[#166534]/10 text-[#166534] text-[13px] rounded-md font-sans flex items-center gap-2 select-none">
+        <div className="p-3 bg-[var(--trace-success-light)] border border-[var(--trace-success)]/10 text-[var(--trace-success)] text-[13px] rounded-md font-sans flex items-center gap-2 select-none">
           <CheckCircle className="w-4 h-4 shrink-0" />
           <span>{feedbackMsg}</span>
         </div>
       )}
 
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="bg-[#F3F2EE] border border-[#E2E0D8] p-0.5 rounded-md h-[34px] mb-6">
-          <TabsTrigger value="general" className="text-[12px] font-sans px-4 h-[28px] rounded-sm data-[state=active]:bg-[#FAFAF8] text-[#6B6963] focus-visible:ring-0">General</TabsTrigger>
-          <TabsTrigger value="factors" className="text-[12px] font-sans px-4 h-[28px] rounded-sm data-[state=active]:bg-[#FAFAF8] text-[#6B6963] focus-visible:ring-0">Emission Factors</TabsTrigger>
-          <TabsTrigger value="model" className="text-[12px] font-sans px-4 h-[28px] rounded-sm data-[state=active]:bg-[#FAFAF8] text-[#6B6963] focus-visible:ring-0">Normative Model</TabsTrigger>
-          <TabsTrigger value="team" className="text-[12px] font-sans px-4 h-[28px] rounded-sm data-[state=active]:bg-[#FAFAF8] text-[#6B6963] focus-visible:ring-0">Team Access</TabsTrigger>
+        <TabsList className="bg-[var(--card)] border border-[var(--border)] p-0.5 rounded-md h-[34px] mb-6">
+          <TabsTrigger value="general" className="text-[12px] font-sans px-4 h-[28px] rounded-sm data-[state=active]:bg-[var(--background)] text-[var(--muted-foreground)] focus-visible:ring-0">General</TabsTrigger>
+          <TabsTrigger value="factors" className="text-[12px] font-sans px-4 h-[28px] rounded-sm data-[state=active]:bg-[var(--background)] text-[var(--muted-foreground)] focus-visible:ring-0">Emission Factors</TabsTrigger>
+          <TabsTrigger value="model" className="text-[12px] font-sans px-4 h-[28px] rounded-sm data-[state=active]:bg-[var(--background)] text-[var(--muted-foreground)] focus-visible:ring-0">Normative Model</TabsTrigger>
+          <TabsTrigger value="team" className="text-[12px] font-sans px-4 h-[28px] rounded-sm data-[state=active]:bg-[var(--background)] text-[var(--muted-foreground)] focus-visible:ring-0">Team Access</TabsTrigger>
         </TabsList>
 
         {/* Tab 1: General Settings */}
         <TabsContent value="general" className="outline-none focus:outline-none">
-          <div className="max-w-[460px] border border-[#E2E0D8] bg-[#FAFAF8] p-6 rounded-md shadow-sm space-y-6">
-            <h3 className="text-[13px] font-sans font-medium text-[#1A1917] uppercase tracking-wider border-b border-[#E2E0D8] pb-2">
+          <div className="max-w-[460px] border border-[var(--border)] bg-[var(--background)] p-6 rounded-md shadow-sm space-y-6">
+            <h3 className="text-[13px] font-sans font-medium text-[var(--foreground)] uppercase tracking-wider border-b border-[var(--border)] pb-2">
               Organizational Parameters
             </h3>
 
             <form onSubmit={handleSaveGeneral} className="space-y-4">
               <div className="space-y-1">
-                <label className="text-[10px] font-sans font-medium text-[#6B6963] uppercase tracking-wider block">
+                <label className="text-[10px] font-sans font-medium text-[var(--muted-foreground)] uppercase tracking-wider block">
                   Organization Legal Name
                 </label>
                 <Input
-                  value={orgName}
-                  onChange={(e) => setOrgName(e.target.value)}
-                  className="h-[34px] text-[13px] bg-[#F3F2EE] border-[#E2E0D8] text-[#1A1917] rounded-md focus:border-[#2D6A4F]"
+                  value={orgName} 
+                  readOnly
+                  className="h-[34px] text-[13px] bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] rounded-md focus:border-[var(--primary)]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-sans font-medium text-[#6B6963] uppercase tracking-wider block">
+                <label className="text-[10px] font-sans font-medium text-[var(--muted-foreground)] uppercase tracking-wider block">
                   Country / Headquarters
                 </label>
                 <Input
-                  value={orgCountry}
-                  onChange={(e) => setOrgCountry(e.target.value)}
-                  className="h-[34px] text-[13px] bg-[#F3F2EE] border-[#E2E0D8] text-[#1A1917] rounded-md focus:border-[#2D6A4F]"
+                  value={orgCountry} 
+                  readOnly
+                  className="h-[34px] text-[13px] bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] rounded-md focus:border-[var(--primary)]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-sans font-medium text-[#6B6963] uppercase tracking-wider block">
+                <label className="text-[10px] font-sans font-medium text-[var(--muted-foreground)] uppercase tracking-wider block">
                   Reporting Fiscal Year
                 </label>
-                <Select value={fiscalYear} onValueChange={(val) => setFiscalYear(val || '2024-2025')}>
-                  <SelectTrigger className="h-[32px] text-[12px] bg-[#F3F2EE] border-[#E2E0D8] text-[#1A1917] rounded-md focus:ring-0">
+                <Select value={fiscalYear}>
+                  <SelectTrigger className="h-[32px] text-[12px] bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] rounded-md focus:ring-0">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#FAFAF8] border-[#E2E0D8] rounded-md">
+                  <SelectContent className="bg-[var(--background)] border-[var(--border)] rounded-md">
                     <SelectItem value="2024-2025" className="text-[12px]">FY 2024 - 2025</SelectItem>
                     <SelectItem value="2023-2024" className="text-[12px]">FY 2023 - 2024</SelectItem>
                   </SelectContent>
@@ -341,7 +333,7 @@ export default function SettingsPage() {
 
               <Button
                 type="submit"
-                className="h-[34px] bg-[#2D6A4F] hover:bg-[#166534] text-white text-[13px] rounded-md flex items-center gap-1.5 transition-colors"
+                className="h-[34px] bg-[var(--primary)] hover:bg-[var(--trace-success)] text-white text-[13px] rounded-md flex items-center gap-1.5 transition-colors"
               >
                 <Save className="w-4 h-4" />
                 <span>Save Configuration</span>
@@ -354,26 +346,26 @@ export default function SettingsPage() {
         <TabsContent value="factors" className="outline-none focus:outline-none space-y-4">
           <div className="flex justify-between items-center select-none">
             <div>
-              <h3 className="text-[13px] font-sans font-medium text-[#1A1917] uppercase tracking-wider">
+              <h3 className="text-[13px] font-sans font-medium text-[var(--foreground)] uppercase tracking-wider">
                 Activity Carbon Coefficients Database
               </h3>
-              <p className="text-[11px] text-[#6B6963] font-sans mt-0.5">
+              <p className="text-[11px] text-[var(--muted-foreground)] font-sans mt-0.5">
                 Changes apply to all future uploads — already-analyzed data is not retroactively recalculated.
               </p>
             </div>
             <Button
               onClick={handleSaveFactors}
-              className="h-[32px] bg-[#2D6A4F] hover:bg-[#166534] text-white text-[12px] rounded-md flex items-center gap-1.5 transition-colors"
+              className="h-[32px] bg-[var(--primary)] hover:bg-[var(--trace-success)] text-white text-[12px] rounded-md flex items-center gap-1.5 transition-colors"
             >
               <Save className="w-4 h-4" />
               <span>Save Factors Ledger</span>
             </Button>
           </div>
 
-          <div className="border border-[#E2E0D8] rounded-md bg-[#FAFAF8]">
+          <div className="border border-[var(--border)] rounded-md bg-[var(--background)]">
             <table className="border-collapse w-full text-[13px]">
-              <thead className="bg-[#F3F2EE] border-b-2 border-[#E2E0D8]">
-                <tr className="h-[38px] text-[#9B9891] text-[10px] font-sans uppercase font-medium tracking-wider">
+              <thead className="bg-[var(--card)] border-b-2 border-[var(--border)]">
+                <tr className="h-[38px] text-[var(--trace-subtle)] text-[10px] font-sans uppercase font-medium tracking-wider">
                   <th className="px-4 py-2 text-left">Activity Node Name</th>
                   <th className="px-4 py-2 text-right">Factor (kg CO₂e)</th>
                   <th className="px-4 py-2 text-left">Reference Source</th>
@@ -382,19 +374,19 @@ export default function SettingsPage() {
               </thead>
               <tbody>
                 {factors.map((f) => (
-                  <tr key={f.id} className="h-[44px] border-b border-[#E2E0D8] last:border-b-0">
-                    <td className="px-4 py-2 text-[#1A1917] font-medium">{f.activity}</td>
+                  <tr key={f.id} className="h-[44px] border-b border-[var(--border)] last:border-b-0">
+                    <td className="px-4 py-2 text-[var(--foreground)] font-medium">{f.activity}</td>
                     <td className="px-4 py-2 text-right font-mono w-[160px]">
                       <Input
                         type="number"
                         step="0.01"
                         value={f.factor}
                         onChange={(e) => handleFactorChange(f.id, parseFloat(e.target.value) || 0)}
-                        className="h-[28px] text-[12px] font-mono text-right bg-[#F3F2EE] border-[#E2E0D8] text-[#1A1917] rounded-md focus:border-[#2D6A4F]"
+                        className="h-[28px] text-[12px] font-mono text-right bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] rounded-md focus:border-[var(--primary)]"
                       />
                     </td>
-                    <td className="px-4 py-2 text-[#6B6963]">{f.source}</td>
-                    <td className="px-4 py-2 text-[#9B9891] font-mono text-[11px]">{f.unit}</td>
+                    <td className="px-4 py-2 text-[var(--muted-foreground)]">{f.source}</td>
+                    <td className="px-4 py-2 text-[var(--trace-subtle)] font-mono text-[11px]">{f.unit}</td>
                   </tr>
                 ))}
               </tbody>
@@ -404,44 +396,44 @@ export default function SettingsPage() {
 
         {/* Tab 3: Normative Model */}
         <TabsContent value="model" className="outline-none focus:outline-none">
-          <div className="max-w-[500px] border border-[#E2E0D8] bg-[#FAFAF8] p-6 rounded-md shadow-sm space-y-6 select-none">
-            <h3 className="text-[13px] font-sans font-medium text-[#1A1917] uppercase tracking-wider border-b border-[#E2E0D8] pb-2">
+          <div className="max-w-[500px] border border-[var(--border)] bg-[var(--background)] p-6 rounded-md shadow-sm space-y-6 select-none">
+            <h3 className="text-[13px] font-sans font-medium text-[var(--foreground)] uppercase tracking-wider border-b border-[var(--border)] pb-2">
               Normative Process Policy Model
             </h3>
 
             <div className="space-y-4">
-              <div className="p-3.5 bg-[#F3F2EE] border border-[#E2E0D8] rounded-md text-[13px] space-y-2">
+              <div className="p-3.5 bg-[var(--card)] border border-[var(--border)] rounded-md text-[13px] space-y-2">
                 <div>
-                  <span className="text-[10px] text-[#6B6963] uppercase block">Currently Active Policy ruleset</span>
-                  <span className="font-mono text-[12px] font-semibold text-[#1A1917]">
+                  <span className="text-[10px] text-[var(--muted-foreground)] uppercase block">Currently Active Policy ruleset</span>
+                  <span className="font-mono text-[12px] font-semibold text-[var(--foreground)]">
                     {ruleStatus?.filename ?? modelFile}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-[#6B6963] uppercase block">Rules Count</span>
-                  <span className="font-sans font-medium text-[#2D6A4F]">
+                  <span className="text-[10px] text-[var(--muted-foreground)] uppercase block">Rules Count</span>
+                  <span className="font-sans font-medium text-[var(--primary)]">
                     {ruleStatus ? `${ruleStatus.rule_count} rule group(s) — ${ruleStatus.active ? 'custom' : 'default'}` : '4 Active ESG constraints'}
                   </span>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[11px] font-sans font-medium text-[#6B6963] uppercase tracking-wider block">
+                <label className="text-[11px] font-sans font-medium text-[var(--muted-foreground)] uppercase tracking-wider block">
                   Replace Ruleset Model File
                 </label>
-                <div className="border border-dashed border-[#E2E0D8] bg-[#F3F2EE] hover:bg-[#ECEAE4] rounded-md p-6 text-center cursor-pointer transition-colors relative">
+                <div className="border border-dashed border-[var(--border)] bg-[var(--card)] hover:bg-[#ECEAE4] rounded-md p-6 text-center cursor-pointer transition-colors relative">
                   <input
                     type="file"
                     accept=".pnml,.csv"
                     onChange={handleModelUpload}
                     className="absolute inset-0 opacity-0 cursor-pointer"
                   />
-                  <Upload className="w-8 h-8 text-[#6B6963] mx-auto mb-2" strokeWidth={1.5} />
-                  <span className="text-[12px] font-sans font-medium text-[#1A1917] block">Drop PNML model file here, or click to upload</span>
-                  <span className="text-[10px] text-[#6B6963] block mt-1">Accepts standard PNML or structured CSV rulesets</span>
+                  <Upload className="w-8 h-8 text-[var(--muted-foreground)] mx-auto mb-2" strokeWidth={1.5} />
+                  <span className="text-[12px] font-sans font-medium text-[var(--foreground)] block">Drop PNML model file here, or click to upload</span>
+                  <span className="text-[10px] text-[var(--muted-foreground)] block mt-1">Accepts standard PNML or structured CSV rulesets</span>
                 </div>
                 {ruleStatus?.active === true && (
-                  <Button variant="outline" onClick={handleResetRules} className="w-full h-[32px] text-[11px] border-[#E2E0D8] text-[#6B6963] hover:bg-[#F3F2EE] rounded-md">Revert to Default Rules</Button>
+                  <Button variant="outline" onClick={handleResetRules} className="w-full h-[32px] text-[11px] border-[var(--border)] text-[var(--muted-foreground)] hover:bg-[var(--card)] rounded-md">Revert to Default Rules</Button>
                 )}
               </div>
             </div>
@@ -452,14 +444,14 @@ export default function SettingsPage() {
         <TabsContent value="team" className="outline-none focus:outline-none space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 items-start">
             {/* Team Add form */}
-            <div className="border border-[#E2E0D8] bg-[#FAFAF8] p-5 rounded-md shadow-sm space-y-4 select-none">
-              <h3 className="text-[13px] font-sans font-medium text-[#1A1917] uppercase tracking-wider border-b border-[#E2E0D8] pb-2">
+            <div className="border border-[var(--border)] bg-[var(--background)] p-5 rounded-md shadow-sm space-y-4 select-none">
+              <h3 className="text-[13px] font-sans font-medium text-[var(--foreground)] uppercase tracking-wider border-b border-[var(--border)] pb-2">
                 Invite Member
               </h3>
 
               <form onSubmit={handleAddMember} className="space-y-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-sans font-medium text-[#6B6963] uppercase tracking-wider block">
+                  <label className="text-[10px] font-sans font-medium text-[var(--muted-foreground)] uppercase tracking-wider block">
                     Email Address
                   </label>
                   <Input
@@ -467,22 +459,22 @@ export default function SettingsPage() {
                     placeholder="name@louisindia.com"
                     value={newMemberEmail}
                     onChange={(e) => setNewMemberEmail(e.target.value)}
-                    className="h-[34px] text-[13px] bg-[#F3F2EE] border-[#E2E0D8] text-[#1A1917] rounded-md focus:border-[#2D6A4F]"
+                    className="h-[34px] text-[13px] bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] rounded-md focus:border-[var(--primary)]"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-sans font-medium text-[#6B6963] uppercase tracking-wider block">
+                  <label className="text-[10px] font-sans font-medium text-[var(--muted-foreground)] uppercase tracking-wider block">
                     Access Level
                   </label>
                   <Select
                     value={newMemberRole}
                     onValueChange={(val) => setNewMemberRole((val as 'admin' | 'editor' | 'viewer') || 'viewer')}
                   >
-                    <SelectTrigger className="h-[32px] text-[12px] bg-[#F3F2EE] border-[#E2E0D8] text-[#1A1917] rounded-md focus:ring-0">
+                    <SelectTrigger className="h-[32px] text-[12px] bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] rounded-md focus:ring-0">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#FAFAF8] border-[#E2E0D8] rounded-md">
+                    <SelectContent className="bg-[var(--background)] border-[var(--border)] rounded-md">
                       <SelectItem value="viewer" className="text-[12px]">Viewer (Read Only)</SelectItem>
                       <SelectItem value="editor" className="text-[12px]">Editor (Read/Write)</SelectItem>
                       <SelectItem value="admin" className="text-[12px]">Admin (Full Access)</SelectItem>
@@ -492,7 +484,7 @@ export default function SettingsPage() {
 
                 <Button
                   type="submit"
-                  className="w-full h-[34px] bg-[#2D6A4F] hover:bg-[#166534] text-white text-[12px] rounded-md flex items-center justify-center gap-1.5 transition-colors"
+                  className="w-full h-[34px] bg-[var(--primary)] hover:bg-[var(--trace-success)] text-white text-[12px] rounded-md flex items-center justify-center gap-1.5 transition-colors"
                 >
                   <Users className="w-3.5 h-3.5" />
                   <span>Send Invite</span>
@@ -502,7 +494,7 @@ export default function SettingsPage() {
 
             {/* Team Roster */}
             <div className="space-y-3">
-              <h3 className="text-[13px] font-sans font-medium text-[#1A1917] uppercase tracking-wider">
+              <h3 className="text-[13px] font-sans font-medium text-[var(--foreground)] uppercase tracking-wider">
                 Auditor Roster Access Ledger
               </h3>
               <DataTable columns={teamColumns} data={team} />

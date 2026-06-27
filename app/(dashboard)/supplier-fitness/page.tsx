@@ -52,18 +52,18 @@ export default function SupplierFitnessPage() {
 
   // Helper for color-coded CFS pills
   const getCfsPill = (cfs: number) => {
-    let bg = 'bg-[#DCFCE7]';
-    let text = 'text-[#166534]';
-    let border = 'border-[#166534]/10';
+    let bg = 'bg-[var(--trace-success-light)]';
+    let text = 'text-[var(--trace-success)]';
+    let border = 'border-[var(--trace-success)]/10';
 
     if (cfs < 50) {
-      bg = 'bg-[#FDECEA]';
-      text = 'text-[#C0392B]';
-      border = 'border-[#C0392B]/10';
+      bg = 'bg-[var(--trace-danger-light)]';
+      text = 'text-[var(--destructive)]';
+      border = 'border-[var(--destructive)]/10';
     } else if (cfs < 80) {
-      bg = 'bg-[#FEF3C7]';
-      text = 'text-[#B45309]';
-      border = 'border-[#B45309]/10';
+      bg = 'bg-[var(--trace-warning-light)]';
+      text = 'text-[var(--trace-warning)]';
+      border = 'border-[var(--trace-warning)]/10';
     }
 
     return (
@@ -81,11 +81,11 @@ export default function SupplierFitnessPage() {
       cell: (row) => (
         <div className="flex flex-col select-none">
           <div className="flex items-center gap-2">
-            <Truck className="w-4 h-4 text-[#6B6963]" />
-            <span className="font-medium text-[#1A1917]">{row.supplier}</span>
+            <Truck className="w-4 h-4 text-[var(--muted-foreground)]" />
+            <span className="font-medium text-[var(--foreground)]">{row.supplier}</span>
           </div>
           {row.isResourceFallback && (
-            <span className="text-[10px] text-[#9B9891] ml-6 font-sans italic">
+            <span className="text-[10px] text-[var(--trace-subtle)] ml-6 font-sans italic">
               (via resource column)
             </span>
           )}
@@ -128,7 +128,7 @@ export default function SupplierFitnessPage() {
           variant="outline"
           size="sm"
           onClick={() => handleRequestAction(row)}
-          className="h-[28px] text-[11px] font-sans border-[#E2E0D8] text-[#2D6A4F] hover:bg-[#E8F0EB] hover:text-[#2D6A4F] flex items-center gap-1 rounded-md"
+          className="h-[28px] text-[11px] font-sans border-[var(--border)] text-[var(--primary)] hover:bg-[var(--accent)] hover:text-[var(--primary)] flex items-center gap-1 rounded-md"
         >
           <Mail className="w-3 h-3" />
           <span>Request Corrective Action</span>
@@ -150,7 +150,7 @@ export default function SupplierFitnessPage() {
 
       {/* Feedback Banner */}
       {feedbackMsg && (
-        <div className="p-3 bg-[#DCFCE7] border border-[#166534]/10 text-[#166534] text-[13px] rounded-md font-sans flex items-center gap-2 select-none">
+        <div className="p-3 bg-[var(--trace-success-light)] border border-[var(--trace-success)]/10 text-[var(--trace-success)] text-[13px] rounded-md font-sans flex items-center gap-2 select-none">
           <CheckCircle className="w-4 h-4" />
           <span>{feedbackMsg}</span>
         </div>
@@ -158,13 +158,13 @@ export default function SupplierFitnessPage() {
 
       {/* Top Warning Banner */}
       {lowCfsSuppliers.length > 0 && (
-        <div className="flex items-start gap-3 bg-[#FDECEA] border border-[#C0392B]/10 p-4 rounded-md select-none">
-          <AlertTriangle className="w-5 h-5 text-[#C0392B] shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 bg-[var(--trace-danger-light)] border border-[var(--destructive)]/10 p-4 rounded-md select-none">
+          <AlertTriangle className="w-5 h-5 text-[var(--destructive)] shrink-0 mt-0.5" />
           <div>
-            <h4 className="text-[13px] font-sans font-semibold text-[#C0392B]">
+            <h4 className="text-[13px] font-sans font-semibold text-[var(--destructive)]">
               Action Required
             </h4>
-            <p className="text-[12px] text-[#6B6963] font-sans mt-0.5">
+            <p className="text-[12px] text-[var(--muted-foreground)] font-sans mt-0.5">
               {lowCfsSuppliers.length} supplier{lowCfsSuppliers.length > 1 ? 's' : ''} below threshold (CFS &lt; 50). Dispatched freight is causing active carbon ledger deficits. Corrective actions are recommended.
             </p>
           </div>
@@ -173,7 +173,7 @@ export default function SupplierFitnessPage() {
 
       {/* Supplier Index Table */}
       <div className="space-y-3">
-        <h3 className="text-[13px] font-sans font-medium text-[#1A1917] uppercase tracking-wider">
+        <h3 className="text-[13px] font-sans font-medium text-[var(--foreground)] uppercase tracking-wider">
           Carrier Performance Ledger
         </h3>
         <DataTable columns={columns} data={suppliers} />
@@ -181,12 +181,12 @@ export default function SupplierFitnessPage() {
 
       {/* Confirmation Dialog */}
       <Dialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
-        <DialogContent className="max-w-[400px] bg-[#FAFAF8] border border-[#E2E0D8] rounded-md shadow-sm">
+        <DialogContent className="max-w-[400px] bg-[var(--background)] border border-[var(--border)] rounded-md shadow-sm">
           <DialogHeader>
-            <DialogTitle className="text-[16px] font-sans font-medium text-[#1A1917]">
+            <DialogTitle className="text-[16px] font-sans font-medium text-[var(--foreground)]">
               Confirm Corrective Action Request
             </DialogTitle>
-            <DialogDescription className="text-[12px] text-[#6B6963] pt-1">
+            <DialogDescription className="text-[12px] text-[var(--muted-foreground)] pt-1">
               Are you sure you want to dispatch a formal carbon-compliance warning and request corrective action plans from {actionSupplier?.supplier}?
             </DialogDescription>
           </DialogHeader>
@@ -195,13 +195,13 @@ export default function SupplierFitnessPage() {
             <Button
               variant="ghost"
               onClick={() => setIsAlertOpen(false)}
-              className="h-[32px] text-[12px] text-[#6B6963] hover:bg-[#F3F2EE] rounded-md"
+              className="h-[32px] text-[12px] text-[var(--muted-foreground)] hover:bg-[var(--card)] rounded-md"
             >
               Cancel
             </Button>
             <Button
               onClick={confirmActionRequest}
-              className="h-[32px] text-[12px] bg-[#C0392B] hover:bg-[#9B2C21] text-white rounded-md"
+              className="h-[32px] text-[12px] bg-[var(--destructive)] hover:bg-[#9B2C21] text-white rounded-md"
             >
               Confirm & Send
             </Button>

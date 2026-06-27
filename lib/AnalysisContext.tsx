@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { OcelMetadata, OcelNode, OcelEdge, CarbonBudgetMonth, Violation, CfsScore, SupplierFitness, ColumnMapping, ActivityCarbonBreakdownItem, ProcessOptimization, BrsrReport, EsgReport, RouteRecommendation } from './types';
+import { OcelMetadata, OcelNode, OcelEdge, CarbonBudgetMonth, Violation, CfsScore, SupplierFitness, ColumnMapping, ActivityCarbonBreakdownItem, ProcessOptimization, BrsrReport, EsgReport, RouteRecommendation, Forecasting } from './types';
 
 export interface UploadResponse {
   metadata: OcelMetadata;
@@ -23,6 +23,7 @@ export interface UploadResponse {
     disallowed_activities: string[];
     mandated_alternative: string;
   }[];
+  forecasting?: Forecasting;
 }
 
 interface AnalysisContextType {

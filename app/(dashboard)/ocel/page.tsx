@@ -238,18 +238,18 @@ export default function OcelPage() {
       data: {
         label: (
           <div className="p-1">
-            <div className="font-sans font-medium text-[12px] text-[#1A1917]">{node.label}</div>
-            <div className="font-mono text-[10px] text-[#6B6963] mt-0.5">Freq: {node.frequency}</div>
-            <div className="font-mono text-[9px] text-[#9B9891]">Duration: {node.avgDuration}</div>
+            <div className="font-sans font-medium text-[12px] text-[var(--foreground)]">{node.label}</div>
+            <div className="font-mono text-[10px] text-[var(--muted-foreground)] mt-0.5">Freq: {node.frequency}</div>
+            <div className="font-mono text-[9px] text-[var(--trace-subtle)]">Duration: {node.avgDuration}</div>
           </div>
         )
       },
       position: { x: xCoord, y: yCoord },
       style: {
-        background: '#FAFAF8',
-        border: '1px solid #E2E0D8',
+        background: 'var(--background)',
+        border: '1px solid #E2E8F0',
         borderRadius: '6px',
-        color: '#1A1917',
+        color: 'var(--foreground)',
         width: 170,
         boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
       }
@@ -261,11 +261,11 @@ export default function OcelPage() {
     source: edge.source,
     target: edge.target,
     label: `${edge.frequency}x (${edge.avgDelay})`,
-    labelStyle: { fill: '#6B6963', fontSize: 10, fontFamily: 'monospace', fontWeight: 500 },
+    labelStyle: { fill: 'var(--muted-foreground)', fontSize: 10, fontFamily: 'monospace', fontWeight: 500 },
     labelBgPadding: [4, 2] as [number, number],
     labelBgBorderRadius: 4,
-    labelBgStyle: { fill: '#F3F2EE', color: '#6B6963' },
-    style: { stroke: '#9B9891', strokeWidth: 1.5 },
+    labelBgStyle: { fill: 'var(--card)', color: 'var(--muted-foreground)' },
+    style: { stroke: 'var(--trace-subtle)', strokeWidth: 1.5 },
     animated: true
   }));
 
@@ -301,7 +301,7 @@ export default function OcelPage() {
             variant="outline"
             size="sm"
             onClick={loadDemoData}
-            className="h-[32px] text-[12px] text-[#2D6A4F] border-[#2D6A4F] hover:bg-[#E8F0EB] hover:text-[#2D6A4F] rounded-md"
+            className="h-[32px] text-[12px] text-[var(--primary)] border-[var(--primary)] hover:bg-[var(--accent)] hover:text-[var(--primary)] rounded-md"
           >
             <FlaskConical className="w-3.5 h-3.5 mr-1.5" />
             Load Demo Event Log
@@ -312,34 +312,34 @@ export default function OcelPage() {
       <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 flex-1 items-start">
         {/* Left Column */}
         <div className="space-y-4">
-          <div className="border border-[#E2E0D8] bg-[#FAFAF8] p-5 rounded-md shadow-sm">
-            <h3 className="text-[13px] font-sans font-medium text-[#1A1917] uppercase tracking-wider mb-3">
+          <div className="border border-[var(--border)] bg-[var(--background)] p-5 rounded-md shadow-sm">
+            <h3 className="text-[13px] font-sans font-medium text-[var(--foreground)] uppercase tracking-wider mb-3">
               Event Log Upload
             </h3>
 
             <FileUpload onFileSelect={handleFileSelect} placeholder="Drop OCEL 2.0 CSV/XML" />
 
             {(selectedFile || displayedFileName) && (
-              <div className="mt-4 border-t border-[#E2E0D8] pt-4 space-y-3.5">
-                <div className="flex items-start gap-2.5 p-2 bg-[#F3F2EE] rounded-md border border-[#E2E0D8]">
-                  <FileSpreadsheet className="w-5 h-5 text-[#2D6A4F] shrink-0 mt-0.5" />
+              <div className="mt-4 border-t border-[var(--border)] pt-4 space-y-3.5">
+                <div className="flex items-start gap-2.5 p-2 bg-[var(--card)] rounded-md border border-[var(--border)]">
+                  <FileSpreadsheet className="w-5 h-5 text-[var(--primary)] shrink-0 mt-0.5" />
                   <div className="overflow-hidden">
-                    <p className="text-[12px] font-sans font-medium text-[#1A1917] truncate">
+                    <p className="text-[12px] font-sans font-medium text-[var(--foreground)] truncate">
                       {displayedFileName}
                     </p>
-                    <p className="text-[10px] text-[#6B6963] font-mono">
+                    <p className="text-[10px] text-[var(--muted-foreground)] font-mono">
                       {displayedFileSizeStr}
                     </p>
                   </div>
                 </div>
 
                 {(((errorType === '422' && errorDetails) || isAdjustingMapping)) && (
-                  <div className={`p-3.5 border ${isAdjustingMapping ? 'border-[#E2E0D8]' : 'border-[#C0392B]/30'} bg-[#FAFAF8] rounded-md text-[12px] font-sans space-y-4`}>
+                  <div className={`p-3.5 border ${isAdjustingMapping ? 'border-[var(--border)]' : 'border-[var(--destructive)]/30'} bg-[var(--background)] rounded-md text-[12px] font-sans space-y-4`}>
                     <div className="space-y-1">
-                      <p className={`font-medium ${isAdjustingMapping ? 'text-[#1A1917]' : 'text-[#C0392B]'}`}>
+                      <p className={`font-medium ${isAdjustingMapping ? 'text-[var(--foreground)]' : 'text-[var(--destructive)]'}`}>
                         {isAdjustingMapping ? 'Adjust Column Mapping' : 'Column Mapping Required'}
                       </p>
-                      <p className="text-[11px] text-[#6B6963] leading-relaxed">
+                      <p className="text-[11px] text-[var(--muted-foreground)] leading-relaxed">
                         {isAdjustingMapping 
                           ? 'Review and adjust your column mappings below.' 
                           : "We couldn't confidently detect your columns — please confirm them below."}
@@ -349,14 +349,14 @@ export default function OcelPage() {
                     <div className="space-y-3.5 pt-1">
                       {/* Case ID */}
                       <div className="space-y-1">
-                        <label className={`block text-[11px] font-medium ${isFieldMissing('case_id') ? 'text-red-600' : 'text-[#1A1917]'}`}>
+                        <label className={`block text-[11px] font-medium ${isFieldMissing('case_id') ? 'text-red-600' : 'text-[var(--foreground)]'}`}>
                           Case ID (Required)
                         </label>
                         <select
                           value={selectedCaseId}
                           onChange={(e) => setSelectedCaseId(e.target.value)}
-                          className={`w-full h-8 px-2 bg-white border rounded text-[12px] font-sans focus:outline-none focus:ring-1 focus:ring-[#2D6A4F] ${
-                            isFieldMissing('case_id') ? 'border-red-500 bg-red-50 text-red-900 font-medium' : 'border-[#E2E0D8] text-[#1A1917]'
+                          className={`w-full h-8 px-2 bg-white border rounded text-[12px] font-sans focus:outline-none focus:ring-1 focus:ring-[var(--primary)] ${
+                            isFieldMissing('case_id') ? 'border-red-500 bg-red-50 text-red-900 font-medium' : 'border-[var(--border)] text-[var(--foreground)]'
                           }`}
                         >
                           <option value="">-- Select Column --</option>
@@ -370,14 +370,14 @@ export default function OcelPage() {
 
                       {/* Activity */}
                       <div className="space-y-1">
-                        <label className={`block text-[11px] font-medium ${isFieldMissing('activity') ? 'text-red-600' : 'text-[#1A1917]'}`}>
+                        <label className={`block text-[11px] font-medium ${isFieldMissing('activity') ? 'text-red-600' : 'text-[var(--foreground)]'}`}>
                           Activity (Required)
                         </label>
                         <select
                           value={selectedActivity}
                           onChange={(e) => setSelectedActivity(e.target.value)}
-                          className={`w-full h-8 px-2 bg-white border rounded text-[12px] font-sans focus:outline-none focus:ring-1 focus:ring-[#2D6A4F] ${
-                            isFieldMissing('activity') ? 'border-red-500 bg-red-50 text-red-900 font-medium' : 'border-[#E2E0D8] text-[#1A1917]'
+                          className={`w-full h-8 px-2 bg-white border rounded text-[12px] font-sans focus:outline-none focus:ring-1 focus:ring-[var(--primary)] ${
+                            isFieldMissing('activity') ? 'border-red-500 bg-red-50 text-red-900 font-medium' : 'border-[var(--border)] text-[var(--foreground)]'
                           }`}
                         >
                           <option value="">-- Select Column --</option>
@@ -391,14 +391,14 @@ export default function OcelPage() {
 
                       {/* Timestamp */}
                       <div className="space-y-1">
-                        <label className={`block text-[11px] font-medium ${isFieldMissing('timestamp') ? 'text-red-600' : 'text-[#1A1917]'}`}>
+                        <label className={`block text-[11px] font-medium ${isFieldMissing('timestamp') ? 'text-red-600' : 'text-[var(--foreground)]'}`}>
                           Timestamp (Required)
                         </label>
                         <select
                           value={selectedTimestamp}
                           onChange={(e) => setSelectedTimestamp(e.target.value)}
-                          className={`w-full h-8 px-2 bg-white border rounded text-[12px] font-sans focus:outline-none focus:ring-1 focus:ring-[#2D6A4F] ${
-                            isFieldMissing('timestamp') ? 'border-red-500 bg-red-50 text-red-900 font-medium' : 'border-[#E2E0D8] text-[#1A1917]'
+                          className={`w-full h-8 px-2 bg-white border rounded text-[12px] font-sans focus:outline-none focus:ring-1 focus:ring-[var(--primary)] ${
+                            isFieldMissing('timestamp') ? 'border-red-500 bg-red-50 text-red-900 font-medium' : 'border-[var(--border)] text-[var(--foreground)]'
                           }`}
                         >
                           <option value="">-- Select Column --</option>
@@ -412,14 +412,14 @@ export default function OcelPage() {
 
                       {/* Resource */}
                       <div className="space-y-1">
-                        <label className={`block text-[11px] font-medium ${isFieldMissing('resource') ? 'text-red-600' : 'text-[#1A1917]'}`}>
+                        <label className={`block text-[11px] font-medium ${isFieldMissing('resource') ? 'text-red-600' : 'text-[var(--foreground)]'}`}>
                           Resource (Optional)
                         </label>
                         <select
                           value={selectedResource}
                           onChange={(e) => setSelectedResource(e.target.value)}
-                          className={`w-full h-8 px-2 bg-white border rounded text-[12px] font-sans focus:outline-none focus:ring-1 focus:ring-[#2D6A4F] ${
-                            isFieldMissing('resource') ? 'border-red-500 bg-red-50 text-red-900 font-medium' : 'border-[#E2E0D8] text-[#1A1917]'
+                          className={`w-full h-8 px-2 bg-white border rounded text-[12px] font-sans focus:outline-none focus:ring-1 focus:ring-[var(--primary)] ${
+                            isFieldMissing('resource') ? 'border-red-500 bg-red-50 text-red-900 font-medium' : 'border-[var(--border)] text-[var(--foreground)]'
                           }`}
                         >
                           <option value="— None —">— None —</option>
@@ -433,14 +433,14 @@ export default function OcelPage() {
 
                       {/* Supplier */}
                       <div className="space-y-1">
-                        <label className={`block text-[11px] font-medium ${isFieldMissing('supplier') ? 'text-red-600' : 'text-[#1A1917]'}`}>
+                        <label className={`block text-[11px] font-medium ${isFieldMissing('supplier') ? 'text-red-600' : 'text-[var(--foreground)]'}`}>
                           Supplier (Optional)
                         </label>
                         <select
                           value={selectedSupplier}
                           onChange={(e) => setSelectedSupplier(e.target.value)}
-                          className={`w-full h-8 px-2 bg-white border rounded text-[12px] font-sans focus:outline-none focus:ring-1 focus:ring-[#2D6A4F] ${
-                            isFieldMissing('supplier') ? 'border-red-500 bg-red-50 text-red-900 font-medium' : 'border-[#E2E0D8] text-[#1A1917]'
+                          className={`w-full h-8 px-2 bg-white border rounded text-[12px] font-sans focus:outline-none focus:ring-1 focus:ring-[var(--primary)] ${
+                            isFieldMissing('supplier') ? 'border-red-500 bg-red-50 text-red-900 font-medium' : 'border-[var(--border)] text-[var(--foreground)]'
                           }`}
                         >
                           <option value="— None —">— None —</option>
@@ -454,14 +454,14 @@ export default function OcelPage() {
 
                       {/* Water */}
                       <div className="space-y-1">
-                        <label className={`block text-[11px] font-medium ${isFieldMissing('water') ? 'text-red-600' : 'text-[#1A1917]'}`}>
+                        <label className={`block text-[11px] font-medium ${isFieldMissing('water') ? 'text-red-600' : 'text-[var(--foreground)]'}`}>
                           Water (Optional)
                         </label>
                         <select
                           value={selectedWater}
                           onChange={(e) => setSelectedWater(e.target.value)}
-                          className={`w-full h-8 px-2 bg-white border rounded text-[12px] font-sans focus:outline-none focus:ring-1 focus:ring-[#2D6A4F] ${
-                            isFieldMissing('water') ? 'border-red-500 bg-red-50 text-red-900 font-medium' : 'border-[#E2E0D8] text-[#1A1917]'
+                          className={`w-full h-8 px-2 bg-white border rounded text-[12px] font-sans focus:outline-none focus:ring-1 focus:ring-[var(--primary)] ${
+                            isFieldMissing('water') ? 'border-red-500 bg-red-50 text-red-900 font-medium' : 'border-[var(--border)] text-[var(--foreground)]'
                           }`}
                         >
                           <option value="— None —">— None —</option>
@@ -475,14 +475,14 @@ export default function OcelPage() {
 
                       {/* Electricity */}
                       <div className="space-y-1">
-                        <label className={`block text-[11px] font-medium ${isFieldMissing('electricity') ? 'text-red-600' : 'text-[#1A1917]'}`}>
+                        <label className={`block text-[11px] font-medium ${isFieldMissing('electricity') ? 'text-red-600' : 'text-[var(--foreground)]'}`}>
                           Electricity (Optional)
                         </label>
                         <select
                           value={selectedElectricity}
                           onChange={(e) => setSelectedElectricity(e.target.value)}
-                          className={`w-full h-8 px-2 bg-white border rounded text-[12px] font-sans focus:outline-none focus:ring-1 focus:ring-[#2D6A4F] ${
-                            isFieldMissing('electricity') ? 'border-red-500 bg-red-50 text-red-900 font-medium' : 'border-[#E2E0D8] text-[#1A1917]'
+                          className={`w-full h-8 px-2 bg-white border rounded text-[12px] font-sans focus:outline-none focus:ring-1 focus:ring-[var(--primary)] ${
+                            isFieldMissing('electricity') ? 'border-red-500 bg-red-50 text-red-900 font-medium' : 'border-[var(--border)] text-[var(--foreground)]'
                           }`}
                         >
                           <option value="— None —">— None —</option>
@@ -496,14 +496,14 @@ export default function OcelPage() {
 
                       {/* Cost */}
                       <div className="space-y-1">
-                        <label className={`block text-[11px] font-medium ${isFieldMissing('cost') ? 'text-red-600' : 'text-[#1A1917]'}`}>
+                        <label className={`block text-[11px] font-medium ${isFieldMissing('cost') ? 'text-red-600' : 'text-[var(--foreground)]'}`}>
                           Cost (Optional)
                         </label>
                         <select
                           value={selectedCost}
                           onChange={(e) => setSelectedCost(e.target.value)}
-                          className={`w-full h-8 px-2 bg-white border rounded text-[12px] font-sans focus:outline-none focus:ring-1 focus:ring-[#2D6A4F] ${
-                            isFieldMissing('cost') ? 'border-red-500 bg-red-50 text-red-900 font-medium' : 'border-[#E2E0D8] text-[#1A1917]'
+                          className={`w-full h-8 px-2 bg-white border rounded text-[12px] font-sans focus:outline-none focus:ring-1 focus:ring-[var(--primary)] ${
+                            isFieldMissing('cost') ? 'border-red-500 bg-red-50 text-red-900 font-medium' : 'border-[var(--border)] text-[var(--foreground)]'
                           }`}
                         >
                           <option value="— None —">— None —</option>
@@ -520,7 +520,7 @@ export default function OcelPage() {
                       <Button
                         onClick={() => handleRunAnalysis(true)}
                         disabled={isAnalyzing || !selectedCaseId || !selectedActivity || !selectedTimestamp}
-                        className="flex-1 h-[36px] bg-[#2D6A4F] hover:bg-[#166534] disabled:bg-[#2D6A4F]/60 text-white font-sans text-[13px] font-medium rounded-md flex items-center justify-center gap-1.5 transition-colors"
+                        className="flex-1 h-[36px] bg-[var(--primary)] hover:bg-[var(--trace-success)] disabled:bg-[var(--primary)]/60 text-white font-sans text-[13px] font-medium rounded-md flex items-center justify-center gap-1.5 transition-colors"
                       >
                         {isAnalyzing ? 'Analyzing...' : 'Confirm & Upload'}
                       </Button>
@@ -534,7 +534,7 @@ export default function OcelPage() {
                             setErrorDetails(null);
                           }
                         }}
-                        className="h-[36px] px-3 text-[12px] text-[#6B6963] border-[#E2E0D8] hover:bg-[#F3F2EE] rounded-md"
+                        className="h-[36px] px-3 text-[12px] text-[var(--muted-foreground)] border-[var(--border)] hover:bg-[var(--card)] rounded-md"
                       >
                         {isAdjustingMapping ? 'Cancel' : 'Reset'}
                       </Button>
@@ -543,16 +543,16 @@ export default function OcelPage() {
                 )}
 
                 {errorType === '500' && (
-                  <div className="p-3 border border-[#C0392B] bg-[#FDECEA] rounded-md text-[12px] font-sans space-y-3">
-                    <div className="flex items-center gap-1.5 font-medium text-[#C0392B]">
+                  <div className="p-3 border border-[var(--destructive)] bg-[var(--trace-danger-light)] rounded-md text-[12px] font-sans space-y-3">
+                    <div className="flex items-center gap-1.5 font-medium text-[var(--destructive)]">
                       <span>Analysis Failed</span>
                     </div>
-                    <p className="text-[#6B6963] leading-relaxed">
+                    <p className="text-[var(--muted-foreground)] leading-relaxed">
                       A network error or internal server error occurred while processing the file.
                     </p>
                     <Button
                       onClick={() => handleRunAnalysis()}
-                      className="w-full h-[32px] bg-[#C0392B] hover:bg-[#a82f24] text-white font-sans text-[12px] font-medium rounded-md"
+                      className="w-full h-[32px] bg-[var(--destructive)] hover:bg-[#a82f24] text-white font-sans text-[12px] font-medium rounded-md"
                     >
                       Retry
                     </Button>
@@ -560,7 +560,7 @@ export default function OcelPage() {
                 )}
 
                 {isAnalyzed && !errorType && !isAdjustingMapping && (
-                  <div className="space-y-2 p-2.5 border border-[#E2E0D8] bg-[#E8F0EB] text-[#2D6A4F] rounded-md text-[12px] font-sans">
+                  <div className="space-y-2 p-2.5 border border-[var(--border)] bg-[var(--accent)] text-[var(--primary)] rounded-md text-[12px] font-sans">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5 font-medium">
                         <CheckCircle className="w-4 h-4 shrink-0" />
@@ -569,13 +569,13 @@ export default function OcelPage() {
                       {!isDemo && (
                         <button
                           onClick={handleAdjustMappingClick}
-                          className="text-[11px] font-medium text-[#2D6A4F] underline hover:text-[#166534] transition-colors focus:outline-none"
+                          className="text-[11px] font-medium text-[var(--primary)] underline hover:text-[var(--trace-success)] transition-colors focus:outline-none"
                         >
                           Adjust Column Mapping
                         </button>
                       )}
                     </div>
-                    <div className="mt-2 space-y-1 text-[#166534] font-mono text-[11px] leading-relaxed">
+                    <div className="mt-2 space-y-1 text-[var(--trace-success)] font-mono text-[11px] leading-relaxed">
                       <div>File: {isDemo ? mockOcelMetadata.filename : metadata?.filename}</div>
                       <div>Events: {isDemo ? mockOcelMetadata.totalEvents.toLocaleString() : metadata?.totalEvents?.toLocaleString()}</div>
                       <div>Cases: {isDemo ? mockOcelMetadata.caseCount : metadata?.caseCount}</div>
@@ -588,7 +588,7 @@ export default function OcelPage() {
                   <Button
                     onClick={() => handleRunAnalysis()}
                     disabled={isAnalyzing}
-                    className="w-full h-[36px] bg-[#2D6A4F] hover:bg-[#166534] disabled:bg-[#2D6A4F]/60 text-white font-sans text-[13px] font-medium rounded-md flex items-center justify-center gap-1.5 transition-colors"
+                    className="w-full h-[36px] bg-[var(--primary)] hover:bg-[var(--trace-success)] disabled:bg-[var(--primary)]/60 text-white font-sans text-[13px] font-medium rounded-md flex items-center justify-center gap-1.5 transition-colors"
                   >
                     <Play className="w-4 h-4" />
                     <span>{isAnalyzing ? 'Analyzing Event Log...' : 'Run Analysis'}</span>
@@ -601,11 +601,14 @@ export default function OcelPage() {
 
         {/* Right Column */}
         <div className="flex flex-col gap-6">
-          <div className="border border-[#E2E0D8] rounded-md bg-[#FAFAF8] h-[480px] w-full relative flex items-center justify-center overflow-hidden shadow-sm">
+          <div className="border border-[var(--border)] rounded-md bg-[var(--background)] h-[480px] w-full relative flex items-center justify-center overflow-hidden shadow-sm">
             {isAnalyzing ? (
               <div className="text-center p-8">
-                <div className="w-8 h-8 border-2 border-[#2D6A4F] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                <p className="text-[13px] text-[#6B6963] font-mono">Processing event log...</p>
+                <div className="w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                <p className="text-[13px] text-[var(--muted-foreground)] font-mono">Processing event log...</p>
+                {selectedFile && selectedFile.size > 5000000 && (
+                  <p className="text-[11px] text-[var(--trace-subtle)] mt-2">Large file detected. This may take a minute.</p>
+                )}
               </div>
             ) : isAnalyzed ? (
               <ReactFlow
@@ -614,22 +617,22 @@ export default function OcelPage() {
                 fitView
                 className="w-full h-full"
               >
-                <Background color="#E2E0D8" gap={16} />
-                <Controls className="react-flow__controls bg-[#FAFAF8] border border-[#E2E0D8] rounded-md shadow-sm" />
+                <Background color='var(--border)' gap={16} />
+                <Controls className="react-flow__controls bg-[var(--background)] border border-[var(--border)] rounded-md shadow-sm" />
               </ReactFlow>
             ) : (
               <div className="text-center p-8">
-                <Database className="w-16 h-16 text-[#E2E0D8] mx-auto mb-4" strokeWidth={1.5} />
-                <h4 className="text-[14px] font-sans font-medium text-[#1A1917] mb-1">
+                <Database className="w-16 h-16 text-[var(--border)] mx-auto mb-4" strokeWidth={1.5} />
+                <h4 className="text-[14px] font-sans font-medium text-[var(--foreground)] mb-1">
                   Visualize Process Graph
                 </h4>
-                <p className="text-[13px] text-[#6B6963] max-w-xs leading-normal mb-4">
+                <p className="text-[13px] text-[var(--muted-foreground)] max-w-xs leading-normal mb-4">
                   Upload an event log on the left or load demo data to view the interactive process map.
                 </p>
                 <Button
                   onClick={loadDemoData}
                   variant="outline"
-                  className="h-[32px] text-[12px] text-[#2D6A4F] border-[#2D6A4F] hover:bg-[#E8F0EB] rounded-md"
+                  className="h-[32px] text-[12px] text-[var(--primary)] border-[var(--primary)] hover:bg-[var(--accent)] rounded-md"
                 >
                   <FlaskConical className="w-3.5 h-3.5 mr-1.5" />
                   Load Demo Data

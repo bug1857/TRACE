@@ -119,7 +119,7 @@ export default function AuditLogsPage() {
       header: 'Timestamp',
       accessorKey: 'timestamp',
       sortable: true,
-      cell: (row) => <span className="font-mono text-[#1A1917]">{row.timestamp}</span>
+      cell: (row) => <span className="font-mono text-[var(--foreground)]">{row.timestamp}</span>
     },
     {
       header: 'User',
@@ -132,7 +132,7 @@ export default function AuditLogsPage() {
       accessorKey: 'action',
       sortable: true,
       cell: (row) => (
-        <span className="font-mono text-[11px] text-[#2D6A4F] bg-[#E8F0EB] px-2 py-0.5 border border-[#2D6A4F]/10 rounded-sm">
+        <span className="font-mono text-[11px] text-[var(--primary)] bg-[var(--accent)] px-2 py-0.5 border border-[var(--primary)]/10 rounded-sm">
           {row.action}
         </span>
       )
@@ -145,13 +145,13 @@ export default function AuditLogsPage() {
     {
       header: 'Details',
       accessorKey: 'details',
-      cell: (row) => <span className="font-sans text-[#6B6963]">{row.details || '—'}</span>
+      cell: (row) => <span className="font-sans text-[var(--muted-foreground)]">{row.details || '—'}</span>
     },
     {
       header: 'IP Address',
       accessorKey: 'ip',
       sortable: true,
-      cell: (row) => <span className="font-mono text-[#6B6963]">{row.ip}</span>
+      cell: (row) => <span className="font-mono text-[var(--muted-foreground)]">{row.ip}</span>
     },
     {
       header: 'Status',
@@ -161,9 +161,9 @@ export default function AuditLogsPage() {
         const isSuccess = row.status === 'success';
         return (
           <span className={`inline-flex items-center gap-1 font-sans font-medium text-[12px] ${
-            isSuccess ? 'text-[#166534]' : 'text-[#C0392B]'
+            isSuccess ? 'text-[var(--trace-success)]' : 'text-[var(--destructive)]'
           }`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${isSuccess ? 'bg-[#166534]' : 'bg-[#C0392B]'}`} />
+            <span className={`w-1.5 h-1.5 rounded-full ${isSuccess ? 'bg-[var(--trace-success)]' : 'bg-[var(--destructive)]'}`} />
             <span>{isSuccess ? 'Success' : 'Failed'}</span>
           </span>
         );
@@ -180,7 +180,7 @@ export default function AuditLogsPage() {
           <Button
             onClick={handleExportCSV}
             variant="outline"
-            className="h-[32px] text-[12px] font-sans font-medium border-[#2D6A4F] text-[#2D6A4F] hover:bg-[#E8F0EB] hover:text-[#2D6A4F] flex items-center gap-1.5 rounded-md"
+            className="h-[32px] text-[12px] font-sans font-medium border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--accent)] hover:text-[var(--primary)] flex items-center gap-1.5 rounded-md"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Export CSV</span>
@@ -192,42 +192,42 @@ export default function AuditLogsPage() {
 
       {/* Feedback Banner */}
       {feedbackMsg && (
-        <div className="p-3 bg-[#DCFCE7] border border-[#166534]/10 text-[#166534] text-[13px] rounded-md font-sans flex items-center gap-2 select-none">
+        <div className="p-3 bg-[var(--trace-success-light)] border border-[var(--trace-success)]/10 text-[var(--trace-success)] text-[13px] rounded-md font-sans flex items-center gap-2 select-none">
           <CheckCircle className="w-4 h-4 shrink-0" />
           <span>{feedbackMsg}</span>
         </div>
       )}
 
       {/* Search Filter Panel */}
-      <div className="border border-[#E2E0D8] bg-[#FAFAF8] p-4 rounded-md shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4 items-center select-none">
+      <div className="border border-[var(--border)] bg-[var(--background)] p-4 rounded-md shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4 items-center select-none">
         
         {/* Filter 1: Search by User */}
         <div className="space-y-1">
-          <label className="text-[10px] font-sans font-medium text-[#6B6963] uppercase tracking-wider block">
+          <label className="text-[10px] font-sans font-medium text-[var(--muted-foreground)] uppercase tracking-wider block">
             Filter by Auditor User
           </label>
           <div className="relative">
-            <Search className="w-3.5 h-3.5 text-[#9B9891] absolute left-2.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-[var(--trace-subtle)] absolute left-2.5 top-1/2 -translate-y-1/2" />
             <Input
               placeholder="e.g. rajesh.sharma@louisindia.com"
               value={searchUser}
               onChange={(e) => setSearchUser(e.target.value)}
               disabled={isRealData}
-              className="h-[32px] text-[12px] pl-8 bg-[#F3F2EE] border-[#E2E0D8] text-[#1A1917] rounded-md focus:border-[#2D6A4F] disabled:opacity-50"
+              className="h-[32px] text-[12px] pl-8 bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] rounded-md focus:border-[var(--primary)] disabled:opacity-50"
             />
           </div>
         </div>
 
         {/* Filter 2: Search by Action Type */}
         <div className="space-y-1">
-          <label className="text-[10px] font-sans font-medium text-[#6B6963] uppercase tracking-wider block">
+          <label className="text-[10px] font-sans font-medium text-[var(--muted-foreground)] uppercase tracking-wider block">
             Filter by Action Type
           </label>
           <Select value={filterAction} onValueChange={(val) => setFilterAction(val || 'ALL')}>
-            <SelectTrigger className="h-[32px] text-[12px] bg-[#F3F2EE] border-[#E2E0D8] text-[#1A1917] rounded-md focus:ring-0">
+            <SelectTrigger className="h-[32px] text-[12px] bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] rounded-md focus:ring-0">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-[#FAFAF8] border-[#E2E0D8] rounded-md">
+            <SelectContent className="bg-[var(--background)] border-[var(--border)] rounded-md">
               <SelectItem value="ALL" className="text-[12px]">All Audit Actions</SelectItem>
               <SelectItem value="RUN_SIMULATION" className="text-[12px]">RUN_SIMULATION</SelectItem>
               <SelectItem value="UPLOAD_OCEL_LOG" className="text-[12px]">UPLOAD_OCEL_LOG</SelectItem>
@@ -248,7 +248,7 @@ export default function AuditLogsPage() {
                 setSearchUser('');
                 setFilterAction('ALL');
               }}
-              className="h-[32px] text-[12px] text-[#C0392B] hover:bg-[#F3F2EE] rounded-md"
+              className="h-[32px] text-[12px] text-[var(--destructive)] hover:bg-[var(--card)] rounded-md"
             >
               Reset Filters
             </Button>
@@ -259,7 +259,7 @@ export default function AuditLogsPage() {
 
       {/* Audit Logs Table */}
       <div className="space-y-3">
-        <h3 className="text-[13px] font-sans font-medium text-[#1A1917] uppercase tracking-wider">
+        <h3 className="text-[13px] font-sans font-medium text-[var(--foreground)] uppercase tracking-wider">
           Audited Actions History
         </h3>
         <DataTable columns={columns} data={filteredLogs} />

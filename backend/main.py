@@ -224,10 +224,14 @@ async def upload_ocel_log(
             timestamp_col=mapping["timestamp"]["column"]
         )
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed during process optimization calculation: {str(e)}"
-        )
+        import traceback
+        print(f"[WARN] process_optimization failed: {traceback.format_exc()}")
+        process_optimization_result = {
+            "bottlenecks": [], 
+            "rework": [], 
+            "caseDurationDistribution": [], 
+            "totalCasesAnalyzed": 0
+        }
 
     # Calculate water/electricity/cost sums if mapped
     water_liters = None

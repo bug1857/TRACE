@@ -11,14 +11,14 @@ export default function ScoreRing({ score, size = 120, label }: ScoreRingProps) 
   const normalizedScore = Math.max(0, Math.min(100, score));
 
   // Determine color based on threshold
-  let color = '#2D6A4F'; // default green (>70)
-  let bgColor = '#E8F0EB';
+  let color = 'var(--primary)'; // default green (>70)
+  let bgColor = 'var(--accent)';
   if (normalizedScore < 40) {
-    color = '#C0392B'; // red
-    bgColor = '#FDECEA';
+    color = 'var(--destructive)'; // red
+    bgColor = 'var(--trace-danger-light)';
   } else if (normalizedScore <= 70) {
-    color = '#B45309'; // amber
-    bgColor = '#FEF3C7';
+    color = 'var(--trace-warning)'; // amber
+    bgColor = 'var(--trace-warning-light)';
   }
 
   // SVG calculations
@@ -64,17 +64,17 @@ export default function ScoreRing({ score, size = 120, label }: ScoreRingProps) 
 
         {/* Centered value */}
         <div className="absolute flex flex-col items-center justify-center">
-          <span className="text-[26px] font-mono font-medium text-[#1A1917] leading-none">
+          <span className="text-[26px] font-mono font-medium text-[var(--foreground)] leading-none">
             {normalizedScore}
           </span>
-          <span className="text-[10px] text-[#9B9891] font-mono font-normal tracking-tight mt-0.5">
+          <span className="text-[10px] text-[var(--trace-subtle)] font-mono font-normal tracking-tight mt-0.5">
             / 100
           </span>
         </div>
       </div>
 
       {label && (
-        <span className="text-[11px] font-sans font-medium text-[#6B6963] uppercase tracking-wider text-center max-w-[140px]">
+        <span className="text-[11px] font-sans font-medium text-[var(--muted-foreground)] uppercase tracking-wider text-center max-w-[140px]">
           {label}
         </span>
       )}

@@ -84,7 +84,7 @@ export default function ProjectsPage() {
       sortable: true,
       cell: (row) => (
         <div className="flex flex-col">
-          <span className="font-medium text-[#1A1917]">{row.name}</span>
+          <span className="font-medium text-[var(--foreground)]">{row.name}</span>
         </div>
       )
     },
@@ -93,7 +93,7 @@ export default function ProjectsPage() {
       accessorKey: 'created_at',
       sortable: true,
       cell: (row) => (
-        <span className="text-[#6B6963] text-[13px]">
+        <span className="text-[var(--muted-foreground)] text-[13px]">
           {new Date(row.created_at).toLocaleDateString()}
         </span>
       )
@@ -113,21 +113,21 @@ export default function ProjectsPage() {
                   setActiveProjectId(row.id);
                   router.push('/workspaces');
                 }}
-                className="h-[28px] text-[11px] font-sans text-[#2D6A4F] border-[#2D6A4F] hover:bg-[#E8F0EB] hover:text-[#2D6A4F] flex items-center gap-1 rounded-md"
+                className="h-[28px] text-[11px] font-sans text-[var(--primary)] border-[var(--primary)] hover:bg-[var(--accent)] hover:text-[var(--primary)] flex items-center gap-1 rounded-md"
               >
                 <span>Enter Project</span>
                 <ArrowRight className="w-3 h-3" />
               </Button>
             ) : (
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-medium text-[#2D6A4F] bg-[#E8F0EB] px-2.5 py-1 rounded-md">
+                <span className="text-[11px] font-medium text-[var(--primary)] bg-[var(--accent)] px-2.5 py-1 rounded-md">
                   Active
                 </span>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => router.push('/workspaces')}
-                  className="h-[28px] text-[11px] font-sans text-[#2D6A4F] border-[#2D6A4F] hover:bg-[#E8F0EB] hover:text-[#2D6A4F] flex items-center gap-1 rounded-md"
+                  className="h-[28px] text-[11px] font-sans text-[var(--primary)] border-[var(--primary)] hover:bg-[var(--accent)] hover:text-[var(--primary)] flex items-center gap-1 rounded-md"
                 >
                   <span>Go to Workspaces</span>
                   <ArrowRight className="w-3 h-3" />
@@ -143,7 +143,7 @@ export default function ProjectsPage() {
                   handleDeleteProject(row.id);
                 }
               }}
-              className="h-[28px] w-[28px] p-0 text-[#C0392B] hover:bg-[#FDECEA] hover:text-[#C0392B] rounded-md"
+              className="h-[28px] w-[28px] p-0 text-[var(--destructive)] hover:bg-[var(--trace-danger-light)] hover:text-[var(--destructive)] rounded-md"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </Button>
@@ -178,7 +178,7 @@ export default function ProjectsPage() {
             <Button
               onClick={() => setIsDialogOpen(true)}
               variant="outline"
-              className="h-[32px] text-[12px] font-sans font-medium border-[#2D6A4F] text-[#2D6A4F] hover:bg-[#E8F0EB] hover:text-[#2D6A4F] flex items-center gap-1.5 rounded-md"
+              className="h-[32px] text-[12px] font-sans font-medium border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--accent)] hover:text-[var(--primary)] flex items-center gap-1.5 rounded-md"
             >
               <Plus className="w-4 h-4" />
               <span>New Project</span>
@@ -208,29 +208,29 @@ export default function ProjectsPage() {
 
       {/* New Project Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-[400px] bg-[#FAFAF8] border border-[#E2E0D8] rounded-md shadow-sm">
+        <DialogContent className="max-w-[400px] bg-[var(--background)] border border-[var(--border)] rounded-md shadow-sm">
           <DialogHeader>
-            <DialogTitle className="text-[16px] font-sans font-medium text-[#1A1917]">
+            <DialogTitle className="text-[16px] font-sans font-medium text-[var(--foreground)]">
               New Project
             </DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleCreateProject} className="space-y-4 py-2">
             {validationError && (
-              <div className="p-2 bg-[#FDECEA] text-[#C0392B] text-[11px] font-sans rounded-md border border-[#C0392B]/10">
+              <div className="p-2 bg-[var(--trace-danger-light)] text-[var(--destructive)] text-[11px] font-sans rounded-md border border-[var(--destructive)]/10">
                 {validationError}
               </div>
             )}
             
             <div className="space-y-1">
-              <label className="text-[10px] font-sans font-medium text-[#6B6963] uppercase tracking-wider block">
+              <label className="text-[10px] font-sans font-medium text-[var(--muted-foreground)] uppercase tracking-wider block">
                 Project Name
               </label>
               <Input
                 placeholder="e.g. Q3 Supply Chain Audit 2024"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                className="h-[34px] text-[13px] bg-[#F3F2EE] border-[#E2E0D8] text-[#1A1917] rounded-md focus:border-[#2D6A4F]"
+                className="h-[34px] text-[13px] bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] rounded-md focus:border-[var(--primary)]"
               />
             </div>
 
@@ -242,13 +242,13 @@ export default function ProjectsPage() {
                   setIsDialogOpen(false);
                   setValidationError('');
                 }}
-                className="h-[32px] text-[12px] text-[#6B6963] hover:bg-[#F3F2EE] rounded-md"
+                className="h-[32px] text-[12px] text-[var(--muted-foreground)] hover:bg-[var(--card)] rounded-md"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                className="h-[32px] text-[12px] bg-[#2D6A4F] hover:bg-[#166534] text-white rounded-md"
+                className="h-[32px] text-[12px] bg-[var(--primary)] hover:bg-[var(--trace-success)] text-white rounded-md"
               >
                 Create
               </Button>

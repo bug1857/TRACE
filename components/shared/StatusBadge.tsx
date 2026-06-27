@@ -8,10 +8,10 @@ interface StatusBadgeProps {
 }
 
 const statusConfig: Record<BadgeStatus, { bg: string; text: string; label: string }> = {
-  critical: { bg: 'bg-[#FDECEA]', text: 'text-[#C0392B]', label: 'Critical' },
-  warning: { bg: 'bg-[#FEF3C7]', text: 'text-[#B45309]', label: 'Warning' },
-  pass: { bg: 'bg-[#DCFCE7]', text: 'text-[#166534]', label: 'Pass' },
-  info: { bg: 'bg-[#E8F0EB]', text: 'text-[#2D6A4F]', label: 'Info' }
+  critical: { bg: 'bg-[var(--trace-danger-light)]', text: 'text-[var(--destructive)]', label: 'Critical' },
+  warning: { bg: 'bg-[var(--trace-warning-light)]', text: 'text-[var(--trace-warning)]', label: 'Warning' },
+  pass: { bg: 'bg-[var(--trace-success-light)]', text: 'text-[var(--trace-success)]', label: 'Pass' },
+  info: { bg: 'bg-[var(--accent)]', text: 'text-[var(--primary)]', label: 'Info' }
 };
 
 export default function StatusBadge({ status, label }: StatusBadgeProps) {

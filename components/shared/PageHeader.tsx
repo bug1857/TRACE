@@ -8,13 +8,13 @@ interface PageHeaderProps {
 
 export default function PageHeader({ title, subtitle, action }: PageHeaderProps) {
   return (
-    <div className="flex items-end justify-between border-b border-[#E2E0D8] pb-4 mb-6">
+    <div className="flex items-end justify-between border-b border-[var(--border)] pb-4 mb-6">
       <div className="space-y-0.5">
-        <h1 className="text-[20px] font-sans font-medium text-[#1A1917] tracking-tight leading-tight">
+        <h1 className="text-[20px] font-sans font-medium text-[var(--foreground)] tracking-tight leading-tight">
           {title}
         </h1>
         {subtitle && (
-          <p className="text-[13px] text-[#6B6963] font-sans">
+          <p className="text-[13px] text-[var(--muted-foreground)] font-sans">
             {subtitle}
           </p>
         )}

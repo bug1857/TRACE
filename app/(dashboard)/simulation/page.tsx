@@ -145,7 +145,7 @@ export default function SimulationPage() {
       header: 'Scenario Name',
       accessorKey: 'name',
       sortable: true,
-      cell: (row) => <span className="font-medium text-[#1A1917]">{row.name}</span>
+      cell: (row) => <span className="font-medium text-[var(--foreground)]">{row.name}</span>
     },
     {
       header: 'Air Red. %',
@@ -172,7 +172,7 @@ export default function SimulationPage() {
       isNumeric: true,
       cell: (row) => {
         const delta = row.results.afterCarbon - row.results.beforeCarbon;
-        const color = delta <= 0 ? 'text-[#166534]' : 'text-[#C0392B]';
+        const color = delta <= 0 ? 'text-[var(--trace-success)]' : 'text-[var(--destructive)]';
         const sign = delta > 0 ? '+' : '';
         return <span className={`${color} font-mono`}>{sign}{delta.toLocaleString()} kg</span>;
       }
@@ -183,7 +183,7 @@ export default function SimulationPage() {
       isNumeric: true,
       cell: (row) => {
         const delta = row.results.afterCfs - row.results.beforeCfs;
-        const color = delta >= 0 ? 'text-[#166534]' : 'text-[#C0392B]';
+        const color = delta >= 0 ? 'text-[var(--trace-success)]' : 'text-[var(--destructive)]';
         const sign = delta > 0 ? '+' : '';
         return <span className={`${color} font-mono`}>{sign}{delta}</span>;
       }
@@ -204,7 +204,7 @@ export default function SimulationPage() {
                 afterViolations: row.results.afterViolations
               });
             }}
-            className="h-[28px] text-[11px] font-sans border-[#E2E0D8] hover:bg-[#F3F2EE] rounded-md"
+            className="h-[28px] text-[11px] font-sans border-[var(--border)] hover:bg-[var(--card)] rounded-md"
           >
             Load
           </Button>
@@ -212,7 +212,7 @@ export default function SimulationPage() {
             variant="ghost"
             size="sm"
             onClick={(e) => handleDeleteScenario(row.id, e)}
-            className="h-[28px] w-[28px] p-0 text-[#C0392B] hover:bg-[#FDECEA] hover:text-[#C0392B] rounded-md"
+            className="h-[28px] w-[28px] p-0 text-[var(--destructive)] hover:bg-[var(--trace-danger-light)] hover:text-[var(--destructive)] rounded-md"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </Button>
@@ -232,30 +232,30 @@ export default function SimulationPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6 items-start">
         {/* Left Column: Config Panel */}
-        <div className="border border-[#E2E0D8] bg-[#FAFAF8] p-5 rounded-md shadow-sm select-none">
-          <h3 className="text-[13px] font-sans font-medium text-[#1A1917] uppercase tracking-wider mb-4 flex items-center gap-1.5">
-            <Sliders className="w-4 h-4 text-[#2D6A4F]" />
+        <div className="border border-[var(--border)] bg-[var(--background)] p-5 rounded-md shadow-sm select-none">
+          <h3 className="text-[13px] font-sans font-medium text-[var(--foreground)] uppercase tracking-wider mb-4 flex items-center gap-1.5">
+            <Sliders className="w-4 h-4 text-[var(--primary)]" />
             <span>Scenario Parameters</span>
           </h3>
 
           <form onSubmit={handleRunSimulation} className="space-y-5">
             <div className="space-y-1">
-              <label className="text-[10px] font-sans font-medium text-[#6B6963] uppercase tracking-wider block">
+              <label className="text-[10px] font-sans font-medium text-[var(--muted-foreground)] uppercase tracking-wider block">
                 Scenario Name
               </label>
               <Input
                 placeholder="e.g. Electric Last Mile Shift"
                 value={scenarioName}
                 onChange={(e) => setScenarioName(e.target.value)}
-                className="h-[34px] text-[13px] bg-[#F3F2EE] border-[#E2E0D8] text-[#1A1917] rounded-md focus:border-[#2D6A4F]"
+                className="h-[34px] text-[13px] bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] rounded-md focus:border-[var(--primary)]"
               />
             </div>
 
             {/* Slider 1: Air Freight Reduction */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-baseline text-[11px] font-sans">
-                <label className="font-medium text-[#6B6963] uppercase tracking-wider">Air Freight Reduction</label>
-                <span className="font-mono text-[#1A1917] font-semibold">{airFreightRed}%</span>
+                <label className="font-medium text-[var(--muted-foreground)] uppercase tracking-wider">Air Freight Reduction</label>
+                <span className="font-mono text-[var(--foreground)] font-semibold">{airFreightRed}%</span>
               </div>
               <input
                 type="range"
@@ -263,15 +263,15 @@ export default function SimulationPage() {
                 max="100"
                 value={airFreightRed}
                 onChange={(e) => setAirFreightRed(parseInt(e.target.value))}
-                className="w-full accent-[#2D6A4F] h-1 bg-[#E2E0D8] rounded-lg cursor-pointer"
+                className="w-full accent-[var(--primary)] h-1 bg-[var(--border)] rounded-lg cursor-pointer"
               />
             </div>
 
             {/* Slider 2: Supplier Shift */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-baseline text-[11px] font-sans">
-                <label className="font-medium text-[#6B6963] uppercase tracking-wider">Supplier Volume Shift</label>
-                <span className="font-mono text-[#1A1917] font-semibold">{supplierShift}%</span>
+                <label className="font-medium text-[var(--muted-foreground)] uppercase tracking-wider">Supplier Volume Shift</label>
+                <span className="font-mono text-[var(--foreground)] font-semibold">{supplierShift}%</span>
               </div>
               <input
                 type="range"
@@ -279,20 +279,20 @@ export default function SimulationPage() {
                 max="100"
                 value={supplierShift}
                 onChange={(e) => setSupplierShift(parseInt(e.target.value))}
-                className="w-full accent-[#2D6A4F] h-1 bg-[#E2E0D8] rounded-lg cursor-pointer"
+                className="w-full accent-[var(--primary)] h-1 bg-[var(--border)] rounded-lg cursor-pointer"
               />
             </div>
 
             {/* Dropdown 3: Activity Removal */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-sans font-medium text-[#6B6963] uppercase tracking-wider block">
+              <label className="text-[10px] font-sans font-medium text-[var(--muted-foreground)] uppercase tracking-wider block">
                 Remove Activity Node
               </label>
               <Select value={activityRemoval} onValueChange={(val) => setActivityRemoval(val || 'None')}>
-                <SelectTrigger className="h-[32px] text-[12px] bg-[#F3F2EE] border-[#E2E0D8] text-[#1A1917] rounded-md focus:ring-0">
+                <SelectTrigger className="h-[32px] text-[12px] bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] rounded-md focus:ring-0">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#FAFAF8] border-[#E2E0D8] rounded-md">
+                <SelectContent className="bg-[var(--background)] border-[var(--border)] rounded-md">
                   <SelectItem value="None" className="text-[12px]">None</SelectItem>
                   {activityOptions.map((opt) => (
                     <SelectItem key={opt} value={opt} className="text-[12px]">{opt}</SelectItem>
@@ -304,7 +304,7 @@ export default function SimulationPage() {
             <Button
               type="submit"
               disabled={isSimulating}
-              className="w-full h-[36px] bg-[#2D6A4F] hover:bg-[#166534] disabled:bg-[#2D6A4F]/60 text-white font-sans text-[13px] font-medium rounded-md flex items-center justify-center gap-1.5 transition-colors pt-1"
+              className="w-full h-[36px] bg-[var(--primary)] hover:bg-[var(--trace-success)] disabled:bg-[var(--primary)]/60 text-white font-sans text-[13px] font-medium rounded-md flex items-center justify-center gap-1.5 transition-colors pt-1"
             >
               <Play className="w-4 h-4" />
               <span>{isSimulating ? 'Running Model...' : 'Run Simulation'}</span>
@@ -313,32 +313,32 @@ export default function SimulationPage() {
         </div>
 
         {/* Right Column: Results Grid */}
-        <div className="border border-[#E2E0D8] bg-[#FAFAF8] p-5 rounded-md shadow-sm space-y-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-[#E2E0D8] pb-3">
-            <h3 className="text-[13px] font-sans font-medium text-[#1A1917] uppercase tracking-wider">
+        <div className="border border-[var(--border)] bg-[var(--background)] p-5 rounded-md shadow-sm space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-[var(--border)] pb-3">
+            <h3 className="text-[13px] font-sans font-medium text-[var(--foreground)] uppercase tracking-wider">
               Operational Impact Analysis
             </h3>
-            <span className="text-[10px] text-[#9B9891] font-sans italic">
+            <span className="text-[10px] text-[var(--trace-subtle)] font-sans italic">
               Projections use estimated efficiency coefficients, not measured outcomes — actual results may vary.
             </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Carbon Emissions Card */}
-            <div className="border border-[#E2E0D8] rounded-md p-4 bg-[#F3F2EE] space-y-2 select-all">
-              <span className="text-[10px] text-[#6B6963] uppercase tracking-wider font-semibold block">Total Carbon Footprint (kg)</span>
+            <div className="border border-[var(--border)] rounded-md p-4 bg-[var(--card)] space-y-2 select-all">
+              <span className="text-[10px] text-[var(--muted-foreground)] uppercase tracking-wider font-semibold block">Total Carbon Footprint (kg)</span>
               <div className="grid grid-cols-3 gap-2 items-baseline text-center">
                 <div>
-                  <span className="text-[9px] text-[#9B9891] block">Before</span>
-                  <span className="font-mono text-[14px] font-medium text-[#1A1917]">{currentComparison.beforeCarbon.toLocaleString()} kg</span>
+                  <span className="text-[9px] text-[var(--trace-subtle)] block">Before</span>
+                  <span className="font-mono text-[14px] font-medium text-[var(--foreground)]">{currentComparison.beforeCarbon.toLocaleString()} kg</span>
                 </div>
                 <div>
-                  <span className="text-[9px] text-[#9B9891] block">After</span>
-                  <span className="font-mono text-[14px] font-bold text-[#166534]">{currentComparison.afterCarbon.toLocaleString()} kg</span>
+                  <span className="text-[9px] text-[var(--trace-subtle)] block">After</span>
+                  <span className="font-mono text-[14px] font-bold text-[var(--trace-success)]">{currentComparison.afterCarbon.toLocaleString()} kg</span>
                 </div>
                 <div>
-                  <span className="text-[9px] text-[#9B9891] block">Delta</span>
-                  <span className="font-mono text-[14px] font-bold text-[#166534]">
+                  <span className="text-[9px] text-[var(--trace-subtle)] block">Delta</span>
+                  <span className="font-mono text-[14px] font-bold text-[var(--trace-success)]">
                     {currentComparison.afterCarbon - currentComparison.beforeCarbon > 0 ? '+' : ''}
                     {(currentComparison.afterCarbon - currentComparison.beforeCarbon).toLocaleString()} kg
                   </span>
@@ -347,20 +347,20 @@ export default function SimulationPage() {
             </div>
 
             {/* CFS Score Card */}
-            <div className="border border-[#E2E0D8] rounded-md p-4 bg-[#F3F2EE] space-y-2 select-all">
-              <span className="text-[10px] text-[#6B6963] uppercase tracking-wider font-semibold block">Carbon Fitness Score (CFS)</span>
+            <div className="border border-[var(--border)] rounded-md p-4 bg-[var(--card)] space-y-2 select-all">
+              <span className="text-[10px] text-[var(--muted-foreground)] uppercase tracking-wider font-semibold block">Carbon Fitness Score (CFS)</span>
               <div className="grid grid-cols-3 gap-2 items-baseline text-center">
                 <div>
-                  <span className="text-[9px] text-[#9B9891] block">Before</span>
-                  <span className="font-mono text-[14px] font-medium text-[#1A1917]">{currentComparison.beforeCfs}</span>
+                  <span className="text-[9px] text-[var(--trace-subtle)] block">Before</span>
+                  <span className="font-mono text-[14px] font-medium text-[var(--foreground)]">{currentComparison.beforeCfs}</span>
                 </div>
                 <div>
-                  <span className="text-[9px] text-[#9B9891] block">After</span>
-                  <span className="font-mono text-[14px] font-bold text-[#166534]">{currentComparison.afterCfs}</span>
+                  <span className="text-[9px] text-[var(--trace-subtle)] block">After</span>
+                  <span className="font-mono text-[14px] font-bold text-[var(--trace-success)]">{currentComparison.afterCfs}</span>
                 </div>
                 <div>
-                  <span className="text-[9px] text-[#9B9891] block">Delta</span>
-                  <span className="font-mono text-[14px] font-bold text-[#166534]">
+                  <span className="text-[9px] text-[var(--trace-subtle)] block">Delta</span>
+                  <span className="font-mono text-[14px] font-bold text-[var(--trace-success)]">
                     {currentComparison.afterCfs - currentComparison.beforeCfs >= 0 ? '+' : ''}
                     {currentComparison.afterCfs - currentComparison.beforeCfs}
                   </span>
@@ -369,20 +369,20 @@ export default function SimulationPage() {
             </div>
 
             {/* Budget Remaining Card */}
-            <div className="border border-[#E2E0D8] rounded-md p-4 bg-[#F3F2EE] space-y-2 select-all">
-              <span className="text-[10px] text-[#6B6963] uppercase tracking-wider font-semibold block">Remaining Carbon Credits (kg)</span>
+            <div className="border border-[var(--border)] rounded-md p-4 bg-[var(--card)] space-y-2 select-all">
+              <span className="text-[10px] text-[var(--muted-foreground)] uppercase tracking-wider font-semibold block">Remaining Carbon Credits (kg)</span>
               <div className="grid grid-cols-3 gap-2 items-baseline text-center">
                 <div>
-                  <span className="text-[9px] text-[#9B9891] block">Before</span>
-                  <span className="font-mono text-[14px] font-medium text-[#1A1917]">{currentComparison.beforeBudget.toLocaleString()} kg</span>
+                  <span className="text-[9px] text-[var(--trace-subtle)] block">Before</span>
+                  <span className="font-mono text-[14px] font-medium text-[var(--foreground)]">{currentComparison.beforeBudget.toLocaleString()} kg</span>
                 </div>
                 <div>
-                  <span className="text-[9px] text-[#9B9891] block">After</span>
-                  <span className="font-mono text-[14px] font-bold text-[#166534]">{currentComparison.afterBudget.toLocaleString()} kg</span>
+                  <span className="text-[9px] text-[var(--trace-subtle)] block">After</span>
+                  <span className="font-mono text-[14px] font-bold text-[var(--trace-success)]">{currentComparison.afterBudget.toLocaleString()} kg</span>
                 </div>
                 <div>
-                  <span className="text-[9px] text-[#9B9891] block">Delta</span>
-                  <span className="font-mono text-[14px] font-bold text-[#166534]">
+                  <span className="text-[9px] text-[var(--trace-subtle)] block">Delta</span>
+                  <span className="font-mono text-[14px] font-bold text-[var(--trace-success)]">
                     {currentComparison.afterBudget - currentComparison.beforeBudget > 0 ? '+' : ''}
                     {(currentComparison.afterBudget - currentComparison.beforeBudget).toLocaleString()} kg
                   </span>
@@ -391,20 +391,20 @@ export default function SimulationPage() {
             </div>
 
             {/* Violations Count Card */}
-            <div className="border border-[#E2E0D8] rounded-md p-4 bg-[#F3F2EE] space-y-2 select-all">
-              <span className="text-[10px] text-[#6B6963] uppercase tracking-wider font-semibold block">Conformance Violations</span>
+            <div className="border border-[var(--border)] rounded-md p-4 bg-[var(--card)] space-y-2 select-all">
+              <span className="text-[10px] text-[var(--muted-foreground)] uppercase tracking-wider font-semibold block">Conformance Violations</span>
               <div className="grid grid-cols-3 gap-2 items-baseline text-center">
                 <div>
-                  <span className="text-[9px] text-[#9B9891] block">Before</span>
-                  <span className="font-mono text-[14px] font-medium text-[#1A1917]">{currentComparison.beforeViolations}</span>
+                  <span className="text-[9px] text-[var(--trace-subtle)] block">Before</span>
+                  <span className="font-mono text-[14px] font-medium text-[var(--foreground)]">{currentComparison.beforeViolations}</span>
                 </div>
                 <div>
-                  <span className="text-[9px] text-[#9B9891] block">After</span>
-                  <span className="font-mono text-[14px] font-bold text-[#166534]">{currentComparison.afterViolations}</span>
+                  <span className="text-[9px] text-[var(--trace-subtle)] block">After</span>
+                  <span className="font-mono text-[14px] font-bold text-[var(--trace-success)]">{currentComparison.afterViolations}</span>
                 </div>
                 <div>
-                  <span className="text-[9px] text-[#9B9891] block">Delta</span>
-                  <span className="font-mono text-[14px] font-bold text-[#166534]">
+                  <span className="text-[9px] text-[var(--trace-subtle)] block">Delta</span>
+                  <span className="font-mono text-[14px] font-bold text-[var(--trace-success)]">
                     {currentComparison.afterViolations - currentComparison.beforeViolations >= 0 ? '+' : ''}
                     {currentComparison.afterViolations - currentComparison.beforeViolations}
                   </span>
@@ -420,7 +420,7 @@ export default function SimulationPage() {
 
       {/* Saved Scenarios Table */}
       <div className="space-y-3">
-        <h3 className="text-[13px] font-sans font-medium text-[#1A1917] uppercase tracking-wider">
+        <h3 className="text-[13px] font-sans font-medium text-[var(--foreground)] uppercase tracking-wider">
           Saved Simulation Scenarios Ledger
         </h3>
         <DataTable columns={savedColumns} data={scenarios} />

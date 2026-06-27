@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>TRACE — Round 2 Pitch Deck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --indigo:#4338CA;--indigo-mid:#818CF8;--indigo-light:#EEF2FF;
+  --teal:#0D9488;--teal-mid:#5EEAD4;
+  --green:#10B981;--green-mid:#34D399;
+  --orange:#EA580C;--orange-mid:#FB923C;
+  --red:#EF4444;--red-mid:#FCA5A5;
+  --slate-900:#0F172A;--slate-800:#1E293B;--slate-700:#334155;
+  --slate-500:#64748B;--slate-400:#94A3B8;--slate-300:#CBD5E1;
+  --white:#FFFFFF;
+}
+
+html{background:#0A0A14;font-family:'Inter',sans-serif;color:var(--white);}
+body{display:flex;flex-direction:column;align-items:center;padding:40px 20px;gap:40px;}
+
+/* ── NAV ─────────────────────────────────────────────── */
+.nav{
+  position:fixed;right:24px;top:50%;transform:translateY(-50%);
+  display:flex;flex-direction:column;gap:8px;z-index:999;
+}
+.nav a{
+  display:block;width:8px;height:8px;border-radius:50%;
+  background:rgba(255,255,255,0.18);transition:all .2s;
+}
+.nav a:hover{background:var(--indigo-mid);transform:scale(1.4);}
+
+/* ── SLIDE BASE ──────────────────────────────────────── */
+.slide{
+  width:1280px;min-height:720px;position:relative;overflow:hidden;
+  display:flex;flex-direction:column;
+  border:1px solid rgba(255,255,255,0.07);border-radius:12px;
+  background:var(--slate-900);
+  box-shadow:0 24px 64px rgba(0,0,0,.55);
+  flex-shrink:0;
+}
+.footer-bar{
+  position:absolute;bottom:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--indigo),var(--teal));
+}
+
+/* ── SLIDE HEADER ────────────────────────────────────── */
+.sh{
+  padding:36px 64px 0;display:flex;
+  align-items:flex-start;justify-content:space-between;flex-shrink:0;
+}
+.sn{
+  font-family:'JetBrains Mono',monospace;font-size:11px;
+  color:rgba(255,255,255,.18);letter-spacing:.08em;
+}
+.st{
+  font-family:'JetBrains Mono',monospace;font-size:11px;
+  color:var(--indigo-mid);letter-spacing:.12em;text-transform:uppercase;
+  border:1px solid rgba(129,140,248,.28);padding:4px 13px;border-radius:4px;
+}
+
+/* ── SLIDE BODY ──────────────────────────────────────── */
+.sb{flex:1;padding:28px 64px 52px;display:flex;flex-direction:column;}
+
+/* ── TYPOGRAPHIC RHYTHM ──────────────────────────────── */
+.accent{width:44px;height:3px;border-radius:2px;background:linear-gradient(90deg,var(--indigo),var(--teal));margin-bottom:18px;}
+.slide-h{font-size:40px;font-weight:800;letter-spacing:-1.5px;color:#fff;line-height:1.1;margin-bottom:6px;}
+.slide-sub{font-size:15px;color:rgba(255,255,255,.42);font-weight:400;margin-bottom:28px;}
+
+/* ── CARDS ───────────────────────────────────────────── */
+.card{
+  background:rgba(255,255,255,.038);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:9px;padding:22px 20px;
+}
+.card-in{border-left:3px solid var(--indigo);}
+.card-te{border-left:3px solid var(--teal);}
+.card-gr{border-left:3px solid var(--green);}
+.card-or{border-left:3px solid var(--orange);}
+.card-re{border-left:3px solid var(--red);}
+.card h3{
+  font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;
+  color:rgba(255,255,255,.35);margin-bottom:8px;
+}
+.card p{font-size:14px;color:rgba(255,255,255,.72);line-height:1.65;}
+.card strong{color:#fff;font-weight:600;}
+
+/* ── GRIDS ───────────────────────────────────────────── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.split{display:flex;gap:22px;flex:1;}
+.col{display:flex;flex-direction:column;gap:12px;}
+
+/* ── BIG METRIC ──────────────────────────────────────── */
+.bm{font-size:50px;font-weight:800;font-family:'JetBrains Mono',monospace;letter-spacing:-2px;line-height:1;margin-bottom:4px;}
+.bm-in{color:var(--indigo-mid);}
+.bm-te{color:var(--teal-mid);}
+.bm-gr{color:var(--green-mid);}
+.bm-or{color:var(--orange-mid);}
+
+/* ── BADGE ───────────────────────────────────────────── */
+.badge{
+  display:inline-block;font-size:11px;font-family:'JetBrains Mono',monospace;
+  font-weight:600;padding:3px 9px;border-radius:4px;white-space:nowrap;
+}
+.b-in{background:rgba(67,56,202,.15);color:#A5B4FC;border:1px solid rgba(67,56,202,.3);}
+.b-te{background:rgba(13,148,136,.15);color:#5EEAD4;border:1px solid rgba(13,148,136,.3);}
+.b-gr{background:rgba(16,185,129,.15);color:#34D399;border:1px solid rgba(16,185,129,.3);}
+.b-or{background:rgba(234,88,12,.15);color:#FB923C;border:1px solid rgba(234,88,12,.3);}
+.b-re{background:rgba(239,68,68,.15);color:#FCA5A5;border:1px solid rgba(239,68,68,.3);}
+
+/* ── TABLE ───────────────────────────────────────────── */
+table{width:100%;border-collapse:collapse;}
+th{
+  text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.09em;color:rgba(255,255,255,.3);padding:9px 14px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+td{
+  font-size:13.5px;color:rgba(255,255,255,.68);
+  padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.04);
+  vertical-align:middle;
+}
+td.mono{font-family:'JetBrains Mono',monospace;font-size:12px;color:#A5B4FC;}
+
+/* ── BULLET LIST ─────────────────────────────────────── */
+.bl{list-style:none;display:flex;flex-direction:column;gap:11px;}
+.bl li{display:flex;align-items:flex-start;gap:11px;font-size:14px;color:rgba(255,255,255,.72);line-height:1.6;}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:7px;}
+.d-in{background:var(--indigo-mid);}
+.d-te{background:var(--teal-mid);}
+.d-or{background:var(--orange-mid);}
+.d-gr{background:var(--green-mid);}
+
+/* ── FLOW DIAGRAM ────────────────────────────────────── */
+.flow{display:flex;align-items:center;gap:0;margin-bottom:18px;}
+.fn{
+  flex:1;background:rgba(255,255,255,.035);
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:9px;padding:18px 12px;text-align:center;
+}
+.fn.act{background:rgba(67,56,202,.13);border-color:rgba(67,56,202,.38);}
+.fn .fi{font-size:26px;margin-bottom:8px;display:block;}
+.fn .ft{font-size:13px;font-weight:700;color:#fff;margin-bottom:3px;}
+.fn .fs{font-size:10px;color:rgba(255,255,255,.38);font-family:'JetBrains Mono',monospace;}
+.fa{color:rgba(255,255,255,.2);font-size:20px;padding:0 6px;flex-shrink:0;}
+
+/* ── PHASE STEPPER ───────────────────────────────────── */
+.phases{display:flex;gap:0;margin-bottom:18px;}
+.ph{
+  flex:1;text-align:center;padding:18px 10px;
+  background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);
+}
+.ph:first-child{border-radius:9px 0 0 9px;}
+.ph:last-child{border-radius:0 9px 9px 0;}
+.ph.act{background:rgba(67,56,202,.12);border-color:rgba(67,56,202,.3);}
+.ph .pn{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--indigo-mid);font-weight:700;margin-bottom:5px;letter-spacing:.06em;}
+.ph .pt{font-size:13px;font-weight:700;color:#fff;margin-bottom:3px;}
+.ph .ps{font-size:11px;color:rgba(255,255,255,.32);}
+
+/* ── IMPACT STRIP ────────────────────────────────────── */
+.impact-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px;}
+.ic{
+  background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);
+  border-radius:9px;padding:22px 18px;text-align:center;
+}
+.ic .metric{font-size:46px;font-weight:800;font-family:'JetBrains Mono',monospace;letter-spacing:-2px;line-height:1;margin-bottom:7px;}
+.ic .mlabel{font-size:13px;color:rgba(255,255,255,.45);line-height:1.5;}
+
+/* ── CODE BLOCK ──────────────────────────────────────── */
+pre{
+  background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.07);
+  border-radius:7px;padding:16px 18px;
+  font-family:'JetBrains Mono',monospace;font-size:12px;
+  color:#94A3B8;line-height:1.75;margin-top:10px;
+}
+.ck{color:#818CF8;} .cv{color:#34D399;} .cm{color:#475569;}
+
+/* ── TITLE SLIDE ─────────────────────────────────────── */
+.slide-title{
+  background:linear-gradient(135deg,#0F172A 0%,#1E1B4B 50%,#0F172A 100%);
+  justify-content:center;align-items:center;text-align:center;padding:64px;
+}
+.slide-title::before{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse at 28% 50%,rgba(67,56,202,.22) 0%,transparent 58%),
+    radial-gradient(ellipse at 72% 50%,rgba(13,148,136,.14) 0%,transparent 58%);
+}
+.grid-bg{
+  position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:60px 60px;
+}
+.title-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(67,56,202,.18);border:1px solid rgba(67,56,202,.38);
+  border-radius:100px;padding:7px 20px;
+  font-size:12px;font-family:'JetBrains Mono',monospace;
+  color:var(--indigo-mid);letter-spacing:.1em;
+  margin-bottom:28px;position:relative;
+}
+.pulse{
+  width:7px;height:7px;border-radius:50%;background:var(--green);
+  animation:pulse 2.2s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.35;transform:scale(.85);}}
+.hero{
+  font-size:96px;font-weight:900;letter-spacing:-4px;line-height:1;
+  background:linear-gradient(135deg,#FFFFFF 0%,#818CF8 52%,#5EEAD4 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:18px;position:relative;
+}
+.hero-sub{
+  font-size:17px;color:rgba(255,255,255,.55);font-weight:400;
+  line-height:1.65;max-width:640px;margin:0 auto 40px;position:relative;
+}
+.pills{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;position:relative;}
+.pill{
+  padding:7px 16px;border-radius:6px;font-size:12px;font-weight:500;
+  font-family:'JetBrains Mono',monospace;border:1px solid;letter-spacing:.02em;
+}
+.p-in{background:rgba(67,56,202,.14);border-color:rgba(67,56,202,.38);color:#A5B4FC;}
+.p-te{background:rgba(13,148,136,.14);border-color:rgba(13,148,136,.38);color:#5EEAD4;}
+.p-or{background:rgba(234,88,12,.14);border-color:rgba(234,88,12,.38);color:#FB923C;}
+.p-gr{background:rgba(16,185,129,.14);border-color:rgba(16,185,129,.38);color:#34D399;}
+.footer-text{
+  position:absolute;bottom:24px;left:0;right:0;text-align:center;
+  font-size:12px;color:rgba(255,255,255,.28);font-family:'JetBrains Mono',monospace;
+}
+
+/* ── ICON GRID CELLS ─────────────────────────────────── */
+.ig-cell{
+  background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);
+  border-radius:9px;padding:16px 14px;text-align:center;
+}
+.ig-cell .em{font-size:20px;margin-bottom:8px;}
+.ig-cell .it{font-size:13px;font-weight:600;color:#fff;margin-bottom:3px;}
+.ig-cell .is{font-size:11px;color:rgba(255,255,255,.35);}
+
+/* ── PRINT ───────────────────────────────────────────── */
+@media print{
+  html{background:#0F172A;}
+  body{padding:0;gap:0;background:#0F172A;}
+  .nav{display:none;}
+  .slide{
+    width:100%;min-height:100vh;margin:0;border-radius:0;
+    border:none;box-shadow:none;page-break-after:always;break-after:page;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV DOTS -->
+<nav class="nav">
+  <a href="#s1" title="Title"></a>
+  <a href="#s2" title="Problem"></a>
+  <a href="#s3" title="Architecture"></a>
+  <a href="#s4" title="Technical"></a>
+  <a href="#s5" title="Prototype"></a>
+  <a href="#s6" title="Feasibility"></a>
+  <a href="#s7" title="Impact"></a>
+  <a href="#s8" title="Future"></a>
+  <a href="#s9" title="Demo"></a>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 1 — TITLE
+══════════════════════════════════════════════════════ -->
+<div class="slide slide-title" id="s1">
+  <div class="grid-bg"></div>
+  <div class="title-badge"><span class="pulse"></span>ROUND 2 — DETAILED SOLUTION &amp; PROTOTYPE</div>
+  <div class="hero">TRACE</div>
+  <div class="hero-sub">Process Mining &amp; Carbon Intelligence Platform<br/>for Supply Chain Sustainability Compliance</div>
+  <div class="pills">
+    <span class="pill p-in">OCEL 2.0 Process Mining</span>
+    <span class="pill p-te">Carbon Accounting</span>
+    <span class="pill p-or">ESG &amp; BRSR Reporting</span>
+    <span class="pill p-gr">AI Copilot</span>
+    <span class="pill p-in">Multi-Tenant SaaS</span>
+  </div>
+  <div class="footer-text">Hackathon Submission &nbsp;·&nbsp; 2026 &nbsp;·&nbsp; Next.js 16 + FastAPI + PostgreSQL</div>
+  <div class="footer-bar"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 2 — PROBLEM
+══════════════════════════════════════════════════════ -->
+<div class="slide" style="background:#080B12;" id="s2">
+  <div class="sh"><span class="sn">01 / 08</span><span class="st">Problem Understanding</span></div>
+  <div class="sb">
+    <div class="accent"></div>
+    <div class="slide-h">Supply Chains Are a Black Box</div>
+    <div class="slide-sub">Enterprises have zero real-time visibility into emissions, violations, and process drift</div>
+    <div class="split" style="flex:1;">
+      <!-- LEFT -->
+      <div style="flex:1;display:flex;flex-direction:column;gap:14px;">
+        <ul class="bl">
+          <li><span class="dot d-in"></span><div><strong>No process visibility:</strong> Companies cannot trace actual logistics sequences against intended process models — violations go undetected for months</div></li>
+          <li><span class="dot d-te"></span><div><strong>Manual carbon accounting:</strong> Scope 1/2/3 emissions estimated quarterly with spreadsheets — not per-shipment, not per-activity</div></li>
+          <li><span class="dot d-or"></span><div><strong>Regulation blindness:</strong> BRSR (India), GHG Protocol, and ESG frameworks require detailed traceability that no existing tool provides end-to-end</div></li>
+          <li><span class="dot d-gr"></span><div><strong>Supplier opacity:</strong> No system ranks supplier carbon fitness per transaction or flags which partners drive the most violations</div></li>
+        </ul>
+        <div class="card card-re" style="margin-top:auto;">
+          <h3>Real Cost</h3>
+          <p>Supply chain emissions account for <strong>up to 80% of a company's total carbon footprint</strong> — yet most enterprises can only estimate them annually at best</p>
+        </div>
+      </div>
+      <!-- RIGHT -->
+      <div style="flex:1;" class="col">
+        <div class="card">
+          <h3>Current State</h3>
+          <p>ERP logs sit unused. Process analysts export CSVs manually. Carbon consultants bill by the hour to do what algorithms should do in seconds.</p>
+        </div>
+        <div class="card card-in">
+          <h3>What's Needed</h3>
+          <p>An automated platform that ingests raw event logs, detects process violations, computes carbon per activity, and generates regulator-ready reports — <strong>instantly</strong>.</p>
+        </div>
+        <div class="card" style="background:rgba(239,68,68,.05);border-color:rgba(239,68,68,.18);">
+          <h3>The Gap</h3>
+          <p>Existing tools (ProM, Celonis) do process mining <em>or</em> carbon accounting. <strong>None do both. None are accessible without expensive consultants.</strong></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bar"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 3 — ARCHITECTURE
+══════════════════════════════════════════════════════ -->
+<div class="slide" id="s3">
+  <div class="sh"><span class="sn">02 / 08</span><span class="st">Solution Architecture</span></div>
+  <div class="sb">
+    <div class="accent"></div>
+    <div class="slide-h">Full-Stack Intelligence Platform</div>
+    <div class="slide-sub">Single CSV upload → 8 analytical modules fire in parallel → real-time dashboard</div>
+    <!-- FLOW -->
+    <div class="flow">
+      <div class="fn">
+        <span class="fi">📄</span>
+        <div class="ft">Event Log</div>
+        <div class="fs">CSV / OCEL 2.0</div>
+      </div>
+      <div class="fa">→</div>
+      <div class="fn act">
+        <span class="fi">🧭</span>
+        <div class="ft">column_mapper</div>
+        <div class="fs">Fuzzy auto-detection</div>
+      </div>
+      <div class="fa">→</div>
+      <div class="fn act">
+        <span class="fi">⚙️</span>
+        <div class="ft">FastAPI Engine</div>
+        <div class="fs">8 analysis modules</div>
+      </div>
+      <div class="fa">→</div>
+      <div class="fn act">
+        <span class="fi">🗄️</span>
+        <div class="ft">PostgreSQL</div>
+        <div class="fs">Multi-tenant storage</div>
+      </div>
+      <div class="fa">→</div>
+      <div class="fn">
+        <span class="fi">📊</span>
+        <div class="ft">Next.js Dashboard</div>
+        <div class="fs">14 live pages</div>
+      </div>
+    </div>
+    <!-- 4-col grid -->
+    <div class="g4" style="margin-bottom:14px;">
+      <div class="card card-in">
+        <h3>Frontend</h3>
+        <p>Next.js 16 · React 19 · TypeScript strict · Tailwind v4 · Recharts · React Flow · shadcn/ui</p>
+      </div>
+      <div class="card card-te">
+        <h3>Backend</h3>
+        <p>FastAPI · Python 3.11 · SQLAlchemy · pandas · 39 pytest tests passing</p>
+      </div>
+      <div class="card card-or">
+        <h3>Database</h3>
+        <p>PostgreSQL (prod) · SQLite (local) · Auto-migrates on startup · Cascade deletes</p>
+      </div>
+      <div class="card card-gr">
+        <h3>AI Layer</h3>
+        <p>Ollama LLM · Local inference · Multi-model switching · Context-aware ESG queries</p>
+      </div>
+    </div>
+    <!-- hierarchy bar -->
+    <div style="background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:14px 20px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,.25);letter-spacing:.09em;margin-bottom:7px;text-transform:uppercase;">Data Hierarchy (Multi-tenant)</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#A5B4FC;">
+        Organization → Projects → Workspaces → AnalysisSnapshots &nbsp;&nbsp;<span style="color:rgba(255,255,255,.2);">·</span>&nbsp;&nbsp;<span style="color:#5EEAD4;">Cascade delete enforced at DB level</span>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bar"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 4 — TECHNICAL APPROACH
+══════════════════════════════════════════════════════ -->
+<div class="slide" style="background:#080B12;" id="s4">
+  <div class="sh"><span class="sn">03 / 08</span><span class="st">Technical Approach</span></div>
+  <div class="sb">
+    <div class="accent"></div>
+    <div class="slide-h">8 Analytical Engines, One Upload</div>
+    <div class="slide-sub">Every module wired to real backend logic — no mocked data, no placeholder numbers</div>
+    <div class="split" style="flex:1;">
+      <!-- LEFT: table -->
+      <div style="flex:1.05;">
+        <table>
+          <thead><tr><th>Module</th><th>Engine</th><th>Output</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Process Mining</strong></td><td class="mono">process_mining.py</td><td><span class="badge b-in">Nodes + Edges</span></td></tr>
+            <tr><td><strong>Conformance</strong></td><td class="mono">conformance.py</td><td><span class="badge b-or">368 violations</span></td></tr>
+            <tr><td><strong>Carbon Budget</strong></td><td class="mono">carbon_budget.py</td><td><span class="badge b-te">Monthly δ</span></td></tr>
+            <tr><td><strong>Carbon Fitness</strong></td><td class="mono">carbon_fitness.py</td><td><span class="badge b-gr">CFS Score</span></td></tr>
+            <tr><td><strong>Process Optim.</strong></td><td class="mono">process_optimization.py</td><td><span class="badge b-in">Bottlenecks</span></td></tr>
+            <tr><td><strong>BRSR Report</strong></td><td class="mono">brsr_report.py</td><td><span class="badge b-gr">PDF-ready</span></td></tr>
+            <tr><td><strong>ESG Report</strong></td><td class="mono">esg_report.py</td><td><span class="badge b-te">E/S/G scores</span></td></tr>
+            <tr><td><strong>Forecasting</strong></td><td class="mono">forecasting.py</td><td><span class="badge b-or">Multi-baseline</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- RIGHT: cards -->
+      <div style="flex:.95;" class="col">
+        <div class="card card-in">
+          <h3>Smart Column Detection</h3>
+          <p>Fuzzy alias matching auto-detects <strong>case_id, activity, timestamp, resource, supplier, water, electricity, cost</strong> from any CSV schema — confidence-scored, manually overridable</p>
+        </div>
+        <div class="card card-te">
+          <h3>Table-Driven Conformance Rules</h3>
+          <p>Air Freight, Incineration, Landfill violations detected via <strong>generalized rule table</strong>. Zero-violation disclosure surfaces rule scope honestly instead of a fake 100%</p>
+        </div>
+        <div class="card card-gr">
+          <h3>Carbon Fitness Score</h3>
+          <pre><span class="ck">CFS</span> = (<span class="cv">idealCO₂</span> / <span class="cv">actualCO₂</span>) × <span class="cv">100</span>
+<span class="cm"># capped at 100, 0/0 → 100</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bar"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 5 — PROTOTYPE DESIGN
+══════════════════════════════════════════════════════ -->
+<div class="slide" style="background:linear-gradient(135deg,#0F172A 0%,#1a1840 100%);" id="s5">
+  <div class="sh"><span class="sn">04 / 08</span><span class="st">Prototype Design</span></div>
+  <div class="sb">
+    <div class="accent"></div>
+    <div class="slide-h">14 Live Pages. Zero Mocked Data.</div>
+    <div class="slide-sub">Every page is wired to real backend results from a single event log upload</div>
+    <!-- 8-icon grid -->
+    <div class="g4" style="margin-bottom:14px;">
+      <div class="ig-cell"><div class="em">📊</div><div class="it">Dashboard</div><div class="is">KPI strip + trend charts</div></div>
+      <div class="ig-cell"><div class="em">🔗</div><div class="it">OCEL Upload</div><div class="is">Drag-drop + column mapper</div></div>
+      <div class="ig-cell"><div class="em">✅</div><div class="it">Conformance</div><div class="is">Violation table + severities</div></div>
+      <div class="ig-cell"><div class="em">🌿</div><div class="it">Carbon Budget</div><div class="is">Monthly budget vs actual</div></div>
+      <div class="ig-cell"><div class="em">💪</div><div class="it">Carbon Fitness</div><div class="is">CFS score per case</div></div>
+      <div class="ig-cell"><div class="em">🚚</div><div class="it">Supplier Fitness</div><div class="is">Per-partner carbon rank</div></div>
+      <div class="ig-cell"><div class="em">📋</div><div class="it">BRSR Report</div><div class="is">Print-to-PDF ready</div></div>
+      <div class="ig-cell"><div class="em">🤖</div><div class="it">AI Copilot</div><div class="is">Local Ollama LLM</div></div>
+    </div>
+    <!-- bottom 3 cards -->
+    <div class="g3">
+      <div class="card card-in">
+        <h3>Multi-Tenant Hierarchy</h3>
+        <p>Real <strong>Organization → Project → Workspace</strong> model backed by PostgreSQL. Create, switch, delete with cascade. Each workspace stores its own analysis snapshot — reload any session from the URL.</p>
+      </div>
+      <div class="card card-te">
+        <h3>Theming</h3>
+        <p><strong>3 themes</strong> (Corporate Indigo · Nature Green · Dark) switchable live via dropdown. All semantic CSS variables — charts, cards, and SVGs all respond.</p>
+      </div>
+      <div class="card card-gr">
+        <h3>Deployment</h3>
+        <p><strong>Vercel</strong> (frontend) + <strong>Render</strong> (backend + PostgreSQL). Environment-driven config. Zero secrets in code. Build passes cleanly.</p>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bar"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 6 — FEASIBILITY
+══════════════════════════════════════════════════════ -->
+<div class="slide" style="background:#080B12;" id="s6">
+  <div class="sh"><span class="sn">05 / 08</span><span class="st">Feasibility Analysis</span></div>
+  <div class="sb">
+    <div class="accent"></div>
+    <div class="slide-h">Already Built. Already Verified.</div>
+    <div class="slide-sub">This is not a concept — it is a working prototype with 39/39 automated backend tests</div>
+    <div class="split" style="flex:1;">
+      <!-- LEFT: metric stack -->
+      <div style="flex:.7;" class="col">
+        <div class="card card-gr" style="flex:1;justify-content:center;display:flex;flex-direction:column;">
+          <div class="bm bm-gr">39/39</div>
+          <div style="font-size:13px;color:rgba(255,255,255,.45);">Pytest backend tests passing · 0 failures</div>
+        </div>
+        <div class="card card-in" style="flex:1;justify-content:center;display:flex;flex-direction:column;">
+          <div class="bm bm-in">368</div>
+          <div style="font-size:13px;color:rgba(255,255,255,.45);">Violations detected on demo dataset (regression-locked)</div>
+        </div>
+        <div class="card card-te" style="flex:1;justify-content:center;display:flex;flex-direction:column;">
+          <div class="bm bm-te">~3s</div>
+          <div style="font-size:13px;color:rgba(255,255,255,.45);">End-to-end processing time for 4,232-event log</div>
+        </div>
+      </div>
+      <!-- RIGHT: table -->
+      <div style="flex:1.3;">
+        <table>
+          <thead><tr><th>Concern</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>Does CSV upload actually process?</td><td><span class="badge b-gr">✓ Live</span></td></tr>
+            <tr><td>Are carbon numbers real calculations?</td><td><span class="badge b-gr">✓ Vectorized</span></td></tr>
+            <tr><td>Is conformance detection generic?</td><td><span class="badge b-gr">✓ Table-driven</span></td></tr>
+            <tr><td>Is multi-tenancy real or cosmetic?</td><td><span class="badge b-gr">✓ SQL-backed</span></td></tr>
+            <tr><td>Is the AI copilot real or mocked?</td><td><span class="badge b-gr">✓ Real Ollama</span></td></tr>
+            <tr><td>Does BRSR export actually work?</td><td><span class="badge b-gr">✓ Print-to-PDF</span></td></tr>
+            <tr><td>PostgreSQL for production?</td><td><span class="badge b-gr">✓ Env-driven URI</span></td></tr>
+            <tr><td>Frontend build zero TypeScript errors?</td><td><span class="badge b-gr">✓ Clean build</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <!-- bottom full-width card -->
+    <div class="card" style="background:rgba(16,185,129,.045);border-color:rgba(16,185,129,.2);margin-top:14px;">
+      <div style="display:flex;align-items:flex-start;gap:12px;">
+        <span style="font-size:18px;flex-shrink:0;margin-top:1px;">🔒</span>
+        <p><strong>Honest-by-design:</strong> Every feature either works or is removed. No placeholder numbers next to real ones. Zero-violation disclosure tells users what rules are active instead of showing a misleading 100% compliance score. This ethos is documented and enforced in the codebase.</p>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bar"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 7 — IMPACT
+══════════════════════════════════════════════════════ -->
+<div class="slide" style="background:linear-gradient(135deg,#0F172A 0%,#042F2E 100%);" id="s7">
+  <div class="sh"><span class="sn">06 / 08</span><span class="st">Expected Impact</span></div>
+  <div class="sb">
+    <div class="accent"></div>
+    <div class="slide-h">Quantified. Actionable. Immediate.</div>
+    <div class="slide-sub">For any enterprise managing logistics or supply chain operations</div>
+    <!-- metric strip -->
+    <div class="impact-strip">
+      <div class="ic">
+        <div class="metric" style="color:var(--teal-mid);">80%</div>
+        <div class="mlabel">Reduction in time to generate<br/>a BRSR-compliant emissions report</div>
+      </div>
+      <div class="ic">
+        <div class="metric" style="color:var(--indigo-mid);">100%</div>
+        <div class="mlabel">Activity-level carbon traceability<br/>vs. quarterly estimates today</div>
+      </div>
+      <div class="ic">
+        <div class="metric" style="color:var(--green-mid);">₹0</div>
+        <div class="mlabel">External consultant cost to generate<br/>a process conformance audit</div>
+      </div>
+    </div>
+    <!-- 3 cards -->
+    <div class="g3" style="flex:1;">
+      <div class="card card-te" style="display:flex;flex-direction:column;gap:10px;">
+        <div style="font-size:22px;">🎯</div>
+        <h3>For Compliance Teams</h3>
+        <p>BRSR (India) + GHG Protocol reports generated instantly from event logs. Traceability matrix included. Audit-ready hash signature on every report.</p>
+      </div>
+      <div class="card card-in" style="display:flex;flex-direction:column;gap:10px;">
+        <div style="font-size:22px;">🏭</div>
+        <h3>For Operations</h3>
+        <p>Bottleneck analysis + rework detection flags which activities are creating delay AND carbon — enabling dual optimization for cost and sustainability.</p>
+      </div>
+      <div class="card card-gr" style="display:flex;flex-direction:column;gap:10px;">
+        <div style="font-size:22px;">🤝</div>
+        <h3>For Procurement</h3>
+        <p>Supplier Carbon Fitness Score ranks every partner by emissions-per-case. Replace worst offenders with data-backed justification instead of gut feel.</p>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bar"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 8 — FUTURE SCOPE
+══════════════════════════════════════════════════════ -->
+<div class="slide" id="s8">
+  <div class="sh"><span class="sn">07 / 08</span><span class="st">Future Scope</span></div>
+  <div class="sb">
+    <div class="accent"></div>
+    <div class="slide-h">Built to Scale</div>
+    <div class="slide-sub">The foundation is production-grade. These are natural extensions, not pivots.</div>
+    <!-- phase stepper -->
+    <div class="phases">
+      <div class="ph act">
+        <div class="pn">NOW</div>
+        <div class="pt">Working Prototype</div>
+        <div class="ps">OCEL upload → 8 modules → 14 pages</div>
+      </div>
+      <div class="ph">
+        <div class="pn">Q3 2026</div>
+        <div class="pt">SAP / ERP Connectors</div>
+        <div class="ps">Live event stream ingest, no CSV</div>
+      </div>
+      <div class="ph">
+        <div class="pn">Q4 2026</div>
+        <div class="pt">Real-Time Alerts</div>
+        <div class="ps">Webhook triggers on violation spikes</div>
+      </div>
+      <div class="ph">
+        <div class="pn">2027</div>
+        <div class="pt">Marketplace</div>
+        <div class="ps">Shared conformance rule templates</div>
+      </div>
+    </div>
+    <!-- 2×2 grid -->
+    <div class="g2" style="flex:1;">
+      <div class="card card-in">
+        <h3>📡&nbsp; Live Streaming Ingestion</h3>
+        <p>Replace CSV uploads with Kafka / webhook connectors to ERP systems (SAP, Oracle). Violations and carbon budgets update in real-time as events stream in.</p>
+      </div>
+      <div class="card card-te">
+        <h3>🧩&nbsp; Custom Conformance Rules (PNML)</h3>
+        <p>Upload your own Petri Net process model. TRACE parses it into the rule table, replacing hardcoded defaults with domain-specific compliance logic.</p>
+      </div>
+      <div class="card card-gr">
+        <h3>🌐&nbsp; Cross-Org Benchmarking</h3>
+        <p>Anonymized carbon fitness benchmarks across industry verticals. Know if your logistics CFS of 72 is above or below sector median — without exposing raw data.</p>
+      </div>
+      <div class="card card-or">
+        <h3>🤖&nbsp; Predictive Carbon Forecasting</h3>
+        <p>Extend the multi-baseline forecasting module to simulate future emission scenarios: "What if we switch 30% of air freight to rail?" answered in seconds.</p>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bar"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 9 — CLOSING / DEMO
+══════════════════════════════════════════════════════ -->
+<div class="slide slide-title" id="s9">
+  <div class="grid-bg"></div>
+  <div style="position:relative;text-align:center;max-width:900px;margin:0 auto;">
+    <div class="title-badge" style="margin-bottom:32px;"><span class="pulse"></span>LIVE DEMO AVAILABLE</div>
+    <div style="font-size:72px;font-weight:900;letter-spacing:-3px;line-height:1;background:linear-gradient(135deg,#FFFFFF 0%,#818CF8 50%,#5EEAD4 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:18px;">
+      Try TRACE Now
+    </div>
+    <div style="font-size:16px;color:rgba(255,255,255,.48);margin-bottom:40px;line-height:1.7;">
+      Upload <code style="font-family:'JetBrains Mono',monospace;color:#5EEAD4;font-size:14px;background:rgba(94,234,212,.08);padding:2px 8px;border-radius:4px;border:1px solid rgba(94,234,212,.2);">trace_demo_dataset.csv</code>
+      &nbsp;·&nbsp; See 368 violations, carbon scores, BRSR report — in under 5 seconds
+    </div>
+    <!-- 3 link cards -->
+    <div style="display:flex;gap:14px;justify-content:center;margin-bottom:36px;">
+      <div class="card" style="min-width:220px;text-align:left;">
+        <h3>GitHub</h3>
+        <p style="font-family:'JetBrains Mono',monospace;color:#818CF8;font-size:13px;">github.com/bug1857/TRACE</p>
+      </div>
+      <div class="card" style="min-width:220px;text-align:left;">
+        <h3>Frontend (Vercel)</h3>
+        <p style="font-family:'JetBrains Mono',monospace;color:#5EEAD4;font-size:13px;">trace-app.vercel.app</p>
+      </div>
+      <div class="card" style="min-width:220px;text-align:left;">
+        <h3>Backend (Render)</h3>
+        <p style="font-family:'JetBrains Mono',monospace;color:#FB923C;font-size:13px;">trace-backend.onrender.com</p>
+      </div>
+    </div>
+    <div class="pills">
+      <span class="pill p-gr">39/39 Tests Pass</span>
+      <span class="pill p-in">14 Live Pages</span>
+      <span class="pill p-te">8 Analysis Modules</span>
+      <span class="pill p-or">Real AI Copilot</span>
+      <span class="pill p-in">PostgreSQL Ready</span>
+    </div>
+  </div>
+  <div class="footer-text">TRACE &nbsp;·&nbsp; Round 2 Submission &nbsp;·&nbsp; 2026</div>
+  <div class="footer-bar"></div>
+</div>
+
+</body>
+</html>

@@ -58,8 +58,8 @@ export default function FileUpload({
       onClick={triggerSelect}
       className={`border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-colors min-h-[160px] select-none ${
         isDragActive
-          ? 'border-[#2D6A4F] bg-[#E8F0EB]'
-          : 'border-[#E2E0D8] bg-[#F3F2EE] hover:bg-[#ECEAE4]'
+          ? 'border-[var(--primary)] bg-[var(--accent)]'
+          : 'border-[var(--border)] bg-[var(--card)] hover:bg-[#ECEAE4]'
       }`}
     >
       <input
@@ -70,15 +70,15 @@ export default function FileUpload({
         className="hidden"
       />
       
-      <div className="mb-3 text-[#6B6963]">
+      <div className="mb-3 text-[var(--muted-foreground)]">
         <Upload className="w-8 h-8 mx-auto" strokeWidth={1.5} />
       </div>
 
-      <p className="text-[13px] font-sans font-medium text-[#1A1917]">
+      <p className="text-[13px] font-sans font-medium text-[var(--foreground)]">
         {placeholder}
       </p>
       
-      <p className="text-[11px] text-[#6B6963] font-sans mt-1">
+      <p className="text-[11px] text-[var(--muted-foreground)] font-sans mt-1">
         Accepted file types: {accept.toUpperCase()}
       </p>
     </div>

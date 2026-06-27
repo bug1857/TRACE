@@ -276,3 +276,21 @@ export const mockTeamMembers: TeamMember[] = [
   { id: 't-4', name: 'Ananya Sen', email: 'ananya.sen@louisindia.com', role: 'viewer' },
   { id: 't-5', name: 'Vikram Rao', email: 'vikram.rao@louisindia.com', role: 'viewer' }
 ];
+
+export const mockForecastingData = {
+  dataAvailable: true,
+  insufficientDataNote: null,
+  trainMonths: 12,
+  holdoutMonths: 3,
+  baselines: [
+    { name: 'Naive', applicable: true, predictions: [10000, 11000, 12000], mae: 1500, mape: 12.5 },
+    { name: 'Moving Average', applicable: true, predictions: [10500, 11200, 11800], mae: 1200, mape: 10.2 },
+    { name: 'Linear Trend', applicable: true, predictions: [10800, 11500, 12200], mae: 800, mape: 6.5 },
+    { name: 'Seasonal Naive', applicable: true, predictions: [9500, 10200, 10800], mae: 1800, mape: 15.0 }
+  ],
+  bestBaseline: 'Linear Trend',
+  forecastNextMonth: {
+    usingBaseline: 'Linear Trend',
+    predictedActualKg: 12500
+  }
+};

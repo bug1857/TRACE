@@ -68,13 +68,17 @@ def get_fuzzy_score(col_name: str, aliases: list) -> float:
             best_score = max(best_score, 0.7)
     return best_score
 
-def check_timestamp_shape(df: pd.DataFrame, col: str) -> float:
+def check_timestamp_shape(df: pd.DataFrame, col: str, sample_size: int = 500) -> float:
+    """Sample only the first `sample_size` rows for column detection speed.
+    Full parsing happens later when the column is actually used."""
     try:
-        parsed = pd.to_datetime(df[col], errors='coerce', format='mixed')
-        valid_ratio = parsed.notna().sum() / len(df) if len(df) > 0 else 0
+        sample = df[col].iloc[:sample_size]
+        parsed = pd.to_datetime(sample, errors='coerce', format='mixed')
+        valid_ratio = parsed.notna().sum() / len(sample) if len(sample) > 0 else 0
         return 1.0 if valid_ratio >= 0.8 else 0.0
     except Exception:
         return 0.0
+
 
 def check_case_id_shape(df: pd.DataFrame, col: str) -> float:
     total_count = len(df)

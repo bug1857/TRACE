@@ -3,58 +3,85 @@ from typing import List, Dict, Any
 from carbon_budget import classify_activity
 from conformance import VIOLATION_RULES
 
+def get_qty(row: pd.Series) -> float:
+    for col in ["weight", "quantity", "cargo_weight", "volume", "amount"]:
+        if col in row and pd.notna(row[col]):
+            try:
+                return float(row[col])
+            except ValueError:
+                pass
+    return 1.0
+
 def calculate_cfs(events_df: pd.DataFrame, case_id_col: str, activity_col: str) -> List[Dict[str, Any]]:
     """
     Score each case on carbon efficiency (CFS), on a 0-100 scale.
     """
     if events_df.empty:
         return []
+
+    # Fast check for quantities
+    df = events_df[[case_id_col, activity_col]].copy()
+    
+    qty_series = pd.Series(1.0, index=df.index)
+    for col in ["weight", "quantity", "cargo_weight", "volume", "amount"]:
+        if col in events_df.columns:
+            qty_series = pd.to_numeric(events_df[col], errors='coerce').fillna(qty_series)
+            break
+            
+    df["_qty"] = qty_series
+
+    # Pre-calculate factors and rules for all unique activities to avoid looping over 100k+ rows
+    unique_activities = df[activity_col].astype(str).unique()
+    
+    factor_map = {}
+    rf_map = {}
+    
+    for act in unique_activities:
+        # Carbon factor
+        _, factor, _ = classify_activity(act)
+        factor_map[act] = factor
         
+        # Violation reduction factor
+        act_lower = act.lower()
+        matched_rf = None
+        for rule in VIOLATION_RULES:
+            if rule["forbidden"].lower() in act_lower:
+                matched_rf = rule["reduction_factor"]
+                break
+        rf_map[act] = matched_rf
+
+    # Map the pre-calculated values to the entire dataframe in a vectorized way
+    df["_factor"] = df[activity_col].astype(str).map(factor_map).fillna(0.0)
+    df["_event_carbon"] = df["_factor"] * df["_qty"]
+    
+    # Map reduction factors
+    df["_matched_rf"] = df[activity_col].astype(str).map(rf_map)
+    
+    # Violating events flag
+    df["_is_violating"] = df["_matched_rf"].notna()
+    
+    # Calculate ideal carbon
+    # If violating: event_carbon * (1.0 - matched_rf)
+    # If not violating: event_carbon
+    df["_ideal_carbon"] = df.apply(
+        lambda x: x["_event_carbon"] * (1.0 - x["_matched_rf"]) if x["_is_violating"] else x["_event_carbon"], 
+        axis=1
+    )
+
+    # Group by case and sum
+    grouped = df.groupby(case_id_col).agg(
+        actual_carbon=("_event_carbon", "sum"),
+        ideal_carbon=("_ideal_carbon", "sum"),
+        violation_count=("_is_violating", "sum")
+    ).reset_index()
+
     results = []
-    
-    # Group events by case
-    grouped = events_df.groupby(case_id_col)
-    
-    for case_id, group in grouped:
-        actual_carbon = 0.0
-        ideal_carbon = 0.0
-        violation_count = 0
+    for _, row in grouped.iterrows():
+        case_id = row[case_id_col]
+        actual_carbon = float(row["actual_carbon"])
+        ideal_carbon = float(row["ideal_carbon"])
+        violation_count = int(row["violation_count"])
         
-        for _, row in group.iterrows():
-            activity = str(row[activity_col])
-            activity_lower = activity.lower()
-            
-            # Compute actual carbon
-            _, factor, _ = classify_activity(activity)
-            qty = 1.0
-            for col in ["weight", "quantity", "cargo_weight", "volume", "amount"]:
-                if col in row and pd.notna(row[col]):
-                    try:
-                        qty = float(row[col])
-                    except ValueError:
-                        pass
-                    break
-            event_carbon = factor * qty
-            actual_carbon += event_carbon
-            
-            # Check if this event is violating
-            matched_rf = None
-            for rule in VIOLATION_RULES:
-                forbidden = rule["forbidden"].lower()
-                if forbidden in activity_lower:
-                    matched_rf = rule["reduction_factor"]
-                    break  # Take first matching rule (only one per forbidden activity exists)
-            
-            if matched_rf is not None:
-                # Violating activity
-                violation_count += 1
-                event_ideal_carbon = event_carbon * (1.0 - matched_rf)
-                ideal_carbon += event_ideal_carbon
-            else:
-                # Non-violating activity
-                ideal_carbon += event_carbon
-                
-        # Calculate CFS score
         if actual_carbon == 0.0:
             cfs_score = 100.0
         else:
@@ -89,42 +116,37 @@ def calculate_supplier_fitness(
     cfs_results = calculate_cfs(events_df, case_id_col, activity_col)
     case_cfs = {r["caseId"]: r["cfsScore"] for r in cfs_results}
     
-    # Calculate carbon and check violations for each event
-    df_events = events_df.copy()
+    # Vectorized carbon and violation check
+    df = events_df[[case_id_col, activity_col, supplier_col]].copy()
     
-    factors = []
-    violation_flags = []
+    qty_series = pd.Series(1.0, index=df.index)
+    for col in ["weight", "quantity", "cargo_weight", "volume", "amount"]:
+        if col in events_df.columns:
+            qty_series = pd.to_numeric(events_df[col], errors='coerce').fillna(qty_series)
+            break
+    df["_qty"] = qty_series
     
-    for _, row in df_events.iterrows():
-        activity = str(row[activity_col])
-        activity_lower = activity.lower()
+    unique_activities = df[activity_col].astype(str).unique()
+    factor_map = {}
+    violating_map = {}
+    
+    for act in unique_activities:
+        _, factor, _ = classify_activity(act)
+        factor_map[act] = factor
         
-        # Carbon factor
-        _, factor, _ = classify_activity(activity)
-        qty = 1.0
-        for col in ["weight", "quantity", "cargo_weight", "volume", "amount"]:
-            if col in row and pd.notna(row[col]):
-                try:
-                    qty = float(row[col])
-                except ValueError:
-                    pass
-                break
-        factors.append(factor * qty)
-        
-        # Violation check
+        act_lower = act.lower()
         is_violating = False
         for rule in VIOLATION_RULES:
-            forbidden = rule["forbidden"].lower()
-            if forbidden in activity_lower:
+            if rule["forbidden"].lower() in act_lower:
                 is_violating = True
                 break
-        violation_flags.append(is_violating)
+        violating_map[act] = is_violating
         
-    df_events["_carbon"] = factors
-    df_events["_violating"] = violation_flags
+    df["_carbon"] = df[activity_col].astype(str).map(factor_map).fillna(0.0) * df["_qty"]
+    df["_violating"] = df[activity_col].astype(str).map(violating_map).fillna(False)
     
-    # Group events by supplier
-    grouped = df_events.groupby(supplier_col)
+    # Group by supplier
+    grouped = df.groupby(supplier_col)
     supplier_fitness_list = []
     
     for supplier_val, group in grouped:
@@ -140,7 +162,7 @@ def calculate_supplier_fitness(
         case_count = len(involved_cases)
         
         if case_count > 0:
-            avg_cfs = sum(case_cfs[str(cid)] for cid in involved_cases if str(cid) in case_cfs) / case_count
+            avg_cfs = sum(case_cfs.get(str(cid), 100.0) for cid in involved_cases) / case_count
         else:
             avg_cfs = 100.0
             

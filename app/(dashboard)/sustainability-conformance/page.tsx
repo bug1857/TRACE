@@ -197,8 +197,8 @@ export default function SustainabilityConformancePage() {
       <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6 items-start">
         
         {/* Left Column: Process Variants List */}
-        <div className="border border-[#E2E0D8] bg-[#FAFAF8] p-5 rounded-md shadow-sm space-y-3.5 select-none">
-          <h3 className="text-[13px] font-sans font-medium text-[#1A1917] uppercase tracking-wider">
+        <div className="border border-[var(--border)] bg-[var(--background)] p-5 rounded-md shadow-sm space-y-3.5 select-none">
+          <h3 className="text-[13px] font-sans font-medium text-[var(--foreground)] uppercase tracking-wider">
             {isReal ? `Audited Cases (${pathways.length})` : `Process Pathways (${pathways.length})`}
           </h3>
           
@@ -207,7 +207,7 @@ export default function SustainabilityConformancePage() {
               const isSelected = currentVar && currentVar.id === v.id;
               const rulePass = getPassCount(v);
               const ruleFail = policyRules.filter(r => r.check(v, violations).status === 'fail').length;
-              const colorClass = ruleFail > 0 ? 'text-[#C0392B]' : 'text-[#166534]';
+              const colorClass = ruleFail > 0 ? 'text-[var(--destructive)]' : 'text-[var(--trace-success)]';
 
               return (
                 <div
@@ -215,8 +215,8 @@ export default function SustainabilityConformancePage() {
                   onClick={() => setSelectedVar(v)}
                   className={`p-3 border rounded-md cursor-pointer transition-colors flex flex-col gap-1.5 ${
                     isSelected
-                      ? 'bg-[#E8F0EB] border-[#2D6A4F] text-[#2D6A4F]'
-                      : 'bg-[#F3F2EE] border-[#E2E0D8] text-[#6B6963] hover:bg-[#ECEAE4]'
+                      ? 'bg-[var(--accent)] border-[var(--primary)] text-[var(--primary)]'
+                      : 'bg-[var(--card)] border-[var(--border)] text-[var(--muted-foreground)] hover:bg-[#ECEAE4]'
                   }`}
                 >
                   <div className="flex justify-between items-center text-[12px] font-mono">
@@ -237,30 +237,30 @@ export default function SustainabilityConformancePage() {
 
         {/* Right Column: AI Audit Policy Checklist */}
         {currentVar ? (
-          <div className="border border-[#E2E0D8] bg-[#FAFAF8] p-6 rounded-md shadow-sm space-y-6">
-            <div className="flex items-start justify-between border-b border-[#E2E0D8] pb-4">
+          <div className="border border-[var(--border)] bg-[var(--background)] p-6 rounded-md shadow-sm space-y-6">
+            <div className="flex items-start justify-between border-b border-[var(--border)] pb-4">
               <div className="space-y-1">
-                <span className="text-[11px] font-sans font-semibold text-[#2D6A4F] uppercase tracking-widest block">
+                <span className="text-[11px] font-sans font-semibold text-[var(--primary)] uppercase tracking-widest block">
                   AI Auditor Log
                 </span>
-                <h2 className="text-[16px] font-sans font-medium text-[#1A1917]">
+                <h2 className="text-[16px] font-sans font-medium text-[var(--foreground)]">
                   ESG Policy Checklist Analysis — {currentVar.id}
                 </h2>
-                <p className="text-[12px] text-[#6B6963] font-sans">
-                  Pathway: <span className="font-mono text-[11px] text-[#1A1917]">{currentVar.name}</span>
+                <p className="text-[12px] text-[var(--muted-foreground)] font-sans">
+                  Pathway: <span className="font-mono text-[11px] text-[var(--foreground)]">{currentVar.name}</span>
                 </p>
               </div>
               
-              <ShieldCheck className="w-10 h-10 text-[#2D6A4F]" strokeWidth={1} />
+              <ShieldCheck className="w-10 h-10 text-[var(--primary)]" strokeWidth={1} />
             </div>
 
             {/* Audit Result Overview banner */}
             <div className={`p-4 rounded-md border flex items-center gap-3 select-none ${
               isGreen
-                ? 'bg-[#DCFCE7] border-[#166534]/10 text-[#166534]'
+                ? 'bg-[var(--trace-success-light)] border-[var(--trace-success)]/10 text-[var(--trace-success)]'
                 : isAmber
-                ? 'bg-[#FEF3C7] border-[#B45309]/10 text-[#B45309]'
-                : 'bg-[#FDECEA] border-[#C0392B]/10 text-[#C0392B]'
+                ? 'bg-[var(--trace-warning-light)] border-[var(--trace-warning)]/10 text-[var(--trace-warning)]'
+                : 'bg-[var(--trace-danger-light)] border-[var(--destructive)]/10 text-[var(--destructive)]'
             }`}>
               {isGreen ? (
                 <CheckCircle2 className="w-6 h-6 shrink-0" />
@@ -271,7 +271,7 @@ export default function SustainabilityConformancePage() {
                 <h4 className="text-[13px] font-sans font-semibold">
                   {isGreen ? 'Fully Conforming Pathway' : 'Conformance Deviations Identified'}
                 </h4>
-                <p className="text-[12px] text-[#6B6963] font-sans mt-0.5">
+                <p className="text-[12px] text-[var(--muted-foreground)] font-sans mt-0.5">
                   {isReal ? (
                     `AI auditor analyzed 2 active policy rules. Result: ${passCount} passed, ${failCount} failed. (2 rules not evaluated)`
                   ) : (
@@ -289,34 +289,34 @@ export default function SustainabilityConformancePage() {
                 return (
                   <div
                     key={rule.id}
-                    className="border border-[#E2E0D8] rounded-md p-4 bg-[#F3F2EE] flex items-start gap-3"
+                    className="border border-[var(--border)] rounded-md p-4 bg-[var(--card)] flex items-start gap-3"
                   >
                     {status === 'pass' && (
-                      <CheckCircle2 className="w-5 h-5 text-[#166534] shrink-0 mt-0.5" />
+                      <CheckCircle2 className="w-5 h-5 text-[var(--trace-success)] shrink-0 mt-0.5" />
                     )}
                     {status === 'fail' && (
-                      <XCircle className="w-5 h-5 text-[#C0392B] shrink-0 mt-0.5" />
+                      <XCircle className="w-5 h-5 text-[var(--destructive)] shrink-0 mt-0.5" />
                     )}
                     {status === 'unevaluated' && (
-                      <HelpCircle className="w-5 h-5 text-[#9B9891] shrink-0 mt-0.5" />
+                      <HelpCircle className="w-5 h-5 text-[var(--trace-subtle)] shrink-0 mt-0.5" />
                     )}
 
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <h4 className="text-[13px] font-sans font-semibold text-[#1A1917]">
+                        <h4 className="text-[13px] font-sans font-semibold text-[var(--foreground)]">
                           {rule.name}
                         </h4>
-                        <span className="text-[9px] font-mono text-[#9B9891] uppercase tracking-wider border border-[#E2E0D8] px-1 rounded-sm">
+                        <span className="text-[9px] font-mono text-[var(--trace-subtle)] uppercase tracking-wider border border-[var(--border)] px-1 rounded-sm">
                           {rule.category}
                         </span>
                       </div>
 
                       <p className={`text-[12px] font-sans ${
                         status === 'pass'
-                          ? 'text-[#6B6963]'
+                          ? 'text-[var(--muted-foreground)]'
                           : status === 'fail'
-                          ? 'text-[#C0392B] font-medium'
-                          : 'text-[#9B9891] italic'
+                          ? 'text-[var(--destructive)] font-medium'
+                          : 'text-[var(--trace-subtle)] italic'
                       } leading-normal`}>
                         {explanation}
                       </p>
@@ -328,7 +328,7 @@ export default function SustainabilityConformancePage() {
 
           </div>
         ) : (
-          <div className="border border-[#E2E0D8] bg-[#FAFAF8] p-6 rounded-md shadow-sm text-center text-[#6B6963]">
+          <div className="border border-[var(--border)] bg-[var(--background)] p-6 rounded-md shadow-sm text-center text-[var(--muted-foreground)]">
             Select a pathway or case to view policy audits.
           </div>
         )}

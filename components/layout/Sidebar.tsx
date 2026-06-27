@@ -1,10 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Building2,
+  Briefcase,
+  LayoutGrid,
+  LayoutDashboard,
   Database,
   CheckCircle2,
   Zap,
@@ -15,12 +18,11 @@ import {
   FileSpreadsheet,
   Compass,
   Sparkles,
+  Play,
   ShieldAlert,
   History,
   Settings,
-  LineChart,
-  Pencil,
-  LayoutDashboard
+  TrendingUp
 } from 'lucide-react';
 
 interface NavItem {
@@ -39,119 +41,86 @@ const navGroups: NavGroup[] = [
     label: 'OVERVIEW',
     items: [
       { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+      { name: 'Executive', href: '/executive', icon: LayoutDashboard }
     ]
   },
   {
-    label: 'EMISSIONS',
+    label: 'WORKSPACE',
+    items: [
+      { name: 'Organizations', href: '/organizations', icon: Building2 },
+      { name: 'Projects', href: '/projects', icon: Briefcase },
+      { name: 'Workspaces', href: '/workspaces', icon: LayoutGrid }
+    ]
+  },
+  {
+    label: 'PROCESS INTELLIGENCE',
+    items: [
+      { name: 'OCEL 2.0', href: '/ocel', icon: Database },
+      { name: 'Conformance', href: '/conformance', icon: CheckCircle2 },
+      { name: 'Process Optimization', href: '/process-optimization', icon: Zap }
+    ]
+  },
+  {
+    label: 'CARBON & ESG',
     items: [
       { name: 'Carbon Budget', href: '/carbon-budget', icon: Coins },
       { name: 'Carbon Fitness', href: '/carbon-fitness', icon: Leaf },
-      { name: 'Forecasting', href: '/forecasting', icon: LineChart },
       { name: 'Supplier Fitness', href: '/supplier-fitness', icon: Truck },
-    ]
-  },
-  {
-    label: 'REPORTS',
-    items: [
       { name: 'ESG Report', href: '/esg-report', icon: FileText },
       { name: 'BRSR Report', href: '/brsr-report', icon: FileSpreadsheet },
       { name: 'Green Routes', href: '/green-routes', icon: Compass },
-      { name: 'Process Optimization', href: '/process-optimization', icon: Zap },
+      { name: 'Forecasting', href: '/forecasting', icon: TrendingUp }
     ]
   },
   {
-    label: 'COMPLIANCE',
+    label: 'AI INTELLIGENCE',
     items: [
-      { name: 'OCEL 2.0 Upload', href: '/ocel', icon: Database },
-      { name: 'Conformance', href: '/conformance', icon: CheckCircle2 },
-      { name: 'Sustainability Conf.', href: '/sustainability-conformance', icon: ShieldAlert },
       { name: 'Copilot', href: '/copilot', icon: Sparkles },
-      { name: 'Audit Logs', href: '/audit-logs', icon: History },
+      { name: 'Simulation', href: '/simulation', icon: Play },
+      { name: 'Sustainability Conf.', href: '/sustainability-conformance', icon: ShieldAlert }
     ]
   },
   {
-    label: 'SETTINGS',
+    label: 'GOVERNANCE',
     items: [
-      { name: 'Organizations', href: '/organizations', icon: Building2 },
-      { name: 'Settings', href: '/settings', icon: Settings },
+      { name: 'Audit Logs', href: '/audit-logs', icon: History },
+      { name: 'Settings', href: '/settings', icon: Settings }
     ]
   }
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const [sliderStyle, setSliderStyle] = useState({ top: 0, height: 0, opacity: 0 });
-  const [prefersReduced, setPrefersReduced] = useState(false);
-  const containerRef = React.useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setPrefersReduced(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  }, []);
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-    // We use a small delay to ensure DOM is updated before measuring
-    const timer = setTimeout(() => {
-      if (!containerRef.current) return;
-      const activeEl = containerRef.current.querySelector('[data-active="true"]') as HTMLElement;
-      if (activeEl) {
-        setSliderStyle({
-          top: activeEl.offsetTop,
-          height: activeEl.offsetHeight,
-          opacity: 1
-        });
-      } else {
-        setSliderStyle((prev) => ({ ...prev, opacity: 0 }));
-      }
-    }, 50);
-    return () => clearTimeout(timer);
-  }, [pathname]);
-
-  const [ripple, setRipple] = useState<{ id: number; x: number; y: number; rectId: string } | null>(null);
-  const rippleCount = React.useRef(0);
-
-  function handleNavClick(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
-    if (prefersReduced) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    rippleCount.current += 1;
-    setRipple({ id: rippleCount.current, x, y, rectId: href });
-    setTimeout(() => setRipple(null), 600);
-  }
 
   return (
-    <div className="w-[220px] fixed top-0 bottom-0 left-0 bg-trace-surface backdrop-blur-xl border-r border-trace-border flex flex-col z-20 no-print">
+    <div className="w-[220px] fixed top-0 bottom-0 left-0 bg-[var(--card)] border-r border-[var(--border)] flex flex-col z-20 no-print">
       {/* Header / Logo */}
-      <div className="p-4 border-b border-trace-border flex flex-col justify-center h-[56px]">
-        <Link href="/organizations" className="font-mono text-lg font-bold tracking-tight text-trace-text hover:opacity-80 flex items-center justify-between">
-          <span>TRACE.</span>
+      <div className="px-4 border-b border-[var(--border)] flex items-center h-[56px] shrink-0">
+        <Link href="/organizations" className="hover:opacity-80 block -ml-2.5">
+          <svg className="w-[110px] h-[36px] text-[var(--foreground)]" viewBox="0 0 85 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <text x="10" y="18" fill="currentColor" className="font-mono font-bold tracking-tight" style={{ fontSize: '16px', fontFamily: 'var(--font-jetbrains-mono), monospace' }}>TRACE</text>
+            <circle cx="63" cy="16.5" r="1.5" fill="currentColor" />
+            <path d="M 63 16.5 C 63 20, 68 24, 75 24" stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+            {/* Flipped horizontal pencil (eraser on left, tip on right pointing right) */}
+            {/* Eraser */}
+            <path d="M 8 22.25 H 5 C 3.5 22.25, 3 23, 3 24 C 3 25, 3.5 25.75, 5 25.75 H 8 Z" fill="#FCA5A5" />
+            {/* Ferrule */}
+            <path d="M 8 22.25 H 13 V 25.75 H 8 Z" fill='var(--trace-subtle)' />
+            {/* Body */}
+            <path d="M 13 22.25 H 65 V 25.75 H 13 Z" fill='var(--primary)' />
+            {/* Wood */}
+            <path d="M 71 22.6 L 71 25.4 L 65 25.75 L 65 22.25 Z" fill='var(--border)' />
+            {/* Tip */}
+            <path d="M 71 22.6 L 71 25.4 L 75 24 Z" fill='var(--foreground)' />
+          </svg>
         </Link>
-        <div className="flex items-center gap-1 mt-0.5">
-          <Pencil className="w-[10px] h-[10px] text-trace-muted" />
-          <span className="text-[10px] text-trace-muted tracking-normal font-sans leading-none">
-            Process & Carbon Intelligence
-          </span>
-        </div>
       </div>
 
       {/* Navigation Groups */}
-      <div className="flex-1 overflow-y-auto py-3 px-2 space-y-4 relative" ref={containerRef}>
-        {/* Sliding Indicator */}
-        <div 
-          className="absolute left-2 bg-trace-accent-light border-l-2 border-trace-accent rounded-[3px] pointer-events-none z-0"
-          style={{
-            top: sliderStyle.top,
-            height: sliderStyle.height,
-            opacity: sliderStyle.opacity,
-            transition: prefersReduced ? 'none' : 'top 300ms cubic-bezier(0.34, 1.56, 0.64, 1), height 300ms ease, opacity 200ms',
-            width: 'calc(100% - 16px)'
-          }}
-        />
-
+      <div className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
         {navGroups.map((group) => (
-          <div key={group.label} className="space-y-1 relative z-10">
-            <span className="px-2 text-[10px] font-sans font-medium text-trace-subtle tracking-widest block uppercase">
+          <div key={group.label} className="space-y-1">
+            <span className="px-2 text-[10px] font-sans font-medium text-[var(--trace-subtle)] tracking-widest block uppercase">
               {group.label}
             </span>
             <div className="space-y-0.5">
@@ -163,31 +132,14 @@ export default function Sidebar() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    data-active={isActive}
-                    onClick={(e) => handleNavClick(e, item.href)}
-                    className={`relative flex items-center gap-2.5 px-3 py-1.5 text-[13px] font-sans transition-colors rounded-[3px] select-none overflow-hidden ${
+                    className={`flex items-center gap-2.5 px-3 py-1.5 text-[13px] font-sans transition-all duration-200 ease-in-out hover:scale-[1.02] rounded-[3px] select-none ${
                       isActive
-                        ? 'text-trace-accent font-medium pl-[10px] border-l-2 border-transparent bg-transparent'
-                        : 'text-trace-muted hover:bg-white/5 pl-[12px]'
+                        ? 'bg-[var(--accent)] border-l-2 border-[var(--primary)] text-[var(--primary)] font-medium pl-[10px]'
+                        : 'text-[var(--muted-foreground)] hover:bg-[#ECEAE4] pl-[12px]'
                     }`}
                   >
-                    <Icon className={`w-4 h-4 shrink-0 transition-transform duration-200 ${isActive && !prefersReduced ? 'text-trace-accent scale-110' : 'text-trace-muted'}`} />
+                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[var(--primary)]' : 'text-[var(--muted-foreground)]'}`} />
                     <span>{item.name}</span>
-                    
-                    {/* Ripple */}
-                    {ripple?.rectId === item.href && (
-                      <span
-                        className="absolute bg-trace-accent/20 rounded-full pointer-events-none"
-                        style={{
-                          left: ripple.x,
-                          top: ripple.y,
-                          transform: 'translate(-50%, -50%)',
-                          width: '150px',
-                          height: '150px',
-                          animation: 'rippleAnim 600ms linear forwards'
-                        }}
-                      />
-                    )}
                   </Link>
                 );
               })}
@@ -197,7 +149,7 @@ export default function Sidebar() {
       </div>
       
       {/* Footer / Meta */}
-      <div className="p-3 border-t border-trace-border bg-white/5 backdrop-blur-sm text-[11px] text-trace-muted font-mono text-center">
+      <div className="p-3 border-t border-[var(--border)] bg-[#ECEAE4] text-[11px] text-[var(--trace-subtle)] font-mono text-center">
         v1.0.0 • Local Engine
       </div>
     </div>

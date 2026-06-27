@@ -17,18 +17,18 @@ export default function CarbonFitnessPage() {
 
   // Helper for color-coded CFS pills
   const getCfsPill = (cfs: number) => {
-    let bg = 'bg-[#DCFCE7]';
-    let text = 'text-[#166534]';
-    let border = 'border-[#166534]/10';
+    let bg = 'bg-[var(--trace-success-light)]';
+    let text = 'text-[var(--trace-success)]';
+    let border = 'border-[var(--trace-success)]/10';
 
     if (cfs < 50) {
-      bg = 'bg-[#FDECEA]';
-      text = 'text-[#C0392B]';
-      border = 'border-[#C0392B]/10';
+      bg = 'bg-[var(--trace-danger-light)]';
+      text = 'text-[var(--destructive)]';
+      border = 'border-[var(--destructive)]/10';
     } else if (cfs < 80) {
-      bg = 'bg-[#FEF3C7]';
-      text = 'text-[#B45309]';
-      border = 'border-[#B45309]/10';
+      bg = 'bg-[var(--trace-warning-light)]';
+      text = 'text-[var(--trace-warning)]';
+      border = 'border-[var(--trace-warning)]/10';
     }
 
     return (
@@ -88,9 +88,9 @@ export default function CarbonFitnessPage() {
         title="Carbon Fitness Scoring"
         subtitle="Operational performance indicator mapping Carbon Fitness Score (CFS) ratios across cases."
         action={
-          <div className="flex items-center gap-3 bg-[#FEF3C7] border border-[#B45309]/10 py-1.5 px-3 rounded-md select-none">
-            <span className="text-[11px] font-sans font-medium text-[#B45309] uppercase tracking-wider">Project Score:</span>
-            <span className="font-mono text-[16px] font-bold text-[#B45309]">{avgCfs} / 100</span>
+          <div className="flex items-center gap-3 bg-[var(--trace-warning-light)] border border-[var(--trace-warning)]/10 py-1.5 px-3 rounded-md select-none">
+            <span className="text-[11px] font-sans font-medium text-[var(--trace-warning)] uppercase tracking-wider">Project Score:</span>
+            <span className="font-mono text-[16px] font-bold text-[var(--trace-warning)]">{avgCfs} / 100</span>
           </div>
         }
       />
@@ -100,56 +100,56 @@ export default function CarbonFitnessPage() {
       {/* Top Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Average CFS */}
-        <div className="bg-[#FAFAF8] border border-[#E2E0D8] rounded-md p-5 flex flex-col justify-between shadow-sm min-h-[110px]">
-          <span className="text-[11px] font-sans font-medium text-[#6B6963] uppercase tracking-wider block">
+        <div className="bg-[var(--background)] border border-[var(--border)] rounded-md p-5 flex flex-col justify-between shadow-sm min-h-[110px]">
+          <span className="text-[11px] font-sans font-medium text-[var(--muted-foreground)] uppercase tracking-wider block">
             Average Case CFS
           </span>
           <div className="mt-3 flex items-baseline gap-1 select-all">
             <span className={`text-[32px] font-mono font-medium leading-none ${
-              avgCfs >= 80 ? 'text-[#2D6A4F]' : avgCfs >= 50 ? 'text-[#B45309]' : 'text-[#C0392B]'
+              avgCfs >= 80 ? 'text-[var(--primary)]' : avgCfs >= 50 ? 'text-[var(--trace-warning)]' : 'text-[var(--destructive)]'
             }`}>
               {avgCfs}%
             </span>
           </div>
-          <span className="text-[11px] text-[#6B6963] mt-2 font-sans">
+          <span className="text-[11px] text-[var(--muted-foreground)] mt-2 font-sans">
             Average operational carbon fitness ratio
           </span>
         </div>
 
         {/* Total Cases Audited */}
-        <div className="bg-[#FAFAF8] border border-[#E2E0D8] rounded-md p-5 flex flex-col justify-between shadow-sm min-h-[110px]">
-          <span className="text-[11px] font-sans font-medium text-[#6B6963] uppercase tracking-wider block">
+        <div className="bg-[var(--background)] border border-[var(--border)] rounded-md p-5 flex flex-col justify-between shadow-sm min-h-[110px]">
+          <span className="text-[11px] font-sans font-medium text-[var(--muted-foreground)] uppercase tracking-wider block">
             Audited Cases
           </span>
           <div className="mt-3 flex items-baseline gap-1 select-all">
-            <span className="text-[32px] font-mono font-medium text-[#1A1917] leading-none">
+            <span className="text-[32px] font-mono font-medium text-[var(--foreground)] leading-none">
               {totalCases}
             </span>
-            <span className="text-[12px] font-sans text-[#6B6963] ml-1">
+            <span className="text-[12px] font-sans text-[var(--muted-foreground)] ml-1">
               instances
             </span>
           </div>
-          <span className="text-[11px] text-[#6B6963] mt-2 font-sans">
+          <span className="text-[11px] text-[var(--muted-foreground)] mt-2 font-sans">
             Total unique process case streams analyzed
           </span>
         </div>
 
         {/* Gaps Detected */}
-        <div className="bg-[#FAFAF8] border border-[#E2E0D8] rounded-md p-5 flex flex-col justify-between shadow-sm min-h-[110px]">
-          <span className="text-[11px] font-sans font-medium text-[#6B6963] uppercase tracking-wider block">
+        <div className="bg-[var(--background)] border border-[var(--border)] rounded-md p-5 flex flex-col justify-between shadow-sm min-h-[110px]">
+          <span className="text-[11px] font-sans font-medium text-[var(--muted-foreground)] uppercase tracking-wider block">
             Gaps Detected
           </span>
           <div className="mt-3 flex items-baseline gap-1 select-all">
             <span className={`text-[32px] font-mono font-medium leading-none ${
-              totalViolations > 0 ? 'text-[#C0392B]' : 'text-[#2D6A4F]'
+              totalViolations > 0 ? 'text-[var(--destructive)]' : 'text-[var(--primary)]'
             }`}>
               {totalViolations}
             </span>
-            <span className="text-[12px] font-sans text-[#6B6963] ml-1">
+            <span className="text-[12px] font-sans text-[var(--muted-foreground)] ml-1">
               violations
             </span>
           </div>
-          <span className="text-[11px] text-[#6B6963] mt-2 font-sans">
+          <span className="text-[11px] text-[var(--muted-foreground)] mt-2 font-sans">
             Breaches against mandated lower-carbon routes
           </span>
         </div>
@@ -157,7 +157,7 @@ export default function CarbonFitnessPage() {
 
       {/* Case Details Table */}
       <div className="space-y-3">
-        <h3 className="text-[13px] font-sans font-medium text-[#1A1917] uppercase tracking-wider">
+        <h3 className="text-[13px] font-sans font-medium text-[var(--foreground)] uppercase tracking-wider">
           Case Carbon Fitness Metrics
         </h3>
         <DataTable columns={caseColumns} data={cfsScores} />

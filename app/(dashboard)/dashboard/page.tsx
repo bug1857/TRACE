@@ -44,9 +44,9 @@ export default function DashboardPage() {
   const areaData = analysis?.carbonBudget || [];
   
   const scopeData = hasAnalysis && totalCarbonKg !== null ? [
-    { name: 'Scope 1', value: totalCarbonKg * 0.55, color: '#2DD4BF' },
-    { name: 'Scope 2', value: totalCarbonKg * 0.35, color: '#3FB950' },
-    { name: 'Scope 3', value: totalCarbonKg * 0.10, color: '#D29922' },
+    { name: 'Scope 1', value: totalCarbonKg * 0.55, color: 'var(--primary)' },
+    { name: 'Scope 2', value: totalCarbonKg * 0.35, color: '#475569' },
+    { name: 'Scope 3', value: totalCarbonKg * 0.10, color: '#0F766E' },
   ] : [];
 
   const recentData = analysis?.activityCarbonBreakdown?.slice(0, 5) || [];
@@ -175,8 +175,8 @@ export default function DashboardPage() {
                 <AreaChart data={areaData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="actualGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2DD4BF" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#2DD4BF" stopOpacity={0}/>
+                      <stop offset="5%" stopColor='var(--primary)' stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor='var(--primary)' stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
@@ -192,9 +192,9 @@ export default function DashboardPage() {
                   <Tooltip 
                     contentStyle={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, fontSize: 11 }}
                     itemStyle={{ fontSize: 11 }}
-                    labelStyle={{ color: '#94A3B8', marginBottom: 4 }}
+                    labelStyle={{ color: 'var(--trace-subtle)', marginBottom: 4 }}
                   />
-                  <Area type="monotone" dataKey="actual" stroke="#2DD4BF" fill="url(#actualGrad)" strokeWidth={2} />
+                  <Area type="monotone" dataKey="actual" stroke='var(--primary)' fill="url(#actualGrad)" strokeWidth={2} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
