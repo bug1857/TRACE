@@ -58,3 +58,10 @@ test_custom_mapping.csv
 # databases
 *.db
 
+
+# Media files (video/audio)
+*.mp4
+*.mp3
+*.bin
+*.sh
+TRACE_Cinematic_Script.md
