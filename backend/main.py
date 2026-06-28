@@ -776,9 +776,20 @@ def query_copilot(payload: CopilotQuery):
     # 3. Call Ollama (URL and model read from environment variables)
     ollama_generate_url = f"{OLLAMA_BASE_URL}/api/generate"
     model_name = payload.model or OLLAMA_DEFAULT_MODEL
+
+    # Vision-Language models (qwen3-vl, llava, etc.) are slow on pure-text tasks.
+    # Give them a longer timeout and truncate context to avoid prompt overflow.
+    is_vl_model = any(tag in model_name.lower() for tag in ["-vl", ":vl", "llava", "vision"])
+    ollama_timeout = 120.0 if is_vl_model else 60.0
+
+    # Truncate context for VL models to prevent token overflow
+    context_for_prompt = context_str
+    if is_vl_model and len(context_str) > 3000:
+        context_for_prompt = context_str[:3000] + "\n[Context truncated for VL model compatibility]"
+
     ollama_payload = {
         "model": model_name,
-        "prompt": f"Data Context:\n{context_str}\n\nUser Question:\n{payload.query}",
+        "prompt": f"Data Context:\n{context_for_prompt}\n\nUser Question:\n{payload.query}",
         "system": system_prompt,
         "stream": False
     }
@@ -792,8 +803,8 @@ def query_copilot(payload: CopilotQuery):
             data=data,
             headers={"Content-Type": "application/json"}
         )
-        # 60-second timeout — generous for large context, but prevents infinite hangs
-        with urllib.request.urlopen(req, timeout=60.0) as response:
+        # Per-model timeout: VL models get 120s, text models get 60s
+        with urllib.request.urlopen(req, timeout=ollama_timeout) as response:
             latency_ms = int((time.time() - start_time) * 1000)
             if response.status == 200:
                 res_body = response.read().decode('utf-8')

@@ -350,14 +350,24 @@ export default function CopilotPage() {
                   disabled={!status.online}
                   className="h-[26px] px-2 py-0.5 border border-[var(--border)] bg-[var(--card)] disabled:opacity-50 disabled:bg-gray-100 rounded text-[11px] font-medium text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)]"
                 >
-                  {status.availableModels.length > 0 ? (
-                    status.availableModels.map((m) => (
-                      <option key={m} value={m}>{m}</option>
-                    ))
+                   {status.availableModels.length > 0 ? (
+                    status.availableModels.map((m) => {
+                      const isVL = ['-vl', ':vl', 'llava', 'vision'].some(t => m.toLowerCase().includes(t));
+                      return (
+                        <option key={m} value={m}>
+                          {m}{isVL ? ' [VL — slow]' : ''}
+                        </option>
+                      );
+                    })
                   ) : (
                     <option value="gemma3:4b">gemma3:4b (Offline)</option>
                   )}
                 </select>
+                {['-vl', ':vl', 'llava', 'vision'].some(t => selectedModel.toLowerCase().includes(t)) && (
+                  <span className="text-[9px] text-[var(--trace-warning)] font-sans ml-1">
+                    ⚠ VL model — may take up to 2 min
+                  </span>
+                )}
               </div>
 
               <div className="flex items-center gap-1.5">
