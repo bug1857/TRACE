@@ -1,7 +1,7 @@
 /* eslint-disable */
 'use client';
 
-import React, { useRef, createRef } from 'react';
+import React, { useRef } from 'react';
 import Link from 'next/link';
 import { useDockMagnification } from '@/hooks/useDockMagnification';
 import { DockSidebarItem } from '@/components/DockSidebarItem';
@@ -96,9 +96,7 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   const ALL_NAV_ITEMS = navGroups.flatMap(group => group.items);
-  const itemRefs = useRef<React.RefObject<HTMLElement | null>[]>(
-    ALL_NAV_ITEMS.map(() => createRef<HTMLElement | null>())
-  );
+  const itemRefs = useRef<Array<{ current: HTMLElement | null }>>(ALL_NAV_ITEMS.map(() => ({ current: null })));
   const { springScales, onMouseMove, onMouseLeave } =
     useDockMagnification(ALL_NAV_ITEMS.length);
 

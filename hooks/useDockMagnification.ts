@@ -19,7 +19,7 @@ export function useDockMagnification(itemCount: number) {
   );
 
   const onMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLElement>, itemRefs: React.RefObject<HTMLElement | null>[]) => {
+    (e: React.MouseEvent<HTMLElement>, itemRefs: Array<{ current: HTMLElement | null }>) => {
       const cursorY = e.clientY;
       itemRefs.forEach((ref, i) => {
         if (!ref.current) return;
