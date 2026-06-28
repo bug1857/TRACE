@@ -95,8 +95,8 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   const ALL_NAV_ITEMS = navGroups.flatMap(group => group.items);
-  const itemRefs = useRef<React.RefObject<HTMLElement>[]>(
-    ALL_NAV_ITEMS.map(() => createRef<HTMLElement>())
+  const itemRefs = useRef(
+    ALL_NAV_ITEMS.map(() => createRef<HTMLDivElement>())
   );
   const { springScales, onMouseMove, onMouseLeave } =
     useDockMagnification(ALL_NAV_ITEMS.length);
@@ -128,7 +128,7 @@ export default function Sidebar() {
       {/* Navigation Groups */}
       <nav
         className="flex-1 overflow-y-auto py-3 px-2 space-y-4"
-        onMouseMove={(e) => onMouseMove(e as React.MouseEvent<HTMLElement>, itemRefs.current)}
+        onMouseMove={(e) => onMouseMove(e as React.MouseEvent<HTMLElement>, itemRefs.current as any)}
         onMouseLeave={onMouseLeave}
       >
         {navGroups.map((group, groupIdx) => {
