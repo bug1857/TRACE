@@ -13,6 +13,8 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
 });
 
+import { LazyMotion, domAnimation } from "framer-motion";
+
 export const metadata: Metadata = {
   title: "TRACE. — Enterprise Process Mining & ESG Intelligence",
   description: "Process & Carbon Intelligence Platform for real-time compliance, carbon tracking, and operational efficiency.",
@@ -30,9 +32,11 @@ export default function RootLayout({
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <Providers>
-          {children}
-        </Providers>
+        <LazyMotion features={domAnimation} strict>
+          <Providers>
+            {children}
+          </Providers>
+        </LazyMotion>
       </body>
     </html>
   );

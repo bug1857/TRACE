@@ -1,5 +1,5 @@
 import { forwardRef } from "react";
-import { motion, MotionValue } from "framer-motion";
+import { m as motion, MotionValue } from "framer-motion";
 
 interface DockSidebarItemProps {
   scale: MotionValue<number>;
@@ -13,8 +13,8 @@ export const DockSidebarItem = forwardRef<HTMLDivElement, DockSidebarItemProps>(
     return (
       <motion.div
         ref={ref}
-        style={{ scale, transformOrigin: "left center" }}
-        className={`will-change-transform ${className}`}
+        style={{ scale, transformOrigin: "left center", willChange: "transform, opacity" }}
+        className={className}
         onClick={onClick}
       >
         {children}

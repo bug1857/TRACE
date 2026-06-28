@@ -1,6 +1,6 @@
 "use client";
 import { Handle, Position, NodeProps } from "reactflow";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 
 export function AnimatedFlowNode({ data, isConnectable }: NodeProps) {
   return (
@@ -17,7 +17,7 @@ export function AnimatedFlowNode({ data, isConnectable }: NodeProps) {
         padding: "8px 12px",
         minWidth: "120px",
         cursor: "pointer",
-        willChange: "transform",
+        willChange: "transform, opacity",
       }}
     >
       <Handle type="target" position={Position.Left} isConnectable={isConnectable} />

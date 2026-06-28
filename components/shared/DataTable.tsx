@@ -5,12 +5,13 @@ import React, { useState, useMemo } from 'react';
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import {
   Table,
+  TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 
 export interface Column<T> {
   header: string;
@@ -113,37 +114,56 @@ export default function DataTable<T extends Record<string, any>>({
           className="[&_tr:last-child]:border-0"
         >
           {sortedData.length > 0 ? (
-            sortedData.map((row, rowIndex) => (
-              <motion.tr
-                key={row.id || rowIndex}
-                onClick={() => onRowClick && onRowClick(row)}
-                variants={rowIndex < 50 ? { hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.2, ease: "easeOut" } } } : undefined}
-                className={`h-[44px] border-b border-[var(--border)] last:border-b-0 transition-colors duration-200 hover:bg-[var(--card)]/50 ${
-                  onRowClick ? 'cursor-pointer' : ''
-                } ${
-                  (row as any).severity === 'critical' ? 'row-critical' : (row as any).severity === 'warning' ? 'row-warning' : ''
-                }`}
-              >
-                {columns.map((column) => {
-                  const cellContent = column.cell
-                    ? column.cell(row)
-                    : column.accessorFn
-                    ? column.accessorFn(row)
-                    : row[column.accessorKey];
+            sortedData.map((row, rowIndex) => {
+              const rowContent = columns.map((column) => {
+                const cellContent = column.cell
+                  ? column.cell(row)
+                  : column.accessorFn
+                  ? column.accessorFn(row)
+                  : row[column.accessorKey];
 
-                  return (
-                    <TableCell
-                      key={column.accessorKey}
-                      className={`text-[13px] px-4 py-2 text-[var(--foreground)] font-sans border-r border-[var(--border)] last:border-r-0 ${
-                        column.isNumeric ? 'text-right font-mono' : 'text-left'
-                      }`}
-                    >
-                      {cellContent}
-                    </TableCell>
-                  );
-                })}
-              </motion.tr>
-            ))
+                return (
+                  <TableCell
+                    key={column.accessorKey}
+                    className={`text-[13px] px-4 py-2 text-[var(--foreground)] font-sans border-r border-[var(--border)] last:border-r-0 ${
+                      column.isNumeric ? 'text-right font-mono' : 'text-left'
+                    }`}
+                  >
+                    {cellContent}
+                  </TableCell>
+                );
+              });
+
+              const rowClasses = `h-[44px] border-b border-[var(--border)] last:border-b-0 transition-colors duration-200 hover:bg-[var(--card)]/50 ${
+                onRowClick ? 'cursor-pointer' : ''
+              } ${
+                (row as any).severity === 'critical' ? 'row-critical' : (row as any).severity === 'warning' ? 'row-warning' : ''
+              }`;
+
+              if (rowIndex < 30) {
+                return (
+                  <motion.tr
+                    key={row.id || rowIndex}
+                    onClick={() => onRowClick && onRowClick(row)}
+                    variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.2, ease: "easeOut" } } }}
+                    style={{ willChange: "transform, opacity" }}
+                    className={rowClasses}
+                  >
+                    {rowContent}
+                  </motion.tr>
+                );
+              } else {
+                return (
+                  <tr
+                    key={row.id || rowIndex}
+                    onClick={() => onRowClick && onRowClick(row)}
+                    className={rowClasses}
+                  >
+                    {rowContent}
+                  </tr>
+                );
+              }
+            })
           ) : (
             <TableRow>
               <TableCell colSpan={columns.length} className="text-center py-8 text-[13px] text-[var(--muted-foreground)] font-sans">

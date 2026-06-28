@@ -1,5 +1,5 @@
 "use client";
-import { motion, Variants } from "framer-motion";
+import { m as motion, Variants } from "framer-motion";
 
 const containerVariants: Variants = {
   hidden: {},
@@ -23,6 +23,7 @@ export function StaggeredList({ children, className }: { children: React.ReactNo
       initial="hidden"
       animate="visible"
       className={className}
+      style={{ willChange: "transform, opacity" }}
     >
       {children}
     </motion.div>
@@ -31,7 +32,7 @@ export function StaggeredList({ children, className }: { children: React.ReactNo
 
 export function StaggeredItem({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <motion.div variants={itemVariants} className={className}>
+    <motion.div variants={itemVariants} className={className} style={{ willChange: "transform, opacity" }}>
       {children}
     </motion.div>
   );
