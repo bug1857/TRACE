@@ -134,11 +134,19 @@ export default function CopilotPage() {
       };
       setMessages(prev => [...prev, assistantMsg]);
     } catch (err: any) {
-      const errMsg = err.response?.data?.detail || err.message || 'Failed to get response from local LLM.';
+      const status = err.response?.status;
+      let errMsg: string;
+      if (status === 503) {
+        errMsg = "⚠️ Local AI Copilot is offline. Run 'ollama serve' on your machine to activate it, then refresh this page.";
+      } else if (status === 500) {
+        errMsg = `⚠️ The AI engine encountered an error: ${err.response?.data?.detail || err.message}`;
+      } else {
+        errMsg = `⚠️ ${err.response?.data?.detail || err.message || 'Failed to get a response from the local LLM.'}`;
+      }
       const assistantErrorMsg: CopilotMessage = {
         id: `msg-${Date.now() + 1}`,
         role: 'assistant',
-        content: `Error: ${errMsg}`,
+        content: errMsg,
         timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16)
       };
       setMessages(prev => [...prev, assistantErrorMsg]);

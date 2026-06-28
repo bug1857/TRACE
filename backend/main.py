@@ -1,4 +1,5 @@
 import io
+import os
 import json
 import datetime
 import pandas as pd
@@ -22,6 +23,10 @@ from green_routes import compute_green_routes
 
 # Create tables in trace.db (stateless for now, but ready for future features)
 Base.metadata.create_all(bind=engine)
+
+# --- Ollama configuration (read from env so production deployments work) ---
+OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
+OLLAMA_DEFAULT_MODEL = os.environ.get("OLLAMA_MODEL", "gemma3:4b")
 
 app = FastAPI(title="TRACE. Process Mining Backend")
 
@@ -542,7 +547,7 @@ def delete_conformance_rules(db: Session = Depends(get_db)):
 # Copilot Schemas
 class CopilotQuery(BaseModel):
     query: str
-    model: Optional[str] = "gemma3:4b"
+    model: Optional[str] = None  # falls back to OLLAMA_DEFAULT_MODEL env var
     style: Optional[str] = "balanced"
     context: Optional[Dict[str, Any]] = None
 
@@ -551,15 +556,15 @@ class CopilotQuery(BaseModel):
 def get_copilot_status():
     import urllib.request
     import json
-    url = "http://localhost:11434/api/tags"
+    url = f"{OLLAMA_BASE_URL}/api/tags"
     try:
         req = urllib.request.Request(url)
         with urllib.request.urlopen(req, timeout=2.0) as response:
             if response.status == 200:
                 res_body = response.read().decode('utf-8')
                 data = json.loads(res_body)
-                models = [m["name"] for m in data.get("models", [])]
-                return {"online": True, "availableModels": models}
+                available_models = [m["name"] for m in data.get("models", [])]
+                return {"online": True, "availableModels": available_models}
     except Exception:
         pass
     return {"online": False, "availableModels": []}
@@ -768,9 +773,9 @@ def query_copilot(payload: CopilotQuery):
         "CRITICAL: Only use numbers and facts from the provided context. Never invent data."
     ))
 
-    # 3. Call local Ollama
-    url = "http://localhost:11434/api/generate"
-    model_name = payload.model or "gemma3:4b"
+    # 3. Call Ollama (URL and model read from environment variables)
+    ollama_generate_url = f"{OLLAMA_BASE_URL}/api/generate"
+    model_name = payload.model or OLLAMA_DEFAULT_MODEL
     ollama_payload = {
         "model": model_name,
         "prompt": f"Data Context:\n{context_str}\n\nUser Question:\n{payload.query}",
@@ -783,10 +788,11 @@ def query_copilot(payload: CopilotQuery):
     try:
         data = json.dumps(ollama_payload).encode('utf-8')
         req = urllib.request.Request(
-            url,
+            ollama_generate_url,
             data=data,
             headers={"Content-Type": "application/json"}
         )
+        # 60-second timeout — generous for large context, but prevents infinite hangs
         with urllib.request.urlopen(req, timeout=60.0) as response:
             latency_ms = int((time.time() - start_time) * 1000)
             if response.status == 200:
@@ -805,19 +811,17 @@ def query_copilot(payload: CopilotQuery):
             else:
                 raise Exception(f"Ollama returned status {response.status}")
     except urllib.error.URLError as e:
-        latency_ms = int((time.time() - start_time) * 1000)
-        return {
-            "answer": f"⚠️ Could not connect to the local Ollama server (http://localhost:11434). Please ensure Ollama is running with `ollama serve`. Error: {str(e.reason)}",
-            "model": model_name,
-            "latencyMs": latency_ms
-        }
+        # Ollama is not reachable — return 503 so the frontend can handle it distinctly
+        raise HTTPException(
+            status_code=503,
+            detail=f"AI Copilot offline. Start Ollama locally with `ollama serve` to activate this feature. (Could not reach {OLLAMA_BASE_URL})"
+        )
     except Exception as e:
         latency_ms = int((time.time() - start_time) * 1000)
-        return {
-            "answer": f"⚠️ An error occurred while querying the local LLM: {str(e)}",
-            "model": model_name,
-            "latencyMs": latency_ms
-        }
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while querying the local LLM: {str(e)}"
+        )
 
 
 # --- Multi-Tenancy Schemas ---
