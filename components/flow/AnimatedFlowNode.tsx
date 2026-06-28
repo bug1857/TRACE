@@ -1,6 +1,6 @@
 "use client";
 import { Handle, Position, NodeProps } from "reactflow";
-import { m as motion } from "framer-motion";
+import { motion } from "framer-motion";
 
 export function AnimatedFlowNode({ data, isConnectable }: NodeProps) {
   return (

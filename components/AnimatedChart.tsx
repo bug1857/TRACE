@@ -1,6 +1,6 @@
 /* eslint-disable */
 "use client";
-import { m as motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { useRef, useState, useEffect } from "react";
 

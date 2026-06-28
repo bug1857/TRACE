@@ -1,5 +1,5 @@
 import { forwardRef } from "react";
-import { m as motion, MotionValue } from "framer-motion";
+import { motion, MotionValue } from "framer-motion";
 
 interface DockSidebarItemProps {
   scale: MotionValue<number>;
