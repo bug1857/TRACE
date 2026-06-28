@@ -22,18 +22,12 @@ export default function OrganizationsPage() {
     organizations,
     activeOrgId,
     setActiveOrgId,
-    refreshOrganizations,
-    loading
+    refreshOrganizations
   } = useWorkspace();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [validationError, setValidationError] = useState('');
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
 
   const handleCreateOrg = async (e: React.FormEvent) => {
     e.preventDefault();

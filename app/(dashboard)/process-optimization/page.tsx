@@ -13,12 +13,7 @@ import SectionDivider from '@/components/shared/SectionDivider';
 export default function ProcessOptimizationPage() {
   const { analysis } = useAnalysis();
 
-  const hasAnalysis = !!analysis;
   const isReal = !!(analysis && analysis.processOptimization);
-
-  if (!hasAnalysis) {
-    return <div>Loading...</div>;
-  }
 
   // Derive bottlenecks
   const bottlenecks: BottleneckActivity[] = isReal
@@ -222,7 +217,8 @@ export default function ProcessOptimizationPage() {
               </div>
             ))}
 
-            <div className="flex justify-between text-[10px] text-[var(--trace-subtle)] border-t border-[var(--border)] pt-1.5 pl-[116px] font-mono mt-4">
+            {/* X-Axis labels */}
+            <div className="flex justify-between text-[10px] text-[var(--trace-subtle)] border-t border-[var(--border)] pt-1.5 pl-[116px] font-mono">
               <span>0%</span>
               <span>25%</span>
               <span>50%</span>

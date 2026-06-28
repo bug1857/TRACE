@@ -23,12 +23,7 @@ export default function ConformancePage() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [modelFile, setModelFile] = useState<string>('decarbonization_policy_rules_v2.pnml');
 
-  const hasAnalysis = !!analysis;
   const isReal = !!(analysis && analysis.cfsScores && analysis.cfsScores.length > 0);
-
-  if (!hasAnalysis) {
-    return <div>Loading...</div>;
-  }
 
   const violations = isReal ? (analysis?.violations || []) : mockViolations;
 
@@ -92,7 +87,7 @@ export default function ConformancePage() {
       sortable: true,
       cell: (row) => {
         const severityStyles = {
-          critical: 'bg-[var(--trace-danger-light)] text-[var(--destructive)] border-[#FCA5A5]/40 badge-critical',
+          critical: 'bg-[var(--trace-danger-light)] text-[var(--destructive)] border-[#FCA5A5]/40',
           warning: 'bg-[var(--trace-warning-light)] text-[var(--trace-warning)] border-[#FDE68A]/40',
           info: 'bg-[var(--background)] text-[var(--muted-foreground)] border-[var(--border)]'
         };
@@ -150,7 +145,7 @@ export default function ConformancePage() {
           </span>
           <div className="mt-3 flex items-baseline gap-2 select-all">
             <span className="text-[32px] font-mono font-medium text-[var(--destructive)] leading-none">
-              <span>{totalViolations}</span>
+              {totalViolations}
             </span>
             {criticalCount > 0 && (
               <span className="text-[12px] font-sans text-[var(--muted-foreground)]">
@@ -170,7 +165,7 @@ export default function ConformancePage() {
           </span>
           <div className="mt-3 flex items-baseline gap-1 select-all">
             <span className="text-[32px] font-mono font-medium text-[var(--trace-warning)] leading-none">
-              <span>{totalExcessCarbon}</span>
+              {totalExcessCarbon.toLocaleString(undefined, { maximumFractionDigits: 1 })}
             </span>
             <span className="text-[14px] font-sans text-[var(--muted-foreground)] font-normal lowercase ml-0.5">
               kg CO₂
@@ -188,7 +183,7 @@ export default function ConformancePage() {
           </span>
           <div className="mt-3 flex items-baseline gap-1 select-all">
             <span className="text-[32px] font-mono font-medium text-[var(--primary)] leading-none">
-              <span>4</span>
+              4
             </span>
             <span className="text-[12px] font-sans text-[var(--muted-foreground)] ml-1">
               Rules Policed
@@ -301,7 +296,7 @@ export default function ConformancePage() {
                   <div className="flex justify-between items-center text-[12px]">
                     <span className="text-[var(--muted-foreground)]">Severity Level:</span>
                     <span className={`px-2 py-0.5 rounded text-[10px] font-sans font-semibold uppercase tracking-wider border ${
-                      selectedViolation.severity === 'critical' ? 'bg-[var(--trace-danger-light)] text-[var(--destructive)] border-[#FCA5A5]/40 badge-critical' :
+                      selectedViolation.severity === 'critical' ? 'bg-[var(--trace-danger-light)] text-[var(--destructive)] border-[#FCA5A5]/40' :
                       selectedViolation.severity === 'warning' ? 'bg-[var(--trace-warning-light)] text-[var(--trace-warning)] border-[#FDE68A]/40' :
                       'bg-[var(--background)] text-[var(--muted-foreground)] border-[var(--border)]'
                     }`}>
@@ -324,7 +319,7 @@ export default function ConformancePage() {
                   <span className="text-[12px] text-[var(--muted-foreground)] font-sans mt-0.5 block">Estimated excess overhead emissions</span>
                 </div>
                 <span className="text-[20px] font-mono font-bold text-[var(--destructive)]">
-                  <span>+{selectedViolation.carbonDeltaKg} kg</span>
+                  +{selectedViolation.carbonDeltaKg.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kg
                 </span>
               </div>
 

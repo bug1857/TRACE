@@ -1,4 +1,3 @@
-/* eslint-disable */
 'use client';
 
 import React from 'react';
@@ -53,7 +52,17 @@ export default function DashboardPage() {
   const recentData = analysis?.activityCarbonBreakdown?.slice(0, 5) || [];
 
   if (!hasAnalysis) {
-    return <div>Loading...</div>;
+    return (
+      <div className="relative min-h-screen">
+        <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(45,212,191,0.03)_0%,_transparent_60%)] pointer-events-none" />
+        <div className="flex flex-col flex-1 items-center justify-center min-h-[400px] relative z-10">
+          <Database className="w-12 h-12 text-trace-muted mb-4 opacity-50" />
+          <p className="text-trace-muted text-[13px] font-sans">
+            Upload a CSV on the OCEL page to populate this dashboard
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -82,7 +91,7 @@ export default function DashboardPage() {
             </span>
             <div className="mt-2 flex items-baseline gap-1 relative z-10">
               <span className="text-[28px] font-mono font-bold text-trace-text leading-none">
-                {typeof totalCarbonKg === 'number' ? <span>{totalCarbonKg}</span> : '—'}
+                {totalCarbonFormatted}
               </span>
               {totalCarbonKg !== null && <span className="text-trace-muted text-[13px] font-sans">tCO₂e</span>}
             </div>
@@ -102,7 +111,7 @@ export default function DashboardPage() {
             </span>
             <div className="mt-2 flex items-baseline gap-1 relative z-10">
               <span className="text-[28px] font-mono font-bold text-trace-text leading-none">
-                {totalCarbonKg !== null ? <span>{totalCarbonKg / (analysis?.metadata?.rowCount || 1)}</span> : '—'}
+                {intensity}
               </span>
               {intensity !== '—' && <span className="text-trace-muted text-[13px] font-sans">tCO₂/M$</span>}
             </div>
@@ -122,7 +131,7 @@ export default function DashboardPage() {
             </span>
             <div className="mt-2 relative z-10">
               <span className="text-[28px] font-mono font-bold text-trace-success leading-none">
-                {avgCfs !== null ? <span>{Math.min(Math.round(avgCfs * 100), 100)}%</span> : '—'}
+                {netZeroFormatted}
               </span>
             </div>
             <div className="mt-auto flex items-center gap-1 text-trace-success text-[11px] font-sans relative z-10">
@@ -141,7 +150,7 @@ export default function DashboardPage() {
             </span>
             <div className="mt-2 flex items-baseline gap-1 relative z-10">
               <span className="text-[28px] font-mono font-bold text-trace-text leading-none">
-                {typeof energyKwh === 'number' ? <span>{energyKwh / 1000000}</span> : '—'}
+                {energyFormatted}
               </span>
               {energyFormatted !== '—' && <span className="text-trace-muted text-[13px] font-sans">GWh</span>}
             </div>
@@ -161,8 +170,8 @@ export default function DashboardPage() {
               <h2 className="text-[13px] font-sans font-medium text-trace-text">Emissions Trend Over Time</h2>
               <span className="text-[11px] font-mono bg-white/[0.05] text-trace-muted px-2 py-0.5 rounded">2025</span>
             </div>
-            <div className="w-full mt-2 relative z-10 h-[220px]">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="w-full mt-2 relative z-10">
+              <ResponsiveContainer width="100%" height={220}>
                 <AreaChart data={areaData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="actualGrad" x1="0" y1="0" x2="0" y2="1">
@@ -185,12 +194,7 @@ export default function DashboardPage() {
                     itemStyle={{ fontSize: 11 }}
                     labelStyle={{ color: 'var(--trace-subtle)', marginBottom: 4 }}
                   />
-                  <Area 
-                    type="monotone" 
-                    dataKey="actual" 
-                    stroke='var(--primary)' 
-                    fill="url(#actualGrad)" 
-                    strokeWidth={2} />
+                  <Area type="monotone" dataKey="actual" stroke='var(--primary)' fill="url(#actualGrad)" strokeWidth={2} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -217,7 +221,8 @@ export default function DashboardPage() {
                         outerRadius={75}
                         paddingAngle={2}
                         dataKey="value"
-                        stroke="none" >
+                        stroke="none"
+                      >
                         {scopeData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}

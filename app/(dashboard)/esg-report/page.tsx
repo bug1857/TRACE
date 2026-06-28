@@ -56,13 +56,7 @@ export default function EsgReportPage() {
   };
 
 
-  const hasAnalysis = !!analysis;
   const isReal = !!(analysis && analysis.esgReport);
-
-  if (!hasAnalysis) {
-    return <div>Loading...</div>;
-  }
-
   const esgReport = isReal ? analysis.esgReport! : mockEsgReportData;
 
   const renderCompletenessBadge = (type: 'full' | 'partial') => {
@@ -122,7 +116,7 @@ export default function EsgReportPage() {
           <div className="flex flex-col items-center justify-center bg-[var(--accent)] border border-[var(--primary)]/15 rounded-md p-5 min-w-[180px] shadow-sm shrink-0 select-all">
             <span className="text-[10px] font-sans font-medium text-[var(--primary)] uppercase tracking-wider">Composite Score</span>
             <span className="text-[44px] font-mono font-bold text-[var(--primary)] leading-none mt-1">
-              <span>{esgReport.overallScore}%</span>
+              {esgReport.overallScore.toFixed(1)}%
             </span>
             <span className="text-[10px] text-[var(--primary)]/70 font-sans mt-1">Weighted Index Rating</span>
           </div>
@@ -148,7 +142,7 @@ export default function EsgReportPage() {
               <div className="bg-[var(--accent)] border border-[var(--primary)]/15 rounded p-4 text-center select-all">
                 <span className="text-[10px] font-sans font-medium text-[var(--primary)] uppercase tracking-wider block">Carbon Fitness Rating</span>
                 <span className="text-[32px] font-mono font-bold text-[var(--primary)] block mt-0.5">
-                  <span>{esgReport.environmental.score}%</span>
+                  {esgReport.environmental.score.toFixed(1)}%
                 </span>
               </div>
 
@@ -169,14 +163,14 @@ export default function EsgReportPage() {
 
               <div className="space-y-2 text-[12px] border-t border-[var(--border)] pt-3">
                 <span className="text-[10px] font-sans font-bold text-[var(--muted-foreground)] uppercase tracking-wider block">Top Hotspots</span>
-                <div className="space-y-1.5">
+                <ul className="space-y-1.5">
                   {esgReport.environmental.topHotspots.map((item, idx) => (
-                    <div key={idx} className="flex justify-between items-baseline gap-2">
+                    <li key={idx} className="flex justify-between items-baseline gap-2">
                       <span className="font-medium text-[var(--foreground)] truncate max-w-[140px]">{item.activity}</span>
                       <span className="font-mono text-[var(--muted-foreground)] text-[11px] shrink-0">{item.totalCarbon.toLocaleString(undefined, { maximumFractionDigits: 0 })} kg</span>
-                    </div>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </div>
             </div>
             
@@ -240,7 +234,7 @@ export default function EsgReportPage() {
               <div className="bg-[#4A5D6E]/10 border border-[#4A5D6E]/20 rounded p-4 text-center select-all">
                 <span className="text-[10px] font-sans font-medium text-[#4A5D6E] uppercase tracking-wider block">Process Compliance</span>
                 <span className="text-[32px] font-mono font-bold text-[#4A5D6E] block mt-0.5">
-                  <span>{esgReport.governance.score}%</span>
+                  {esgReport.governance.score.toFixed(1)}%
                 </span>
               </div>
 

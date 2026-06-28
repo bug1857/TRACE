@@ -25,18 +25,12 @@ export default function ProjectsPage() {
     activeOrgId,
     activeProjectId,
     setActiveProjectId,
-    refreshProjects,
-    loading
+    refreshProjects
   } = useWorkspace();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [validationError, setValidationError] = useState('');
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();

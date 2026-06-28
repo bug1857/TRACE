@@ -1,4 +1,3 @@
-/* eslint-disable */
 'use client'
 import { useAnalysis } from '@/lib/AnalysisContext'
 import PageHeader from '@/components/shared/PageHeader'
@@ -8,7 +7,17 @@ export default function ExecutiveDashboard() {
   const { analysis } = useAnalysis()
   
   if (!analysis) {
-    return <div>Loading...</div>
+    return (
+      <div className="relative min-h-screen">
+        <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(45,212,191,0.03)_0%,_transparent_60%)] pointer-events-none" />
+        <div className="flex flex-col flex-1 items-center justify-center min-h-[400px] relative z-10">
+          <Database className="w-12 h-12 text-[var(--trace-muted)] mb-4 opacity-50" />
+          <p className="text-[var(--trace-muted)] text-[13px] font-sans">
+            No data loaded. Upload an event log first.
+          </p>
+        </div>
+      </div>
+    )
   }
 
   const totalCases = analysis.metadata?.caseCount ?? '—'
@@ -75,7 +84,6 @@ export default function ExecutiveDashboard() {
             </p>
             <p className="text-xs font-sans text-[var(--trace-muted)] relative z-10">At-risk suppliers (CFS &lt; 90%)</p>
             <div className="mt-3 flex flex-col gap-1.5 relative z-10">
-              <div>
               {suppliers.slice(0, 3).map((s: any) => {
                 const cfsValue = s.avgCfsScore ?? null
                 const isGood = (cfsValue ?? 0) >= 90
@@ -88,7 +96,6 @@ export default function ExecutiveDashboard() {
                   </div>
                 )
               })}
-              </div>
             </div>
           </div>
 
@@ -115,7 +122,6 @@ export default function ExecutiveDashboard() {
             <span className="text-right">Carbon Δ</span>
           </div>
           <div className="flex flex-col relative z-10 mt-1">
-            <div>
             {(analysis.violations ?? []).slice(0, 6).map((v: any, i: number) => (
               <div key={i} className="grid grid-cols-[1fr_1fr_100px_80px] gap-2 px-2 py-2.5 rounded text-[12px] font-sans hover:bg-white/[0.02] transition-colors items-center border-b border-white/[0.03] last:border-0">
                 <span className="text-xs font-mono text-[var(--trace-muted)]">{v.caseId ?? '—'}</span>
@@ -128,7 +134,6 @@ export default function ExecutiveDashboard() {
                 </span>
               </div>
             ))}
-            </div>
           </div>
           {(!analysis.violations || analysis.violations.length === 0) && (
             <div className="py-8 text-center text-[var(--trace-muted)] text-[12px] font-sans relative z-10">

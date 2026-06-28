@@ -13,8 +13,8 @@ export const DockSidebarItem = forwardRef<HTMLDivElement, DockSidebarItemProps>(
     return (
       <motion.div
         ref={ref}
-        style={{ scale, transformOrigin: "left center", willChange: "transform, opacity" }}
-        className={className}
+        style={{ scale, transformOrigin: "left center" }}
+        className={`will-change-transform ${className}`}
         onClick={onClick}
       >
         {children}

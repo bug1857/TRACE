@@ -15,12 +15,7 @@ import { Info, AlertTriangle } from 'lucide-react';
 export default function ForecastingPage() {
   const { analysis } = useAnalysis();
 
-  const hasAnalysis = !!analysis;
   const isReal = !!(analysis && analysis.forecasting);
-
-  if (!hasAnalysis) {
-    return <div>Loading...</div>;
-  }
 
   // Derive forecasting data
   const forecasting = (analysis?.forecasting) || mockForecastingData;

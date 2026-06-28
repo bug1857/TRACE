@@ -14,7 +14,6 @@ import { useAnalysis, UploadResponse } from '@/lib/AnalysisContext';
 import { useWorkspace } from '@/lib/WorkspaceContext';
 import { ColumnMapping, MappingField } from '@/lib/types';
 import { AxiosError } from 'axios';
-import { motion } from 'framer-motion';
 
 export default function OcelPage() {
   const { analysis, setAnalysis } = useAnalysis();
@@ -612,22 +611,15 @@ export default function OcelPage() {
                 )}
               </div>
             ) : isAnalyzed ? (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.97 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.35, ease: "easeOut" }}
-                style={{ width: "100%", height: "100%" }}
+              <ReactFlow
+                nodes={reactFlowNodes}
+                edges={reactFlowEdges}
+                fitView
+                className="w-full h-full"
               >
-                <ReactFlow
-                  nodes={reactFlowNodes}
-                  edges={reactFlowEdges}
-                  fitView
-                  className="w-full h-full"
-                >
-                  <Background color='var(--border)' gap={16} />
-                  <Controls className="react-flow__controls bg-[var(--background)] border border-[var(--border)] rounded-md shadow-sm" />
-                </ReactFlow>
-              </motion.div>
+                <Background color='var(--border)' gap={16} />
+                <Controls className="react-flow__controls bg-[var(--background)] border border-[var(--border)] rounded-md shadow-sm" />
+              </ReactFlow>
             ) : (
               <div className="text-center p-8">
                 <Database className="w-16 h-16 text-[var(--border)] mx-auto mb-4" strokeWidth={1.5} />

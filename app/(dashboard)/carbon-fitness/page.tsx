@@ -108,7 +108,7 @@ export default function CarbonFitnessPage() {
             <span className={`text-[32px] font-mono font-medium leading-none ${
               avgCfs >= 80 ? 'text-[var(--primary)]' : avgCfs >= 50 ? 'text-[var(--trace-warning)]' : 'text-[var(--destructive)]'
             }`}>
-              <span>{avgCfs}%</span>
+              {avgCfs}%
             </span>
           </div>
           <span className="text-[11px] text-[var(--muted-foreground)] mt-2 font-sans">
@@ -123,7 +123,7 @@ export default function CarbonFitnessPage() {
           </span>
           <div className="mt-3 flex items-baseline gap-1 select-all">
             <span className="text-[32px] font-mono font-medium text-[var(--foreground)] leading-none">
-              <span>{totalCases}</span>
+              {totalCases}
             </span>
             <span className="text-[12px] font-sans text-[var(--muted-foreground)] ml-1">
               instances
@@ -143,7 +143,7 @@ export default function CarbonFitnessPage() {
             <span className={`text-[32px] font-mono font-medium leading-none ${
               totalViolations > 0 ? 'text-[var(--destructive)]' : 'text-[var(--primary)]'
             }`}>
-              <span>{totalViolations}</span>
+              {totalViolations}
             </span>
             <span className="text-[12px] font-sans text-[var(--muted-foreground)] ml-1">
               violations
