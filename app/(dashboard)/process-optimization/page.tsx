@@ -9,11 +9,18 @@ import { useAnalysis } from '@/lib/AnalysisContext';
 import { mockBottlenecks, mockReworks } from '@/lib/mockData';
 import { BottleneckActivity, ReworkActivity } from '@/lib/types';
 import SectionDivider from '@/components/shared/SectionDivider';
+import { StaggeredList, StaggeredItem } from '@/components/StaggeredList';
+import { TableSkeleton } from '@/components/skeletons/TableSkeleton';
 
 export default function ProcessOptimizationPage() {
   const { analysis } = useAnalysis();
 
+  const hasAnalysis = !!analysis;
   const isReal = !!(analysis && analysis.processOptimization);
+
+  if (!hasAnalysis) {
+    return <TableSkeleton rows={8} />;
+  }
 
   // Derive bottlenecks
   const bottlenecks: BottleneckActivity[] = isReal
@@ -192,9 +199,9 @@ export default function ProcessOptimizationPage() {
 
         <div className="border border-[var(--border)] bg-[var(--background)] p-6 rounded-md shadow-sm">
           {/* Observable Plot Mock Chart */}
-          <div className="space-y-4 max-w-[700px] select-none">
+          <StaggeredList className="space-y-4 max-w-[700px] select-none">
             {durationBuckets.map((bucket) => (
-              <div key={bucket.range} className="flex items-center gap-4 text-[13px]">
+              <StaggeredItem key={bucket.range} className="flex items-center gap-4 text-[13px]">
                 {/* Bucket label */}
                 <div className="w-[100px] text-right text-[var(--muted-foreground)] font-sans shrink-0 font-medium">
                   {bucket.range}
@@ -214,18 +221,17 @@ export default function ProcessOptimizationPage() {
                 <div className="w-[80px] font-mono text-[var(--foreground)] text-left shrink-0">
                   {bucket.count} cases
                 </div>
-              </div>
+              </StaggeredItem>
             ))}
 
-            {/* X-Axis labels */}
-            <div className="flex justify-between text-[10px] text-[var(--trace-subtle)] border-t border-[var(--border)] pt-1.5 pl-[116px] font-mono">
+            <div className="flex justify-between text-[10px] text-[var(--trace-subtle)] border-t border-[var(--border)] pt-1.5 pl-[116px] font-mono mt-4">
               <span>0%</span>
               <span>25%</span>
               <span>50%</span>
               <span>75%</span>
               <span>100%</span>
             </div>
-          </div>
+          </StaggeredList>
         </div>
       </div>
     </div>

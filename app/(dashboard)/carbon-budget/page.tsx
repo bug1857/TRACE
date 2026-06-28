@@ -9,6 +9,9 @@ import DataTable, { Column } from '@/components/shared/DataTable';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { mockCarbonBudgetMonths } from '@/lib/mockData';
 import { CarbonBudgetMonth, ActivityCarbonBreakdownItem } from '@/lib/types';
+import { AnimatedNumber } from '@/components/AnimatedNumber';
+import { TableSkeleton } from '@/components/skeletons/TableSkeleton';
+import { GlowCard } from '@/components/GlowCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAnalysis } from '@/lib/AnalysisContext';
@@ -206,7 +209,7 @@ export default function CarbonBudgetPage() {
       <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-6 items-start">
         {/* Left Column: Budget Status & Score Ring */}
         <div className="space-y-4">
-          <div className="border border-[var(--border)] bg-[var(--background)] p-6 rounded-md shadow-sm flex flex-col items-center select-none">
+          <GlowCard className="border border-[var(--border)] bg-[var(--background)] p-6 rounded-md shadow-sm flex flex-col items-center select-none">
             <h3 className="text-[13px] font-sans font-medium text-[var(--foreground)] uppercase tracking-wider self-start mb-6">
               Carbon Budget Allocation
             </h3>
@@ -234,13 +237,13 @@ export default function CarbonBudgetPage() {
                 </p>
               </div>
             )}
-          </div>
+          </GlowCard>
         </div>
 
         {/* Right Column: Burn Rate Trend */}
         <div className="flex flex-col gap-6">
           {/* Burn rate SVG Line chart */}
-          <div className="border border-[var(--border)] bg-[var(--background)] p-5 rounded-md shadow-sm">
+          <GlowCard className="border border-[var(--border)] bg-[var(--background)] p-5 rounded-md shadow-sm">
             <h3 className="text-[13px] font-sans font-medium text-[var(--foreground)] uppercase tracking-wider mb-4">
               Monthly Emissions Burn Rate & Forecast
             </h3>
@@ -292,7 +295,7 @@ export default function CarbonBudgetPage() {
                 ))}
               </div>
             </div>
-          </div>
+          </GlowCard>
 
           {/* Monthly Breakdown Table */}
           <div className="space-y-3">

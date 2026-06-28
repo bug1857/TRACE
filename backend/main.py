@@ -562,6 +562,11 @@ def get_copilot_status():
                 return {"online": True, "availableModels": models}
     except Exception:
         pass
+
+    import os
+    if os.environ.get("OPENAI_API_KEY"):
+        return {"online": True, "availableModels": ["gpt-4o-mini (Cloud Fallback)"]}
+
     return {"online": False, "availableModels": []}
 
 
@@ -806,6 +811,46 @@ def query_copilot(payload: CopilotQuery):
                 raise Exception(f"Ollama returned status {response.status}")
     except urllib.error.URLError as e:
         latency_ms = int((time.time() - start_time) * 1000)
+
+        # Fallback to OpenAI if key is present
+        import os
+        openai_key = os.environ.get("OPENAI_API_KEY")
+        if openai_key:
+            try:
+                openai_url = "https://api.openai.com/v1/chat/completions"
+                openai_payload = {
+                    "model": "gpt-4o-mini",
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": f"Data Context:\n{context_str}\n\nUser Question:\n{payload.query}"}
+                    ]
+                }
+                o_data = json.dumps(openai_payload).encode('utf-8')
+                o_req = urllib.request.Request(
+                    openai_url,
+                    data=o_data,
+                    headers={
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {openai_key}"
+                    }
+                )
+                with urllib.request.urlopen(o_req, timeout=60.0) as o_response:
+                    if o_response.status == 200:
+                        o_res_body = o_response.read().decode('utf-8')
+                        o_result = json.loads(o_res_body)
+                        answer = o_result.get("choices", [])[0].get("message", {}).get("content", "")
+                        return {
+                            "answer": answer,
+                            "model": "gpt-4o-mini (Cloud Fallback)",
+                            "latencyMs": int((time.time() - start_time) * 1000)
+                        }
+            except Exception as fallback_e:
+                return {
+                    "answer": f"⚠️ Local Ollama is offline, and Cloud Fallback failed: {str(fallback_e)}",
+                    "model": "Cloud Fallback Error",
+                    "latencyMs": int((time.time() - start_time) * 1000)
+                }
+
         return {
             "answer": f"⚠️ Could not connect to the local Ollama server (http://localhost:11434). Please ensure Ollama is running with `ollama serve`. Error: {str(e.reason)}",
             "model": model_name,

@@ -58,9 +58,10 @@ export default function FileUpload({
       onClick={triggerSelect}
       className={`border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-colors min-h-[160px] select-none ${
         isDragActive
-          ? 'border-[var(--primary)] bg-[var(--accent)]'
+          ? 'drop-zone-active bg-[var(--accent)]'
           : 'border-[var(--border)] bg-[var(--card)] hover:bg-[#ECEAE4]'
       }`}
+      style={{ transition: "transform 0.2s ease", transform: isDragActive ? "scale(1.015)" : "scale(1)" }}
     >
       <input
         type="file"

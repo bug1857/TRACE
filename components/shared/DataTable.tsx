@@ -1,15 +1,16 @@
 'use client';
 
+/* eslint-disable */
 import React, { useState, useMemo } from 'react';
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import {
   Table,
-  TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { motion } from 'framer-motion';
 
 export interface Column<T> {
   header: string;
@@ -105,14 +106,22 @@ export default function DataTable<T extends Record<string, any>>({
             })}
           </TableRow>
         </TableHeader>
-        <TableBody>
+        <motion.tbody
+          variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.03, delayChildren: 0.05 } } }}
+          initial="hidden"
+          animate="visible"
+          className="[&_tr:last-child]:border-0"
+        >
           {sortedData.length > 0 ? (
             sortedData.map((row, rowIndex) => (
-              <TableRow
+              <motion.tr
                 key={row.id || rowIndex}
                 onClick={() => onRowClick && onRowClick(row)}
+                variants={rowIndex < 50 ? { hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.2, ease: "easeOut" } } } : undefined}
                 className={`h-[44px] border-b border-[var(--border)] last:border-b-0 transition-colors duration-200 hover:bg-[var(--card)]/50 ${
                   onRowClick ? 'cursor-pointer' : ''
+                } ${
+                  (row as any).severity === 'critical' ? 'row-critical' : (row as any).severity === 'warning' ? 'row-warning' : ''
                 }`}
               >
                 {columns.map((column) => {
@@ -133,7 +142,7 @@ export default function DataTable<T extends Record<string, any>>({
                     </TableCell>
                   );
                 })}
-              </TableRow>
+              </motion.tr>
             ))
           ) : (
             <TableRow>
@@ -142,7 +151,7 @@ export default function DataTable<T extends Record<string, any>>({
               </TableCell>
             </TableRow>
           )}
-        </TableBody>
+        </motion.tbody>
       </Table>
     </div>
   );

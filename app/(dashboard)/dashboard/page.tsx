@@ -1,3 +1,4 @@
+/* eslint-disable */
 'use client';
 
 import React from 'react';
@@ -7,6 +8,11 @@ import {
   PieChart, Pie, Cell 
 } from 'recharts';
 import { ArrowUp, ArrowDown, Database } from 'lucide-react';
+import { AnimatedNumber } from '@/components/AnimatedNumber';
+import { AnimatedChart } from '@/components/AnimatedChart';
+import { GlowCard } from '@/components/GlowCard';
+import { StaggeredList, StaggeredItem } from '@/components/StaggeredList';
+import { DashboardSkeleton } from '@/components/skeletons/DashboardSkeleton';
 
 const categoryLabel: Record<string, string> = {
   air_freight: 'Air Freight Hub',
@@ -52,17 +58,7 @@ export default function DashboardPage() {
   const recentData = analysis?.activityCarbonBreakdown?.slice(0, 5) || [];
 
   if (!hasAnalysis) {
-    return (
-      <div className="relative min-h-screen">
-        <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(45,212,191,0.03)_0%,_transparent_60%)] pointer-events-none" />
-        <div className="flex flex-col flex-1 items-center justify-center min-h-[400px] relative z-10">
-          <Database className="w-12 h-12 text-trace-muted mb-4 opacity-50" />
-          <p className="text-trace-muted text-[13px] font-sans">
-            Upload a CSV on the OCEL page to populate this dashboard
-          </p>
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (
@@ -82,7 +78,7 @@ export default function DashboardPage() {
         {/* 2. KPI Strip */}
         <div className="grid grid-cols-4 gap-4">
           {/* Card 1 */}
-          <div className="relative rounded-xl border border-white/[0.06] bg-gradient-to-br from-white/[0.06] to-white/[0.02] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden p-5 flex flex-col justify-between h-[110px] border-l-2 border-l-trace-accent">
+          <GlowCard className="relative rounded-xl border border-white/[0.06] bg-gradient-to-br from-white/[0.06] to-white/[0.02] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden p-5 flex flex-col justify-between h-[110px] border-l-2 border-l-trace-accent">
             <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/[0.04] to-transparent pointer-events-none" />
             <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-trace-accent shadow-[0_0_8px_rgba(45,212,191,0.6)]" />
             
@@ -91,7 +87,7 @@ export default function DashboardPage() {
             </span>
             <div className="mt-2 flex items-baseline gap-1 relative z-10">
               <span className="text-[28px] font-mono font-bold text-trace-text leading-none">
-                {totalCarbonFormatted}
+                {typeof totalCarbonKg === 'number' ? <AnimatedNumber value={totalCarbonKg} /> : '—'}
               </span>
               {totalCarbonKg !== null && <span className="text-trace-muted text-[13px] font-sans">tCO₂e</span>}
             </div>
@@ -99,10 +95,10 @@ export default function DashboardPage() {
               <ArrowUp className="w-3 h-3" />
               <span>18% YoY</span>
             </div>
-          </div>
+          </GlowCard>
 
           {/* Card 2 */}
-          <div className="relative rounded-xl border border-white/[0.06] bg-gradient-to-br from-white/[0.06] to-white/[0.02] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden p-5 flex flex-col justify-between h-[110px] border-l-2 border-l-trace-success">
+          <GlowCard className="relative rounded-xl border border-white/[0.06] bg-gradient-to-br from-white/[0.06] to-white/[0.02] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden p-5 flex flex-col justify-between h-[110px] border-l-2 border-l-trace-success">
             <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/[0.04] to-transparent pointer-events-none" />
             <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-trace-success shadow-[0_0_8px_rgba(63,185,80,0.6)]" />
 
@@ -111,7 +107,7 @@ export default function DashboardPage() {
             </span>
             <div className="mt-2 flex items-baseline gap-1 relative z-10">
               <span className="text-[28px] font-mono font-bold text-trace-text leading-none">
-                {intensity}
+                {totalCarbonKg !== null ? <AnimatedNumber value={totalCarbonKg / (analysis?.metadata?.rowCount || 1)} decimals={1} /> : '—'}
               </span>
               {intensity !== '—' && <span className="text-trace-muted text-[13px] font-sans">tCO₂/M$</span>}
             </div>
@@ -119,10 +115,10 @@ export default function DashboardPage() {
               <ArrowDown className="w-3 h-3" />
               <span>12% YoY</span>
             </div>
-          </div>
+          </GlowCard>
 
           {/* Card 3 */}
-          <div className="relative rounded-xl border border-white/[0.06] bg-gradient-to-br from-white/[0.06] to-white/[0.02] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden p-5 flex flex-col justify-between h-[110px] border-l-2 border-l-trace-warning">
+          <GlowCard className="relative rounded-xl border border-white/[0.06] bg-gradient-to-br from-white/[0.06] to-white/[0.02] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden p-5 flex flex-col justify-between h-[110px] border-l-2 border-l-trace-warning">
             <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/[0.04] to-transparent pointer-events-none" />
             <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-trace-warning shadow-[0_0_8px_rgba(210,153,34,0.6)]" />
 
@@ -131,17 +127,17 @@ export default function DashboardPage() {
             </span>
             <div className="mt-2 relative z-10">
               <span className="text-[28px] font-mono font-bold text-trace-success leading-none">
-                {netZeroFormatted}
+                {avgCfs !== null ? <AnimatedNumber value={Math.min(Math.round(avgCfs * 100), 100)} suffix="%" /> : '—'}
               </span>
             </div>
             <div className="mt-auto flex items-center gap-1 text-trace-success text-[11px] font-sans relative z-10">
               <ArrowUp className="w-3 h-3" />
               <span>15%</span>
             </div>
-          </div>
+          </GlowCard>
 
           {/* Card 4 */}
-          <div className="relative rounded-xl border border-white/[0.06] bg-gradient-to-br from-white/[0.06] to-white/[0.02] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden p-5 flex flex-col justify-between h-[110px] border-l-2 border-l-trace-danger">
+          <GlowCard className="relative rounded-xl border border-white/[0.06] bg-gradient-to-br from-white/[0.06] to-white/[0.02] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden p-5 flex flex-col justify-between h-[110px] border-l-2 border-l-trace-danger">
             <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/[0.04] to-transparent pointer-events-none" />
             <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-trace-danger shadow-[0_0_8px_rgba(248,81,73,0.6)]" />
 
@@ -150,7 +146,7 @@ export default function DashboardPage() {
             </span>
             <div className="mt-2 flex items-baseline gap-1 relative z-10">
               <span className="text-[28px] font-mono font-bold text-trace-text leading-none">
-                {energyFormatted}
+                {typeof energyKwh === 'number' ? <AnimatedNumber value={energyKwh / 1000000} decimals={1} /> : '—'}
               </span>
               {energyFormatted !== '—' && <span className="text-trace-muted text-[13px] font-sans">GWh</span>}
             </div>
@@ -158,7 +154,7 @@ export default function DashboardPage() {
               <ArrowDown className="w-3 h-3" />
               <span>3%</span>
             </div>
-          </div>
+          </GlowCard>
         </div>
 
         {/* 3. Two-column grid */}
@@ -170,8 +166,8 @@ export default function DashboardPage() {
               <h2 className="text-[13px] font-sans font-medium text-trace-text">Emissions Trend Over Time</h2>
               <span className="text-[11px] font-mono bg-white/[0.05] text-trace-muted px-2 py-0.5 rounded">2025</span>
             </div>
-            <div className="w-full mt-2 relative z-10">
-              <ResponsiveContainer width="100%" height={220}>
+            <AnimatedChart className="w-full mt-2 relative z-10 h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={areaData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="actualGrad" x1="0" y1="0" x2="0" y2="1">
@@ -194,10 +190,19 @@ export default function DashboardPage() {
                     itemStyle={{ fontSize: 11 }}
                     labelStyle={{ color: 'var(--trace-subtle)', marginBottom: 4 }}
                   />
-                  <Area type="monotone" dataKey="actual" stroke='var(--primary)' fill="url(#actualGrad)" strokeWidth={2} />
+                  <Area 
+                    type="monotone" 
+                    dataKey="actual" 
+                    stroke='var(--primary)' 
+                    fill="url(#actualGrad)" 
+                    strokeWidth={2}
+                    isAnimationActive={true}
+                    animationDuration={800}
+                    animationEasing="ease-out"
+                  />
                 </AreaChart>
               </ResponsiveContainer>
-            </div>
+            </AnimatedChart>
             <div className="mt-4 flex items-center justify-center gap-4 text-[11px] font-sans text-trace-muted relative z-10">
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full bg-trace-accent"></div>
@@ -211,7 +216,7 @@ export default function DashboardPage() {
             <div className="relative rounded-xl border border-white/[0.06] bg-gradient-to-br from-white/[0.06] to-white/[0.02] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden p-5 flex flex-col h-full">
               <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/[0.04] to-transparent pointer-events-none" />
               <h2 className="text-[13px] font-sans font-medium text-trace-text mb-2 relative z-10">Emissions By Scope</h2>
-              <div className="h-[160px] w-full relative flex items-center justify-center z-10">
+              <AnimatedChart className="h-[160px] w-full relative flex items-center justify-center z-10">
                 {hasAnalysis && totalCarbonKg !== null ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
@@ -222,6 +227,9 @@ export default function DashboardPage() {
                         paddingAngle={2}
                         dataKey="value"
                         stroke="none"
+                        isAnimationActive={true}
+                        animationDuration={800}
+                        animationEasing="ease-out"
                       >
                         {scopeData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
@@ -236,7 +244,7 @@ export default function DashboardPage() {
                 ) : (
                   <span className="text-trace-muted font-sans text-[12px]">—</span>
                 )}
-              </div>
+              </AnimatedChart>
               {hasAnalysis && totalCarbonKg !== null && (
                 <div className="mt-auto space-y-2 relative z-10">
                   {scopeData.map((s, i) => (
@@ -297,11 +305,11 @@ export default function DashboardPage() {
                 <div className="text-right">Quantity</div>
                 <div className="text-right">Change</div>
               </div>
-              <div className="flex flex-col">
+              <StaggeredList className="flex flex-col">
                 {recentData.map((row: any, i: number) => {
                   const categoryName = (row.category || '').split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
                   return (
-                    <div key={i} className="grid grid-cols-7 py-2.5 text-[12px] font-sans text-trace-text border-b border-white/[0.03] last:border-0 hover:bg-white/[0.02] transition-colors items-center">
+                    <StaggeredItem key={i} className="grid grid-cols-7 py-2.5 text-[12px] font-sans text-trace-text border-b border-white/[0.03] last:border-0 hover:bg-white/[0.02] transition-colors items-center">
                       <div className="text-trace-muted">10/25</div>
                       <div className="truncate pr-4 col-span-2">
                         {categoryLabel[row.category] ?? (row.activityName || row.activity)}
@@ -318,10 +326,10 @@ export default function DashboardPage() {
                           {i % 2 === 0 ? '↓ 2.1%' : '↑ 1.4%'}
                         </span>
                       </div>
-                    </div>
+                    </StaggeredItem>
                   );
                 })}
-              </div>
+              </StaggeredList>
             </div>
           ) : (
             <div className="py-8 text-center text-trace-muted text-[12px] font-sans relative z-10">

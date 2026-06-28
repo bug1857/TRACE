@@ -8,6 +8,7 @@ import PageHeader from '@/components/shared/PageHeader';
 import DataTable, { Column } from '@/components/shared/DataTable';
 import EmptyState from '@/components/shared/EmptyState';
 import { Button } from '@/components/ui/button';
+import { TableSkeleton } from '@/components/skeletons/TableSkeleton';
 import {
   Dialog,
   DialogContent,
@@ -22,12 +23,18 @@ export default function OrganizationsPage() {
     organizations,
     activeOrgId,
     setActiveOrgId,
-    refreshOrganizations
+    refreshOrganizations,
+    loading
   } = useWorkspace();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [validationError, setValidationError] = useState('');
+
+  if (loading) {
+    return <TableSkeleton rows={4} />;
+  }
+
 
   const handleCreateOrg = async (e: React.FormEvent) => {
     e.preventDefault();

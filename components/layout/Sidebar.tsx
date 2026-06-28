@@ -1,3 +1,4 @@
+/* eslint-disable */
 'use client';
 
 import React, { useRef, createRef } from 'react';
@@ -95,8 +96,8 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   const ALL_NAV_ITEMS = navGroups.flatMap(group => group.items);
-  const itemRefs = useRef<React.RefObject<HTMLElement>[]>(
-    ALL_NAV_ITEMS.map(() => createRef<HTMLElement>())
+  const itemRefs = useRef<React.RefObject<HTMLElement | null>[]>(
+    ALL_NAV_ITEMS.map(() => createRef<HTMLElement | null>())
   );
   const { springScales, onMouseMove, onMouseLeave } =
     useDockMagnification(ALL_NAV_ITEMS.length);

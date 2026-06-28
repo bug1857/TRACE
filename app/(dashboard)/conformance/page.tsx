@@ -9,6 +9,9 @@ import { mockViolations } from '@/lib/mockData';
 import { Violation } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { useAnalysis } from '@/lib/AnalysisContext';
+import { AnimatedNumber } from '@/components/AnimatedNumber';
+import { TableSkeleton } from '@/components/skeletons/TableSkeleton';
+import { GlowCard } from '@/components/GlowCard';
 import {
   Sheet,
   SheetContent,
@@ -23,7 +26,12 @@ export default function ConformancePage() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [modelFile, setModelFile] = useState<string>('decarbonization_policy_rules_v2.pnml');
 
+  const hasAnalysis = !!analysis;
   const isReal = !!(analysis && analysis.cfsScores && analysis.cfsScores.length > 0);
+
+  if (!hasAnalysis) {
+    return <TableSkeleton rows={8} />;
+  }
 
   const violations = isReal ? (analysis?.violations || []) : mockViolations;
 
@@ -87,7 +95,7 @@ export default function ConformancePage() {
       sortable: true,
       cell: (row) => {
         const severityStyles = {
-          critical: 'bg-[var(--trace-danger-light)] text-[var(--destructive)] border-[#FCA5A5]/40',
+          critical: 'bg-[var(--trace-danger-light)] text-[var(--destructive)] border-[#FCA5A5]/40 badge-critical',
           warning: 'bg-[var(--trace-warning-light)] text-[var(--trace-warning)] border-[#FDE68A]/40',
           info: 'bg-[var(--background)] text-[var(--muted-foreground)] border-[var(--border)]'
         };
@@ -139,13 +147,13 @@ export default function ConformancePage() {
       {/* Top Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Active Gaps */}
-        <div className="bg-[var(--background)] border border-[var(--border)] rounded-md p-5 flex flex-col justify-between shadow-sm min-h-[110px]">
+        <GlowCard className="bg-[var(--background)] border border-[var(--border)] rounded-md p-5 flex flex-col justify-between shadow-sm min-h-[110px]">
           <span className="text-[11px] font-sans font-medium text-[var(--muted-foreground)] uppercase tracking-wider block">
             Active Gaps
           </span>
           <div className="mt-3 flex items-baseline gap-2 select-all">
             <span className="text-[32px] font-mono font-medium text-[var(--destructive)] leading-none">
-              {totalViolations}
+              <AnimatedNumber value={totalViolations} />
             </span>
             {criticalCount > 0 && (
               <span className="text-[12px] font-sans text-[var(--muted-foreground)]">
@@ -156,16 +164,16 @@ export default function ConformancePage() {
           <span className="text-[11px] text-[var(--muted-foreground)] mt-2 font-sans">
             Total detected policy non-conformance loops
           </span>
-        </div>
+        </GlowCard>
 
         {/* Excess Carbon */}
-        <div className="bg-[var(--background)] border border-[var(--border)] rounded-md p-5 flex flex-col justify-between shadow-sm min-h-[110px]">
+        <GlowCard className="bg-[var(--background)] border border-[var(--border)] rounded-md p-5 flex flex-col justify-between shadow-sm min-h-[110px]">
           <span className="text-[11px] font-sans font-medium text-[var(--muted-foreground)] uppercase tracking-wider block">
             Excess Emissions
           </span>
           <div className="mt-3 flex items-baseline gap-1 select-all">
             <span className="text-[32px] font-mono font-medium text-[var(--trace-warning)] leading-none">
-              {totalExcessCarbon.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+              <AnimatedNumber value={totalExcessCarbon} decimals={1} />
             </span>
             <span className="text-[14px] font-sans text-[var(--muted-foreground)] font-normal lowercase ml-0.5">
               kg CO₂
@@ -174,16 +182,16 @@ export default function ConformancePage() {
           <span className="text-[11px] text-[var(--muted-foreground)] mt-2 font-sans">
             Delta carbon compared to mandated alternatives
           </span>
-        </div>
+        </GlowCard>
 
         {/* Audited Process Rules */}
-        <div className="bg-[var(--background)] border border-[var(--border)] rounded-md p-5 flex flex-col justify-between shadow-sm min-h-[110px]">
+        <GlowCard className="bg-[var(--background)] border border-[var(--border)] rounded-md p-5 flex flex-col justify-between shadow-sm min-h-[110px]">
           <span className="text-[11px] font-sans font-medium text-[var(--muted-foreground)] uppercase tracking-wider block">
             Active Policy Rules
           </span>
           <div className="mt-3 flex items-baseline gap-1 select-all">
             <span className="text-[32px] font-mono font-medium text-[var(--primary)] leading-none">
-              4
+              <AnimatedNumber value={4} />
             </span>
             <span className="text-[12px] font-sans text-[var(--muted-foreground)] ml-1">
               Rules Policed
@@ -192,7 +200,7 @@ export default function ConformancePage() {
           <span className="text-[11px] text-[var(--muted-foreground)] mt-2 font-sans">
             Logistics & Waste categories audited automatically
           </span>
-        </div>
+        </GlowCard>
       </div>
 
       {/* Violations Table Section */}
@@ -296,7 +304,7 @@ export default function ConformancePage() {
                   <div className="flex justify-between items-center text-[12px]">
                     <span className="text-[var(--muted-foreground)]">Severity Level:</span>
                     <span className={`px-2 py-0.5 rounded text-[10px] font-sans font-semibold uppercase tracking-wider border ${
-                      selectedViolation.severity === 'critical' ? 'bg-[var(--trace-danger-light)] text-[var(--destructive)] border-[#FCA5A5]/40' :
+                      selectedViolation.severity === 'critical' ? 'bg-[var(--trace-danger-light)] text-[var(--destructive)] border-[#FCA5A5]/40 badge-critical' :
                       selectedViolation.severity === 'warning' ? 'bg-[var(--trace-warning-light)] text-[var(--trace-warning)] border-[#FDE68A]/40' :
                       'bg-[var(--background)] text-[var(--muted-foreground)] border-[var(--border)]'
                     }`}>
@@ -319,7 +327,7 @@ export default function ConformancePage() {
                   <span className="text-[12px] text-[var(--muted-foreground)] font-sans mt-0.5 block">Estimated excess overhead emissions</span>
                 </div>
                 <span className="text-[20px] font-mono font-bold text-[var(--destructive)]">
-                  +{selectedViolation.carbonDeltaKg.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kg
+                  <AnimatedNumber value={selectedViolation.carbonDeltaKg} decimals={2} prefix="+" suffix=" kg" />
                 </span>
               </div>
 
