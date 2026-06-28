@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Cpu, ArrowRight } from 'lucide-react';
+import { Send, Cpu, ArrowRight, X } from 'lucide-react';
 import PageHeader from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ export default function CopilotPage() {
   const [messages, setMessages] = useState<CopilotMessage[]>(mockCopilotMessages);
   const [inputVal, setInputVal] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [showWarning, setShowWarning] = useState(true);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const [status, setStatus] = useState<{ online: boolean; availableModels: string[] }>({
@@ -53,8 +54,8 @@ export default function CopilotPage() {
 
   const isDemoMode = !analysis;
   const filename = analysis?.metadata?.filename || 'louis_india_q3_sc.csv';
-  const totalCarbon = analysis?.totalCarbonKg !== undefined 
-    ? `${analysis.totalCarbonKg.toLocaleString()} kg` 
+  const totalCarbon = analysis?.totalCarbonKg !== undefined
+    ? `${analysis.totalCarbonKg.toLocaleString()} kg`
     : '78,430 kg (Demo)';
 
   let cfsDisplay = '72 / 100 (Demo)';
@@ -149,29 +150,69 @@ export default function CopilotPage() {
 
   return (
     <div className="flex flex-col flex-1 h-[calc(100vh-100px)]">
+
+      {/* Warning Popup Dialog */}
+      {showWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white border border-yellow-300 rounded-xl shadow-2xl max-w-md w-full mx-4 p-6">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">⚠️</span>
+                <h2 className="text-[15px] font-semibold text-gray-900">Copilot Unavailable on Cloud</h2>
+              </div>
+              <button
+                onClick={() => setShowWarning(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-[13px] text-gray-700 mb-3 leading-relaxed">
+              TRACE Copilot currently runs on a <strong>local Ollama LLM</strong> and cannot operate in cloud deployments without an API key.
+            </p>
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4 text-[12px] text-yellow-800 leading-relaxed">
+              <p className="font-semibold mb-1">To use Copilot:</p>
+              <p>Download the project from GitHub and run it locally with Ollama installed.</p>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-5 text-[12px] text-blue-800 leading-relaxed">
+              <p className="font-semibold mb-1">In production, this can be fixed by:</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Adding an <strong>OpenAI / Groq / Anthropic API key</strong> as an environment variable</li>
+                <li>Replacing the Ollama endpoint in <code className="bg-blue-100 px-1 rounded">backend/main.py</code> with a cloud LLM call</li>
+                <li>Storing the API key securely in Railway / Vercel environment settings</li>
+              </ul>
+            </div>
+
+            <div className="flex gap-2">
+              
+                href="https://github.com/bug1857/TRACE"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 text-center py-2 bg-gray-900 text-white text-[13px] font-medium rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                Download from GitHub
+              </a>
+              <button
+                onClick={() => setShowWarning(false)}
+                className="flex-1 py-2 border border-gray-300 text-gray-700 text-[13px] font-medium rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Continue Anyway
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <PageHeader
         title="TRACE. Copilot Engine"
         subtitle="Natural language process auditor querying logistics event sequences, budget burns, and carbon deviations."
       />
 
-      <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-800 text-[12px] font-sans flex items-center gap-2">
-        <span>⚠️</span>
-        <span>
-          Copilot requires local Ollama setup and cannot run on the cloud.{" "}
-          
-            href="https://github.com/bug1857/TRACE"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline font-semibold"
-          >
-            Download from GitHub
-          </a>{" "}
-          and run locally to use this feature.
-        </span>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6 flex-1 items-stretch min-h-0">
-        
+
         {/* Left Column: Context Panel */}
         <div className="border border-[var(--border)] bg-[var(--background)] p-5 rounded-md shadow-sm flex flex-col justify-between select-none">
           <div className="space-y-4">
@@ -234,12 +275,18 @@ export default function CopilotPage() {
                 {status.online ? 'Ollama Online' : 'Ollama Offline'}
               </span>
             </div>
+            <button
+              onClick={() => setShowWarning(true)}
+              className="mt-1 text-[10px] text-yellow-600 underline text-left font-sans"
+            >
+              Why is Copilot offline?
+            </button>
           </div>
         </div>
 
         {/* Right Column: Main Chat Window */}
         <div className="border border-[var(--border)] bg-[var(--background)] rounded-md shadow-sm flex flex-col justify-between overflow-hidden">
-          
+
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             <div className="space-y-4 max-w-[760px] mx-auto">
               {messages.map((msg) => {
@@ -303,7 +350,7 @@ export default function CopilotPage() {
                         </div>
                       )}
                     </div>
-                    
+
                     <span className="text-[9px] text-[var(--trace-subtle)] font-mono mt-1 px-1">
                       {msg.timestamp}
                     </span>
