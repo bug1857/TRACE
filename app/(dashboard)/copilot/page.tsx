@@ -18,7 +18,6 @@ export default function CopilotPage() {
   const [isTyping, setIsTyping] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Status and configuration states
   const [status, setStatus] = useState<{ online: boolean; availableModels: string[] }>({
     online: false,
     availableModels: [],
@@ -26,7 +25,6 @@ export default function CopilotPage() {
   const [selectedModel, setSelectedModel] = useState('gemma3:4b');
   const [selectedStyle, setSelectedStyle] = useState('balanced');
 
-  // Load status and poll every 30s
   useEffect(() => {
     const checkStatus = async () => {
       try {
@@ -41,7 +39,6 @@ export default function CopilotPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Update default model selection based on availability
   useEffect(() => {
     if (status.availableModels && status.availableModels.length > 0) {
       if (status.availableModels.includes('gemma3:4b')) {
@@ -54,14 +51,12 @@ export default function CopilotPage() {
     }
   }, [status.availableModels]);
 
-  // Context data extraction for sidebar (using real data or honest demo state fallback)
   const isDemoMode = !analysis;
   const filename = analysis?.metadata?.filename || 'louis_india_q3_sc.csv';
   const totalCarbon = analysis?.totalCarbonKg !== undefined 
     ? `${analysis.totalCarbonKg.toLocaleString()} kg` 
     : '78,430 kg (Demo)';
 
-  // Combined CFS Score: average of case CFS scores
   let cfsDisplay = '72 / 100 (Demo)';
   if (analysis && analysis.cfsScores) {
     const scores = analysis.cfsScores.map(s => s.cfsScore);
@@ -76,7 +71,6 @@ export default function CopilotPage() {
     }
   }
 
-  // Violations
   let violationsDisplay = '23 issues (Demo)';
   if (analysis && analysis.violations) {
     const totalViolations = analysis.violations.length;
@@ -117,7 +111,7 @@ export default function CopilotPage() {
         query: finalQuery,
         model: selectedModel,
         style: selectedStyle,
-        context: analysis, // Passes the full real context or null
+        context: analysis,
       });
 
       const result = response.data;
@@ -149,7 +143,6 @@ export default function CopilotPage() {
     setInputVal(chipText);
   };
 
-  // Scroll chat to bottom when message list changes
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
@@ -160,6 +153,22 @@ export default function CopilotPage() {
         title="TRACE. Copilot Engine"
         subtitle="Natural language process auditor querying logistics event sequences, budget burns, and carbon deviations."
       />
+
+      <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-800 text-[12px] font-sans flex items-center gap-2">
+        <span>⚠️</span>
+        <span>
+          Copilot requires local Ollama setup and cannot run on the cloud.{" "}
+          
+            href="https://github.com/bug1857/TRACE"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline font-semibold"
+          >
+            Download from GitHub
+          </a>{" "}
+          and run locally to use this feature.
+        </span>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6 flex-1 items-stretch min-h-0">
         
@@ -231,10 +240,7 @@ export default function CopilotPage() {
         {/* Right Column: Main Chat Window */}
         <div className="border border-[var(--border)] bg-[var(--background)] rounded-md shadow-sm flex flex-col justify-between overflow-hidden">
           
-          {/* Scrollable messages container */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            
-            {/* Render message bubbles */}
             <div className="space-y-4 max-w-[760px] mx-auto">
               {messages.map((msg) => {
                 const isUser = msg.role === 'user';
@@ -248,21 +254,17 @@ export default function CopilotPage() {
                         ? 'bg-[var(--accent)] border-[var(--primary)]/10 text-[var(--foreground)]'
                         : 'bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]'
                     }`}>
-                      {/* Standard text content */}
                       {msg.content && (
                         <p className="font-sans whitespace-pre-line">{msg.content}</p>
                       )}
 
-                      {/* Structured Card Section (Assistant ONLY) */}
                       {!isUser && msg.structured && (
                         <div className={`${msg.content ? 'mt-4 border-t border-[var(--border)] pt-4' : ''} space-y-3`}>
-                          {/* ANSWER section (slightly darker card) */}
                           <div className="p-2.5 bg-[var(--background)] border border-[var(--border)] rounded-[3px]">
                             <span className="text-[9px] text-[var(--trace-subtle)] font-sans uppercase tracking-wider font-semibold block">ANSWER</span>
                             <p className="text-[12px] font-sans font-medium text-[var(--foreground)] mt-0.5">{msg.structured.answer}</p>
                           </div>
 
-                          {/* WHY section */}
                           {msg.structured.why && (
                             <div>
                               <span className="text-[9px] text-[var(--trace-subtle)] font-sans uppercase tracking-wider font-semibold block">WHY</span>
@@ -270,7 +272,6 @@ export default function CopilotPage() {
                             </div>
                           )}
 
-                          {/* EVIDENCE section */}
                           {msg.structured.evidence && msg.structured.evidence.length > 0 && (
                             <div>
                               <span className="text-[9px] text-[var(--trace-subtle)] font-sans uppercase tracking-wider font-semibold block">EVIDENCE</span>
@@ -285,7 +286,6 @@ export default function CopilotPage() {
                             </div>
                           )}
 
-                          {/* ACTION section */}
                           {msg.structured.action && (
                             <div className="pt-2">
                               <Link href={msg.structured.action.actionId}>
@@ -311,7 +311,6 @@ export default function CopilotPage() {
                 );
               })}
 
-              {/* Typing Indicator */}
               {isTyping && (
                 <div className="flex flex-col items-start animate-pulse">
                   <div className="p-3 bg-[var(--card)] border border-[var(--border)] rounded-md text-[13px] text-[var(--muted-foreground)] font-sans">
@@ -323,10 +322,7 @@ export default function CopilotPage() {
             </div>
           </div>
 
-          {/* Bottom input area */}
           <div className="border-t border-[var(--border)] p-3 bg-[var(--background)]">
-            
-            {/* Suggested Chips (Horizontal Scrollable Pill Buttons) */}
             <div className="flex gap-2 max-w-[760px] mx-auto overflow-x-auto pb-2.5 select-none no-scrollbar">
               {suggestedChips.map((chip) => (
                 <button
@@ -341,7 +337,6 @@ export default function CopilotPage() {
               ))}
             </div>
 
-            {/* Model & Style Selectors */}
             <div className="flex gap-4 max-w-[760px] mx-auto mb-2.5 text-[11px] font-sans">
               <div className="flex items-center gap-1.5">
                 <span className="text-[var(--muted-foreground)] font-semibold uppercase tracking-wider">Model:</span>
@@ -404,7 +399,6 @@ export default function CopilotPage() {
               Powered by Ollama (local)
             </div>
           </div>
-
         </div>
       </div>
     </div>
