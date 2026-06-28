@@ -8,7 +8,6 @@ import PageHeader from '@/components/shared/PageHeader';
 import DataTable, { Column } from '@/components/shared/DataTable';
 import EmptyState from '@/components/shared/EmptyState';
 import { Button } from '@/components/ui/button';
-import { TableSkeleton } from '@/components/skeletons/TableSkeleton';
 import {
   Dialog,
   DialogContent,
@@ -32,7 +31,7 @@ export default function OrganizationsPage() {
   const [validationError, setValidationError] = useState('');
 
   if (loading) {
-    return <TableSkeleton rows={4} />;
+    return <div>Loading...</div>;
   }
 
 

@@ -7,7 +7,6 @@ import DemoDataBanner from '@/components/shared/DemoDataBanner';
 import { mockCfsScores } from '@/lib/mockData';
 import { CfsScore } from '@/lib/types';
 import { useAnalysis } from '@/lib/AnalysisContext';
-import { AnimatedNumber } from '@/components/AnimatedNumber';
 
 export default function CarbonFitnessPage() {
   const { analysis } = useAnalysis();
@@ -109,7 +108,7 @@ export default function CarbonFitnessPage() {
             <span className={`text-[32px] font-mono font-medium leading-none ${
               avgCfs >= 80 ? 'text-[var(--primary)]' : avgCfs >= 50 ? 'text-[var(--trace-warning)]' : 'text-[var(--destructive)]'
             }`}>
-              <AnimatedNumber value={avgCfs} suffix="%" />
+              <span>{avgCfs}%</span>
             </span>
           </div>
           <span className="text-[11px] text-[var(--muted-foreground)] mt-2 font-sans">
@@ -124,7 +123,7 @@ export default function CarbonFitnessPage() {
           </span>
           <div className="mt-3 flex items-baseline gap-1 select-all">
             <span className="text-[32px] font-mono font-medium text-[var(--foreground)] leading-none">
-              <AnimatedNumber value={totalCases} />
+              <span>{totalCases}</span>
             </span>
             <span className="text-[12px] font-sans text-[var(--muted-foreground)] ml-1">
               instances
@@ -144,7 +143,7 @@ export default function CarbonFitnessPage() {
             <span className={`text-[32px] font-mono font-medium leading-none ${
               totalViolations > 0 ? 'text-[var(--destructive)]' : 'text-[var(--primary)]'
             }`}>
-              <AnimatedNumber value={totalViolations} />
+              <span>{totalViolations}</span>
             </span>
             <span className="text-[12px] font-sans text-[var(--muted-foreground)] ml-1">
               violations

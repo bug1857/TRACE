@@ -15,11 +15,6 @@ import { useWorkspace } from '@/lib/WorkspaceContext';
 import { ColumnMapping, MappingField } from '@/lib/types';
 import { AxiosError } from 'axios';
 import { motion } from 'framer-motion';
-import { AnimatedFlowNode } from '@/components/flow/AnimatedFlowNode';
-
-const nodeTypes = {
-  default: AnimatedFlowNode,
-};
 
 export default function OcelPage() {
   const { analysis, setAnalysis } = useAnalysis();
@@ -624,7 +619,6 @@ export default function OcelPage() {
                 style={{ width: "100%", height: "100%" }}
               >
                 <ReactFlow
-                  nodeTypes={nodeTypes}
                   nodes={reactFlowNodes}
                   edges={reactFlowEdges}
                   fitView

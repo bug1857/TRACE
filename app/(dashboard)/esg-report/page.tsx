@@ -8,10 +8,6 @@ import DemoDataBanner from '@/components/shared/DemoDataBanner';
 import { useAnalysis } from '@/lib/AnalysisContext';
 import { EsgReport } from '@/lib/types';
 import SectionDivider from '@/components/shared/SectionDivider';
-import { AnimatedNumber } from '@/components/AnimatedNumber';
-import { StaggeredList, StaggeredItem } from '@/components/StaggeredList';
-import { DashboardSkeleton } from '@/components/skeletons/DashboardSkeleton';
-import { GlowCard } from '@/components/GlowCard';
 
 const mockEsgReportData: EsgReport = {
   environmental: {
@@ -64,7 +60,7 @@ export default function EsgReportPage() {
   const isReal = !!(analysis && analysis.esgReport);
 
   if (!hasAnalysis) {
-    return <DashboardSkeleton />;
+    return <div>Loading...</div>;
   }
 
   const esgReport = isReal ? analysis.esgReport! : mockEsgReportData;
@@ -107,7 +103,7 @@ export default function EsgReportPage() {
 
       <div className="space-y-6 max-w-5xl mx-auto w-full">
         {/* 1. Overall Score Hero Section */}
-        <GlowCard className="border border-[var(--border)] bg-[var(--background)] p-6 rounded-md shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="border border-[var(--border)] bg-[var(--background)] p-6 rounded-md shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-2 text-center md:text-left">
             <span className="text-[11px] font-sans font-semibold text-[var(--primary)] uppercase tracking-widest block">
               Synthesis Rating
@@ -126,17 +122,17 @@ export default function EsgReportPage() {
           <div className="flex flex-col items-center justify-center bg-[var(--accent)] border border-[var(--primary)]/15 rounded-md p-5 min-w-[180px] shadow-sm shrink-0 select-all">
             <span className="text-[10px] font-sans font-medium text-[var(--primary)] uppercase tracking-wider">Composite Score</span>
             <span className="text-[44px] font-mono font-bold text-[var(--primary)] leading-none mt-1">
-              <AnimatedNumber value={esgReport.overallScore} decimals={1} suffix="%" />
+              <span>{esgReport.overallScore}%</span>
             </span>
             <span className="text-[10px] text-[var(--primary)]/70 font-sans mt-1">Weighted Index Rating</span>
           </div>
-        </GlowCard>
+        </div>
 
         {/* 2. Three Pillar Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
           {/* E - ENVIRONMENTAL */}
-          <GlowCard className="border border-[var(--border)] bg-[var(--background)] rounded-md p-5 shadow-sm flex flex-col justify-between space-y-6 border-t-4 border-t-[var(--primary)]">
+          <div className="border border-[var(--border)] bg-[var(--background)] rounded-md p-5 shadow-sm flex flex-col justify-between space-y-6 border-t-4 border-t-[var(--primary)]">
             <div className="space-y-4">
               <div className="flex items-start justify-between">
                 <div className="space-y-0.5">
@@ -152,7 +148,7 @@ export default function EsgReportPage() {
               <div className="bg-[var(--accent)] border border-[var(--primary)]/15 rounded p-4 text-center select-all">
                 <span className="text-[10px] font-sans font-medium text-[var(--primary)] uppercase tracking-wider block">Carbon Fitness Rating</span>
                 <span className="text-[32px] font-mono font-bold text-[var(--primary)] block mt-0.5">
-                  <AnimatedNumber value={esgReport.environmental.score} decimals={1} suffix="%" />
+                  <span>{esgReport.environmental.score}%</span>
                 </span>
               </div>
 
@@ -173,24 +169,24 @@ export default function EsgReportPage() {
 
               <div className="space-y-2 text-[12px] border-t border-[var(--border)] pt-3">
                 <span className="text-[10px] font-sans font-bold text-[var(--muted-foreground)] uppercase tracking-wider block">Top Hotspots</span>
-                <StaggeredList className="space-y-1.5">
+                <div className="space-y-1.5">
                   {esgReport.environmental.topHotspots.map((item, idx) => (
-                    <StaggeredItem key={idx} className="flex justify-between items-baseline gap-2">
+                    <div key={idx} className="flex justify-between items-baseline gap-2">
                       <span className="font-medium text-[var(--foreground)] truncate max-w-[140px]">{item.activity}</span>
                       <span className="font-mono text-[var(--muted-foreground)] text-[11px] shrink-0">{item.totalCarbon.toLocaleString(undefined, { maximumFractionDigits: 0 })} kg</span>
-                    </StaggeredItem>
+                    </div>
                   ))}
-                </StaggeredList>
+                </div>
               </div>
             </div>
             
             <p className="text-[11px] text-[var(--trace-subtle)] leading-relaxed italic pt-2">
               Emissions and fitness scores computed directly from logged shipping events.
             </p>
-          </GlowCard>
+          </div>
 
           {/* S - SOCIAL */}
-          <GlowCard className="border border-[var(--border)] bg-[var(--background)] rounded-md p-5 shadow-sm flex flex-col justify-between space-y-6 border-t-4 border-t-[var(--trace-warning)]/50">
+          <div className="border border-[var(--border)] bg-[var(--background)] rounded-md p-5 shadow-sm flex flex-col justify-between space-y-6 border-t-4 border-t-[var(--trace-warning)]/50">
             <div className="space-y-4">
               <div className="flex items-start justify-between">
                 <div className="space-y-0.5">
@@ -225,10 +221,10 @@ export default function EsgReportPage() {
             <p className="text-[11px] text-[var(--trace-warning)] leading-relaxed italic bg-[var(--trace-warning-light)]/40 border border-[var(--trace-warning-light)] p-2.5 rounded text-left">
               {esgReport.social.note}
             </p>
-          </GlowCard>
+          </div>
 
           {/* G - GOVERNANCE */}
-          <GlowCard className="border border-[var(--border)] bg-[var(--background)] rounded-md p-5 shadow-sm flex flex-col justify-between space-y-6 border-t-4 border-t-[#4A5D6E]">
+          <div className="border border-[var(--border)] bg-[var(--background)] rounded-md p-5 shadow-sm flex flex-col justify-between space-y-6 border-t-4 border-t-[#4A5D6E]">
             <div className="space-y-4">
               <div className="flex items-start justify-between">
                 <div className="space-y-0.5">
@@ -244,7 +240,7 @@ export default function EsgReportPage() {
               <div className="bg-[#4A5D6E]/10 border border-[#4A5D6E]/20 rounded p-4 text-center select-all">
                 <span className="text-[10px] font-sans font-medium text-[#4A5D6E] uppercase tracking-wider block">Process Compliance</span>
                 <span className="text-[32px] font-mono font-bold text-[#4A5D6E] block mt-0.5">
-                  <AnimatedNumber value={esgReport.governance.score} decimals={1} suffix="%" />
+                  <span>{esgReport.governance.score}%</span>
                 </span>
               </div>
 
@@ -277,7 +273,7 @@ export default function EsgReportPage() {
                 </span>
               )}
             </p>
-          </GlowCard>
+          </div>
 
         </div>
 

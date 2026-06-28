@@ -11,7 +11,6 @@ import { useAnalysis } from '@/lib/AnalysisContext';
 import { mockForecastingData, mockCarbonBudgetMonths } from '@/lib/mockData';
 import { ForecastingBaseline } from '@/lib/types';
 import { Info, AlertTriangle } from 'lucide-react';
-import { TableSkeleton } from '@/components/skeletons/TableSkeleton';
 
 export default function ForecastingPage() {
   const { analysis } = useAnalysis();
@@ -20,7 +19,7 @@ export default function ForecastingPage() {
   const isReal = !!(analysis && analysis.forecasting);
 
   if (!hasAnalysis) {
-    return <TableSkeleton rows={4} />;
+    return <div>Loading...</div>;
   }
 
   // Derive forecasting data
