@@ -42,16 +42,21 @@ export default function CopilotPage() {
     return () => clearInterval(interval);
   }, []);
 
+  // Update default model selection based on availability ONLY initially
   useEffect(() => {
-    if (status.availableModels && status.availableModels.length > 0) {
-      if (status.availableModels.includes('gemma3:4b')) {
-        setSelectedModel('gemma3:4b');
-      } else {
-        setSelectedModel(status.availableModels[0]);
+    setSelectedModel(prev => {
+      // If user already selected something else, don't overwrite it
+      if (prev && prev !== 'gemma3:4b') return prev;
+      
+      if (status.availableModels && status.availableModels.length > 0) {
+        if (status.availableModels.includes('gemma3:4b')) {
+          return 'gemma3:4b';
+        } else {
+          return status.availableModels[0];
+        }
       }
-    } else {
-      setSelectedModel('gemma3:4b');
-    }
+      return 'gemma3:4b';
+    });
   }, [status.availableModels]);
 
   const isDemoMode = !analysis;

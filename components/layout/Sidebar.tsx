@@ -1,7 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, createRef } from 'react';
 import Link from 'next/link';
+import { useDockMagnification } from '@/hooks/useDockMagnification';
+import { DockSidebarItem } from '@/components/DockSidebarItem';
 import { usePathname } from 'next/navigation';
 import {
   Building2,
@@ -92,6 +94,13 @@ const navGroups: NavGroup[] = [
 export default function Sidebar() {
   const pathname = usePathname();
 
+  const ALL_NAV_ITEMS = navGroups.flatMap(group => group.items);
+  const itemRefs = useRef<React.RefObject<HTMLElement>[]>(
+    ALL_NAV_ITEMS.map(() => createRef<HTMLElement>())
+  );
+  const { springScales, onMouseMove, onMouseLeave } =
+    useDockMagnification(ALL_NAV_ITEMS.length);
+
   return (
     <div className="w-[220px] fixed top-0 bottom-0 left-0 bg-[var(--card)] border-r border-[var(--border)] flex flex-col z-20 no-print">
       {/* Header / Logo */}
@@ -117,36 +126,49 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation Groups */}
-      <div className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
-        {navGroups.map((group) => (
-          <div key={group.label} className="space-y-1">
+      <nav
+        className="flex-1 overflow-y-auto py-3 px-2 space-y-4"
+        onMouseMove={(e) => onMouseMove(e as React.MouseEvent<HTMLElement>, itemRefs.current)}
+        onMouseLeave={onMouseLeave}
+      >
+        {navGroups.map((group, groupIdx) => {
+          const startIndex = navGroups.slice(0, groupIdx).reduce((acc, g) => acc + g.items.length, 0);
+          return (
+            <div key={group.label} className="space-y-1">
             <span className="px-2 text-[10px] font-sans font-medium text-[var(--trace-subtle)] tracking-widest block uppercase">
               {group.label}
             </span>
             <div className="space-y-0.5">
-              {group.items.map((item) => {
+              {group.items.map((item, itemIdx) => {
+                const globalIdx = startIndex + itemIdx;
                 const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
                 const Icon = item.icon;
 
                 return (
-                  <Link
+                  <DockSidebarItem
                     key={item.href}
-                    href={item.href}
-                    className={`flex items-center gap-2.5 px-3 py-1.5 text-[13px] font-sans transition-all duration-200 ease-in-out hover:scale-[1.02] rounded-[3px] select-none ${
-                      isActive
-                        ? 'bg-[var(--accent)] border-l-2 border-[var(--primary)] text-[var(--primary)] font-medium pl-[10px]'
-                        : 'text-[var(--muted-foreground)] hover:bg-[#ECEAE4] pl-[12px]'
-                    }`}
+                    ref={itemRefs.current[globalIdx] as React.RefObject<HTMLDivElement>}
+                    scale={springScales[globalIdx]}
                   >
-                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[var(--primary)]' : 'text-[var(--muted-foreground)]'}`} />
-                    <span>{item.name}</span>
-                  </Link>
+                    <Link
+                      href={item.href}
+                      className={`flex items-center gap-2.5 px-3 py-1.5 text-[13px] font-sans transition-all duration-200 ease-in-out hover:scale-[1.02] rounded-[3px] select-none ${
+                        isActive
+                          ? 'bg-[var(--accent)] border-l-2 border-[var(--primary)] text-[var(--primary)] font-medium pl-[10px]'
+                          : 'text-[var(--muted-foreground)] hover:bg-[#ECEAE4] pl-[12px]'
+                      }`}
+                    >
+                      <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[var(--primary)]' : 'text-[var(--muted-foreground)]'}`} />
+                      <span>{item.name}</span>
+                    </Link>
+                  </DockSidebarItem>
                 );
               })}
             </div>
           </div>
-        ))}
-      </div>
+          );
+        })}
+      </nav>
       
       {/* Footer / Meta */}
       <div className="p-3 border-t border-[var(--border)] bg-[#ECEAE4] text-[11px] text-[var(--trace-subtle)] font-mono text-center">

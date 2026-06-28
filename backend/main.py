@@ -567,7 +567,12 @@ def get_copilot_status():
 
 @app.post("/api/copilot/query")
 def query_copilot(payload: CopilotQuery):
-    # 1. Build context string
+    import urllib.request
+    import urllib.error
+    import json
+    import time
+
+    # 1. Build RICH context string with all available data
     context_str = ""
     if payload.context:
         meta = payload.context.get("metadata", {})
@@ -576,27 +581,148 @@ def query_copilot(payload: CopilotQuery):
         total_events = meta.get("totalEvents", "unknown")
         activity_count = meta.get("activityCount", "unknown")
         total_carbon = payload.context.get("totalCarbonKg", "unknown")
-        
+
         violations = payload.context.get("violations", [])
         v_count = len(violations)
-        critical_v = sum(1 for v in violations if v.get("severity") == "critical" or v.get("severity") == "CRITICAL")
-        
+        critical_v = sum(1 for v in violations if str(v.get("severity", "")).upper() == "CRITICAL")
+
         suppliers = payload.context.get("supplierFitness", [])
         s_count = len(suppliers)
         avg_cfs = "unknown"
         if s_count > 0:
             avg_cfs = round(sum(s.get("avgCfsScore", 0) for s in suppliers) / s_count, 1)
-            
+
         context_str = (
-            f"Active Project Context:\n"
-            f"- Loaded Log File: {filename}\n"
-            f"- Cases Analyzed: {case_count}\n"
-            f"- Total Events: {total_events}\n"
-            f"- Unique Activities: {activity_count}\n"
-            f"- Total Carbon Footprint: {total_carbon} kg\n"
-            f"- Conformance Gaps/Violations: {v_count} detected ({critical_v} critical)\n"
-            f"- Suppliers Monitored: {s_count} (Average Carrier CFS: {avg_cfs})\n"
+            f"=== ACTIVE PROJECT CONTEXT ===\n"
+            f"Log File: {filename}\n"
+            f"Cases Analyzed: {case_count}\n"
+            f"Total Events: {total_events}\n"
+            f"Unique Activities: {activity_count}\n"
+            f"Total Carbon Footprint: {total_carbon} kg CO2e\n"
+            f"Conformance Violations: {v_count} total ({critical_v} critical)\n"
+            f"Suppliers Monitored: {s_count} (Average CFS: {avg_cfs})\n"
         )
+
+        # --- Detailed Supplier Fitness Data (sorted worst-first) ---
+        if suppliers:
+            sorted_suppliers = sorted(suppliers, key=lambda x: x.get("violationCount", 0), reverse=True)
+            context_str += "\n=== SUPPLIER FITNESS RANKING (worst to best by violations) ===\n"
+            for rank, s in enumerate(sorted_suppliers, 1):
+                name = s.get("supplier", s.get("supplierName", "Unknown"))
+                total_cases = s.get("caseCount", s.get("totalCases", 0))
+                violation_count = s.get("violationCount", 0)
+                avg_score = s.get("avgCfsScore", 0)
+                total_carbon = s.get("totalCarbonKg", 0)
+                context_str += (
+                    f"  #{rank}. {name}: {violation_count} violations across {total_cases} cases, "
+                    f"CFS Score: {avg_score}, Total Carbon: {total_carbon} kg\n"
+                )
+
+        # --- Detailed Violation Data (top 20 to keep context manageable) ---
+        if violations:
+            context_str += f"\n=== CONFORMANCE VIOLATIONS (showing top 20 of {v_count}) ===\n"
+            for v in violations[:20]:
+                case_id = v.get("caseId", "?")
+                activity = v.get("activity", "?")
+                severity = v.get("severity", "?")
+                carbon_excess = v.get("carbonExcessKg", 0)
+                mandated = v.get("mandatedAlternative", "?")
+                context_str += (
+                    f"- Case {case_id}: '{activity}' used instead of '{mandated}' | "
+                    f"Severity: {severity} | Excess CO2: {carbon_excess} kg\n"
+                )
+
+        # --- Carbon Activity Breakdown ---
+        carbon_breakdown = payload.context.get("activityCarbonBreakdown", [])
+        if carbon_breakdown:
+            context_str += "\n=== CARBON BREAKDOWN BY ACTIVITY ===\n"
+            for item in carbon_breakdown:
+                act = item.get("activity", "?")
+                total_kg = item.get("totalCarbonKg", 0)
+                freq = item.get("frequency", 0)
+                per_case = item.get("perCaseAvgKg", 0)
+                context_str += f"- {act}: {total_kg} kg total ({freq} occurrences, {per_case} kg/case avg)\n"
+
+        # --- Green Routes Recommendations ---
+        green_routes = payload.context.get("greenRoutes", [])
+        if green_routes:
+            context_str += "\n=== GREEN ROUTE RECOMMENDATIONS ===\n"
+            for r in green_routes:
+                current = r.get("currentRoute", "?")
+                recommended = r.get("recommendedRoute", "?")
+                saving = r.get("carbonSaving", 0)
+                cost_delta = r.get("costDelta", 0)
+                confidence = r.get("confidence", 0)
+                context_str += (
+                    f"- Switch '{current}' -> '{recommended}': "
+                    f"saves {saving} kg CO2, cost delta ${cost_delta}, "
+                    f"confidence {round(confidence * 100)}%\n"
+                )
+
+        # --- Process Optimization / Bottlenecks ---
+        proc_opt = payload.context.get("processOptimization", {})
+        bottlenecks = proc_opt.get("bottlenecks", []) if proc_opt else []
+        if bottlenecks:
+            context_str += "\n=== PROCESS BOTTLENECKS ===\n"
+            for b in bottlenecks:
+                act = b.get("activity", "?")
+                avg_wait = b.get("avgWaitHours", 0)
+                occ = b.get("occurrences", 0)
+                st = b.get("status", "?")
+                context_str += f"- {act}: {avg_wait}h avg wait, {occ} occurrences, status: {st}\n"
+
+        # --- Case Duration Distribution ---
+        case_dist = proc_opt.get("caseDurationDistribution", []) if proc_opt else []
+        if case_dist:
+            context_str += "\n=== CASE DURATION DISTRIBUTION ===\n"
+            for bucket in case_dist:
+                label = bucket.get("bucket", "?")
+                count = bucket.get("count", 0)
+                pct = bucket.get("percentage", 0)
+                context_str += f"- {label}: {count} cases ({pct}%)\n"
+
+        # --- Carbon Budget ---
+        carbon_budget = payload.context.get("carbonBudget", [])
+        if carbon_budget:
+            context_str += "\n=== CARBON BUDGET (MONTHLY) ===\n"
+            for m in carbon_budget:
+                month = m.get("month", "?")
+                actual = m.get("actualKg", 0)
+                cumulative = m.get("cumulativeKg", 0)
+                limit = m.get("limitKg", None)
+                context_str += f"- {month}: {actual} kg (cumulative: {cumulative} kg"
+                if limit:
+                    context_str += f", limit: {limit} kg"
+                context_str += ")\n"
+
+        # --- Forecasting ---
+        forecasting = payload.context.get("forecasting", {})
+        if forecasting and forecasting.get("dataAvailable"):
+            best = forecasting.get("bestBaseline", "?")
+            forecast_next = forecasting.get("forecastNextMonth", {})
+            predicted = forecast_next.get("predictedActualKg", "?")
+            context_str += (
+                f"\n=== FORECASTING ===\n"
+                f"Best Model: {best}\n"
+                f"Next Month Forecast: {predicted} kg CO2e\n"
+            )
+
+        # --- ESG Report ---
+        esg = payload.context.get("esgReport", {})
+        if esg:
+            env = esg.get("environmental", {})
+            soc = esg.get("social", {})
+            gov = esg.get("governance", {})
+            overall = esg.get("overallScore", "?")
+            context_str += (
+                f"\n=== ESG SCORES ===\n"
+                f"Overall ESG: {overall}%\n"
+                f"Environmental: {env.get('score', '?')}% (Carbon Budget: {env.get('carbonBudgetStatus', '?')})\n"
+                f"Social: {soc.get('score', 'N/A')} ({soc.get('note', '')})\n"
+                f"Governance: {gov.get('score', '?')}% (Violations: {gov.get('violationCount', '?')}, Audit: {gov.get('auditReadiness', '?')})\n"
+            )
+
+        # --- Conformance Rule Scope Note ---
         if v_count == 0:
             rule_scope = payload.context.get("conformanceRuleScope", [])
             if rule_scope:
@@ -607,39 +733,53 @@ def query_copilot(payload: CopilotQuery):
             else:
                 disallowed_str = "Air Freight Dispatch, Truck Delivery Transport Dispatch, Incineration Disposal, Landfill Disposal"
             context_str += (
-                f"- Note on conformance rule scope: Conformance checking was conducted against limited rules targeting: "
-                f"[{disallowed_str}]. A count of 0 violations indicates no matches for these specific activities "
-                f"were found, and does not imply complete compliance across other unmonitored activities.\n"
+                f"\nNote: Conformance checking targeted: [{disallowed_str}]. "
+                f"0 violations = no matches for these specific activities.\n"
             )
     else:
         context_str = "No active project data loaded yet. User has not uploaded any event log."
 
     # 2. Select system prompt style
-    system_prompt = ""
-    if payload.style == "numerical":
-        system_prompt = "You are TRACE. Copilot, an AI carbon auditing assistant. Focus heavily on numerical data, metrics, and statistics. Lead with raw numbers and keep prose/paragraphs minimal. Do not make up any numbers; use only the provided context."
-    elif payload.style == "executive":
-        system_prompt = "You are TRACE. Copilot, an AI carbon auditing assistant. Use a concise, professional, and bottom-line-oriented business summary tone. Avoid excessive fluff or details. Do not make up any numbers; use only the provided context."
-    elif payload.style == "formal":
-        system_prompt = "You are TRACE. Copilot, an AI carbon auditing assistant. Use a highly structured, objective, and formal audit-report tone. Use clear bullet points and clear definitions. Do not make up any numbers; use only the provided context."
-    else:  # balanced
-        system_prompt = "You are TRACE. Copilot, an AI carbon auditing assistant. Use a balanced, professional, conversational, and helpful tone. Do not make up any numbers; use only the provided context."
+    style_prompts = {
+        "numerical": (
+            "You are TRACE Copilot, an AI carbon auditing assistant for supply chain analytics. "
+            "Focus heavily on numerical data, metrics, and statistics from the provided context. "
+            "Lead with raw numbers. Use bullet points. Keep prose minimal. "
+            "CRITICAL: Only use numbers and facts from the provided context. Never invent data."
+        ),
+        "executive": (
+            "You are TRACE Copilot, an AI carbon auditing assistant for supply chain analytics. "
+            "Use a concise, professional, bottom-line-oriented business summary tone. "
+            "Give actionable insights. Avoid fluff. Reference specific supplier names and numbers. "
+            "CRITICAL: Only use numbers and facts from the provided context. Never invent data."
+        ),
+        "formal": (
+            "You are TRACE Copilot, an AI carbon auditing assistant for supply chain analytics. "
+            "Use a highly structured, objective, and formal audit-report tone. "
+            "Use clear bullet points, headings, and precise definitions. "
+            "CRITICAL: Only use numbers and facts from the provided context. Never invent data."
+        ),
+    }
+    system_prompt = style_prompts.get(payload.style, (
+        "You are TRACE Copilot, an AI carbon auditing assistant for supply chain analytics. "
+        "Use a balanced, professional, conversational, and helpful tone. "
+        "Always reference specific data points (supplier names, case IDs, carbon values) from the context. "
+        "Give clear, actionable answers. "
+        "CRITICAL: Only use numbers and facts from the provided context. Never invent data."
+    ))
 
     # 3. Call local Ollama
     url = "http://localhost:11434/api/generate"
+    model_name = payload.model or "gemma3:4b"
     ollama_payload = {
-        "model": payload.model or "gemma3:4b",
+        "model": model_name,
         "prompt": f"Data Context:\n{context_str}\n\nUser Question:\n{payload.query}",
         "system": system_prompt,
         "stream": False
     }
-    
-    import urllib.request
-    import urllib.error
-    import json
-    import time
 
     start_time = time.time()
+
     try:
         data = json.dumps(ollama_payload).encode('utf-8')
         req = urllib.request.Request(
@@ -647,31 +787,37 @@ def query_copilot(payload: CopilotQuery):
             data=data,
             headers={"Content-Type": "application/json"}
         )
-        with urllib.request.urlopen(req, timeout=30.0) as response:
+        with urllib.request.urlopen(req, timeout=60.0) as response:
             latency_ms = int((time.time() - start_time) * 1000)
             if response.status == 200:
                 res_body = response.read().decode('utf-8')
                 result = json.loads(res_body)
+                answer = result.get("response", "")
+                # Strip thinking tags if present (qwen3 models)
+                if "<think>" in answer:
+                    import re
+                    answer = re.sub(r'<think>.*?</think>', '', answer, flags=re.DOTALL).strip()
                 return {
-                    "answer": result.get("response", ""),
-                    "model": payload.model or "gemma3:4b",
+                    "answer": answer,
+                    "model": model_name,
                     "latencyMs": latency_ms
                 }
             else:
-                raise HTTPException(
-                    status_code=502,
-                    detail=f"Ollama returned bad status: {response.status}"
-                )
+                raise Exception(f"Ollama returned status {response.status}")
     except urllib.error.URLError as e:
-        raise HTTPException(
-            status_code=503,
-            detail=f"Ollama service is unreachable. Make sure Ollama is running locally. Error: {str(e)}"
-        )
+        latency_ms = int((time.time() - start_time) * 1000)
+        return {
+            "answer": f"⚠️ Could not connect to the local Ollama server (http://localhost:11434). Please ensure Ollama is running with `ollama serve`. Error: {str(e.reason)}",
+            "model": model_name,
+            "latencyMs": latency_ms
+        }
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to query local LLM: {str(e)}"
-        )
+        latency_ms = int((time.time() - start_time) * 1000)
+        return {
+            "answer": f"⚠️ An error occurred while querying the local LLM: {str(e)}",
+            "model": model_name,
+            "latencyMs": latency_ms
+        }
 
 
 # --- Multi-Tenancy Schemas ---
