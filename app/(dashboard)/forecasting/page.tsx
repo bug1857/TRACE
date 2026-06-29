@@ -229,7 +229,8 @@ export default function BenchmarkingPage() {
         formData.append('mapping_override', JSON.stringify(overridePayload));
       }
 
-      const res = await fetch('/api/benchmarking/run', {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const res = await fetch(`${baseUrl}/api/benchmarking/run`, {
         method: 'POST',
         body: formData,
       });
