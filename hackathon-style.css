@@ -1,0 +1,171 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #222222;
+  font-size: 10.5pt;
+  line-height: 1.65;
+}
+
+/* ── COVER PAGE ─────────────────────────────────── */
+.cover {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-height: 92vh;
+  padding: 60px 40px;
+  background: linear-gradient(160deg, #f0fff8 0%, #ffffff 50%, #f0f4ff 100%);
+  page-break-after: always;
+}
+.cover-uni {
+  font-size: 15pt;
+  font-weight: 800;
+  color: #1a1a2e;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+.cover-prog {
+  font-size: 11pt;
+  color: #555555;
+  margin-bottom: 0;
+}
+.cover-spacer { flex: 1; min-height: 80px; }
+.cover-logo {
+  font-size: 52pt;
+  font-weight: 800;
+  color: #00D4AA;
+  letter-spacing: 4px;
+  margin-bottom: 14px;
+  font-family: 'Inter', sans-serif;
+}
+.cover-platform {
+  font-size: 15pt;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 0;
+}
+.cover-spacer-sm { min-height: 50px; }
+.cover-by {
+  font-size: 10pt;
+  color: #555555;
+  margin-bottom: 10px;
+}
+.cover-names {
+  margin-bottom: 14px;
+}
+.cover-names div {
+  font-size: 13pt;
+  font-weight: 700;
+  color: #1a1a2e;
+  line-height: 1.8;
+}
+.cover-dept {
+  font-size: 10pt;
+  color: #555555;
+  margin-bottom: 8px;
+}
+.cover-event {
+  font-size: 9.5pt;
+  color: #777777;
+}
+
+/* ── HEADINGS ─────────────────────────────────────── */
+h2 {
+  page-break-before: always;
+  font-size: 18pt;
+  font-weight: 800;
+  color: #1a1a2e;
+  border-bottom: 3px solid #00D4AA;
+  padding-bottom: 8px;
+  margin-bottom: 20px;
+  margin-top: 0;
+}
+h3 {
+  font-size: 13pt;
+  font-weight: 700;
+  color: #00D4AA;
+  margin-top: 24px;
+  margin-bottom: 10px;
+}
+h4 {
+  font-size: 11pt;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-top: 18px;
+  margin-bottom: 8px;
+}
+
+/* ── BODY TEXT ─────────────────────────────────────── */
+p { margin-bottom: 12px; }
+ul, ol { margin: 8px 0 14px 24px; }
+li { margin-bottom: 5px; }
+strong { color: #1a1a2e; font-weight: 700; }
+hr { border: none; border-top: 1px solid #e2e8f0; margin: 24px 0; }
+
+blockquote {
+  border-left: 4px solid #00D4AA;
+  background: #f0fff8;
+  margin: 16px 0;
+  padding: 12px 20px;
+  border-radius: 0 6px 6px 0;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+/* ── TABLES ─────────────────────────────────────────── */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 16px 0 20px;
+  font-size: 9.5pt;
+  page-break-inside: avoid;
+}
+th {
+  background: #1a1a2e;
+  color: #ffffff;
+  font-weight: 700;
+  padding: 9px 13px;
+  text-align: left;
+}
+td {
+  border: 1px solid #d1d5db;
+  padding: 8px 13px;
+  vertical-align: top;
+}
+tr:nth-child(even) td { background: #f0fff8; }
+
+/* ── CODE ───────────────────────────────────────────── */
+pre {
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 8px;
+  padding: 16px 20px;
+  font-size: 9pt;
+  line-height: 1.6;
+  margin: 14px 0;
+  page-break-inside: avoid;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+}
+code {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  background: #f1f5f9;
+  color: #be123c;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 9pt;
+}
+pre code { background: transparent; color: #e2e8f0; padding: 0; }
+
+/* ── FOOTER ─────────────────────────────────────────── */
+.report-footer {
+  text-align: center;
+  margin-top: 40px;
+  font-size: 9pt;
+  color: #00D4AA;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 0.5px;
+}

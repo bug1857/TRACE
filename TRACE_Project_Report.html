@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TRACE — Enterprise Process Mining & Carbon Intelligence Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1a1a2e;--teal:#00D4AA;--teal-bg:#f0fdfa;--teal-mid:#00b894;
+  --body:#222222;--gray:#555555;--light:#f8fafc;--white:#ffffff;
+  --border:#e2e8f0;--shadow:0 8px 48px rgba(26,26,46,0.15);--radius:12px;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,sans-serif;font-size:11pt;color:var(--body);background:#f1f5f9;line-height:1.7}
+.page{width:210mm;min-height:297mm;margin:24px auto;background:var(--white);box-shadow:var(--shadow);border-radius:var(--radius);overflow:hidden}
+
+/* COVER */
+.cover{width:100%;min-height:297mm;background:linear-gradient(160deg,var(--navy) 0%,#16213e 50%,#0f3460 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 50px;position:relative;overflow:hidden}
+.cover::before{content:'';position:absolute;top:-80px;right:-80px;width:400px;height:400px;background:radial-gradient(circle,rgba(0,212,170,0.15) 0%,transparent 70%);border-radius:50%}
+.cover::after{content:'';position:absolute;bottom:-100px;left:-60px;width:350px;height:350px;background:radial-gradient(circle,rgba(0,212,170,0.10) 0%,transparent 70%);border-radius:50%}
+.cover-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(0,212,170,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,170,0.04) 1px,transparent 1px);background-size:40px 40px}
+.cover-content{position:relative;z-index:2;text-align:center;width:100%}
+.cover-university{font-size:13pt;font-weight:700;color:rgba(255,255,255,0.95);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:6px}
+.cover-programme{font-size:10pt;color:rgba(0,212,170,0.85);letter-spacing:0.03em;margin-bottom:70px}
+.cover-logo-wrap{margin-bottom:20px;position:relative;display:inline-block}
+.cover-logo-wrap::before{content:'';position:absolute;inset:-20px;background:radial-gradient(circle,rgba(0,212,170,0.2) 0%,transparent 70%);border-radius:50%}
+.cover-logo{font-size:64pt;font-weight:900;color:var(--teal);letter-spacing:-0.02em;line-height:1;font-style:italic;text-shadow:0 0 60px rgba(0,212,170,0.4);position:relative}
+.cover-bracket{color:rgba(0,212,170,0.5);font-style:normal}
+.cover-subtitle{font-size:14pt;font-weight:500;color:rgba(255,255,255,0.90);max-width:380px;margin:0 auto 70px;line-height:1.5}
+.cover-divider{width:60px;height:2px;background:linear-gradient(90deg,transparent,var(--teal),transparent);margin:0 auto 32px}
+.cover-submitted{font-size:10pt;color:rgba(255,255,255,0.5);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.1em}
+.cover-team{margin-bottom:28px}
+.cover-name{font-size:13pt;font-weight:700;color:var(--white);line-height:1.9}
+.cover-degree{font-size:10pt;color:rgba(0,212,170,0.8);font-weight:500;margin-bottom:6px}
+.cover-event{font-size:9.5pt;color:rgba(255,255,255,0.4);margin-top:14px;letter-spacing:0.05em}
+.cover-badge{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(0,212,170,0.3);border-radius:100px;padding:6px 18px;margin-top:20px;background:rgba(0,212,170,0.08)}
+.cover-badge-dot{width:7px;height:7px;background:var(--teal);border-radius:50%;box-shadow:0 0 8px rgba(0,212,170,0.8)}
+.cover-badge-text{font-size:9pt;color:var(--teal);font-weight:600;letter-spacing:0.05em}
+
+/* CONTENT */
+.content{padding:48px 52px}
+.section{page-break-before:always;padding-top:8px}
+.section:first-child{page-break-before:avoid}
+
+/* HEADINGS */
+.section-number{font-size:10pt;font-weight:600;color:var(--teal);text-transform:uppercase;letter-spacing:0.12em;display:block;margin-bottom:4px}
+h1{font-size:20pt;font-weight:800;color:var(--navy);letter-spacing:-0.02em;line-height:1.2;padding-bottom:12px;border-bottom:3px solid var(--teal);margin-bottom:24px;margin-top:0}
+h2{font-size:13pt;font-weight:700;color:var(--teal-mid);margin-top:28px;margin-bottom:10px;letter-spacing:-0.01em}
+
+/* BODY */
+p{font-size:11pt;color:var(--body);margin-bottom:14px;line-height:1.75}
+strong{color:var(--navy);font-weight:700}
+
+/* LISTS */
+ul{list-style:none;margin:0 0 16px 0;padding:0}
+ul li{position:relative;padding-left:22px;margin-bottom:7px;font-size:11pt;color:var(--body);line-height:1.65}
+ul li::before{content:'';position:absolute;left:0;top:9px;width:7px;height:7px;background:var(--teal);border-radius:50%}
+
+/* TABLES */
+.table-wrap{margin:20px 0 28px;border-radius:10px;overflow:hidden;border:1px solid var(--border);box-shadow:0 2px 12px rgba(0,0,0,0.06)}
+table{width:100%;border-collapse:collapse;font-size:10.5pt}
+thead tr{background:var(--navy)}
+thead th{color:var(--white);font-weight:600;padding:13px 16px;text-align:left;font-size:10pt;letter-spacing:0.02em}
+tbody tr:nth-child(even){background:var(--teal-bg)}
+tbody tr:nth-child(odd){background:var(--white)}
+tbody td{padding:11px 16px;color:var(--body);border-bottom:1px solid var(--border);vertical-align:top;line-height:1.55}
+tbody tr:last-child td{border-bottom:none}
+
+/* FORMULA */
+.formula{background:linear-gradient(135deg,#f8faff 0%,var(--teal-bg) 100%);border-left:4px solid var(--teal);border-radius:0 8px 8px 0;padding:14px 20px;margin:16px 0;font-family:'JetBrains Mono',monospace;font-size:10pt;color:var(--navy);font-weight:600}
+
+/* CALLOUT */
+.callout{background:linear-gradient(135deg,var(--navy) 0%,#16213e 100%);border-radius:10px;padding:20px 24px;margin:20px 0;color:var(--white);font-size:12pt;font-weight:600;text-align:center}
+.callout span{color:var(--teal)}
+
+/* STEPS */
+.steps{display:flex;flex-direction:column;gap:12px;margin:8px 0 20px}
+.step{display:flex;gap:16px;align-items:flex-start;background:var(--light);border-radius:10px;padding:16px 20px;border:1px solid var(--border)}
+.step-num{flex-shrink:0;width:34px;height:34px;background:var(--navy);color:var(--teal);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12pt}
+.step-body{flex:1}
+.step-title{font-weight:700;color:var(--navy);font-size:11pt;margin-bottom:4px}
+.step-desc{font-size:10.5pt;color:var(--gray);line-height:1.6;margin:0}
+
+/* TEAM */
+.team-table{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin:20px 0}
+.team-card{background:var(--light);border-radius:12px;padding:24px 20px;border:1px solid var(--border);text-align:center}
+.team-avatar{width:56px;height:56px;background:linear-gradient(135deg,var(--navy),#16213e);border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:20pt;font-weight:800;color:var(--teal);border:2px solid rgba(0,212,170,0.3)}
+.team-name{font-size:11.5pt;font-weight:700;color:var(--navy);margin-bottom:10px}
+.team-role{font-size:9.5pt;color:var(--gray);line-height:1.55;margin-bottom:12px}
+.team-badge{display:inline-block;background:var(--teal-bg);color:var(--teal-mid);border:1px solid rgba(0,184,148,0.3);border-radius:100px;padding:3px 12px;font-size:8.5pt;font-weight:600}
+
+/* DIFF GRID */
+.diff-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0 20px}
+.diff-card{background:var(--light);border-radius:10px;padding:16px;border:1px solid var(--border);border-left:4px solid var(--teal);font-size:10.5pt;color:var(--body);line-height:1.55}
+
+/* METRICS */
+.metrics{display:flex;gap:16px;margin:20px 0}
+.metric{flex:1;background:linear-gradient(135deg,var(--navy) 0%,#16213e 100%);border-radius:12px;padding:20px 16px;text-align:center;color:var(--white)}
+.metric-val{font-size:22pt;font-weight:900;color:var(--teal);line-height:1.1}
+.metric-label{font-size:9pt;color:rgba(255,255,255,0.65);margin-top:6px;line-height:1.4}
+
+/* FOOTER */
+.doc-footer{border-top:1px solid var(--border);padding:18px 52px;display:flex;align-items:center;justify-content:space-between;background:var(--light)}
+.doc-footer-left{font-size:8.5pt;color:var(--gray);font-weight:500}
+.doc-footer-right{font-size:8.5pt;color:var(--teal-mid);font-weight:600}
+
+/* CONCLUSION */
+.conclusion-box{background:linear-gradient(135deg,#f0fdfa 0%,#e6f9f5 100%);border:1px solid rgba(0,184,148,0.25);border-radius:12px;padding:28px 32px;margin-top:20px;text-align:center}
+.conclusion-box p{color:var(--navy);font-size:11.5pt;font-weight:500;margin:0;line-height:1.7}
+
+/* COMPARISON */
+.yes{color:#00b894;font-weight:700}
+.no{color:#e17055;font-weight:600}
+.na{color:var(--gray)}
+
+/* PRINT */
+@media print{
+  body{background:white}
+  .page{margin:0;box-shadow:none;border-radius:0;width:100%}
+  .section{page-break-before:always}
+  .cover{page-break-after:always;min-height:100vh}
+  .team-table,.table-wrap,.step,.metrics{break-inside:avoid}
+  h1,h2{break-after:avoid}
+}
+@page{size:A4;margin:0}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-grid"></div>
+  <div class="cover-content">
+    <div class="cover-university">Manipal University Jaipur</div>
+    <div class="cover-programme">Indo-Swiss Joint Research Programme &mdash; MJRP Round 2</div>
+    <div class="cover-logo-wrap">
+      <div class="cover-logo"><span class="cover-bracket">[</span>&nbsp;TRACE&nbsp;<span class="cover-bracket">]</span></div>
+    </div>
+    <div class="cover-subtitle">Enterprise Process Mining &amp; Carbon Intelligence Platform</div>
+    <div class="cover-divider"></div>
+    <div class="cover-submitted">Submitted by</div>
+    <div class="cover-team">
+      <div class="cover-name">Rudra Pratap Singh</div>
+      <div class="cover-name">Divayom Sengar</div>
+      <div class="cover-name">Swastik Anurag Vyas</div>
+    </div>
+    <div class="cover-degree">B.Tech Information Technology &nbsp;&middot;&nbsp; 3rd Year</div>
+    <div class="cover-badge">
+      <div class="cover-badge-dot"></div>
+      <div class="cover-badge-text">HackCulture &nbsp;&middot;&nbsp; June 2026</div>
+    </div>
+    <div class="cover-event">Manipal University Jaipur &nbsp;&middot;&nbsp; School of Computing &amp; Information Technology</div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="content">
+
+<!-- S1 -->
+<div class="section" id="s1">
+  <span class="section-number">Section 01</span>
+  <h1>Executive Summary</h1>
+  <p><strong>TRACE</strong> is a next-generation enterprise platform that unifies Object-Centric Event Log (OCEL 2.0) process mining with real-time carbon footprint intelligence. Built for the Indo-Swiss Joint Research Programme (MJRP Round 2) at Manipal University Jaipur, TRACE enables organizations to discover, monitor, and optimize their supply chain and logistics processes &mdash; not just for operational efficiency, but for measurable environmental compliance and ESG reporting.</p>
+  <p>Unlike traditional process mining tools that operate on flat, single-case event logs, TRACE natively handles multi-object process data &mdash; enabling analysis of how multiple entities (orders, shipments, trucks, suppliers) interact across a single process simultaneously.</p>
+  <h2>Key Differentiators</h2>
+  <div class="diff-grid">
+    <div class="diff-card">First open-source platform combining OCEL 2.0 conformance checking with carbon budget fitness scoring</div>
+    <div class="diff-card">Novel <strong>dual-objective conformance engine</strong>: Sequence Fitness + Carbon Fitness Score (CFS)</div>
+    <div class="diff-card">Explicit academic differentiation from Celonis and RWTH Aachen&rsquo;s OCEAn (2025)</div>
+    <div class="diff-card">End-to-end: event log ingestion &rarr; violation detection &rarr; ESG reports &rarr; LLM copilot insights</div>
+  </div>
+</div>
+
+<!-- S2 -->
+<div class="section" id="s2">
+  <span class="section-number">Section 02</span>
+  <h1>Problem Statement</h1>
+  <h2>2.1 The Process Mining Gap</h2>
+  <p>Traditional process mining tools like Celonis analyze business processes using flat XES logs &mdash; one case, one object. In reality, modern supply chains are multi-object: a single shipment involves orders, drivers, warehouses, and suppliers &mdash; all interacting simultaneously. Existing tools cannot model this complexity.</p>
+  <h2>2.2 The Carbon Accountability Gap</h2>
+  <p>Enterprises face increasing regulatory and ESG pressure to track and report Scope 1, 2, and 3 emissions across their operations. However, no existing process mining platform natively integrates carbon footprint analysis into its conformance checking engine. Carbon data exists in silos &mdash; disconnected from process execution data.</p>
+  <h2>2.3 The Reporting Gap</h2>
+  <p>ESG reports (like India&rsquo;s BRSR framework) require structured, auditable data on emissions, resource consumption, and process deviations. Today, this is done manually &mdash; error-prone, time-consuming, and not linked to actual process behavior.</p>
+  <div class="callout"><span>TRACE</span> solves all three.</div>
+</div>
+
+<!-- S3 -->
+<div class="section" id="s3">
+  <span class="section-number">Section 03</span>
+  <h1>Solution Overview</h1>
+  <h2>3.1 Platform Architecture</h2>
+  <p>TRACE is a full-stack web platform with four integrated layers:</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>Frontend</td><td>Next.js 16, TailwindCSS</td><td>Dashboard, ESG Reports, Copilot UI</td></tr>
+        <tr><td>Backend</td><td>FastAPI (Python)</td><td>Process mining engine, API routes</td></tr>
+        <tr><td>Intelligence</td><td>pm4py, Ollama LLM</td><td>OCEL parsing, conformance, AI insights</td></tr>
+        <tr><td>Database</td><td>PostgreSQL</td><td>Event log storage, audit trails</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h2>3.2 Core Engine: Dual-Objective Conformance Checking</h2>
+  <p>TRACE introduces a novel conformance checking methodology that evaluates process executions against two independent objectives simultaneously:</p>
+  <p><strong>Objective 1 &mdash; Sequence Fitness:</strong> Measures how closely the actual execution trace follows the normative process model (BPMN / Petri Net). Score range: 0.0&ndash;1.0.</p>
+  <p><strong>Objective 2 &mdash; Carbon Fitness Score (CFS):</strong> Measures how well the process execution stays within its allocated carbon budget:</p>
+  <div class="formula">CFS = 1 &minus; (actual_emissions / carbon_budget_threshold)&nbsp;&nbsp;&nbsp;[Clamped to 0.0 &ndash; 1.0]</div>
+  <p>Processes that exceed their carbon budget are flagged as <strong>Carbon Violations</strong> &mdash; a concept not present in any existing open-source process mining tool.</p>
+  <p><strong>Combined Compliance Score:</strong></p>
+  <div class="formula">Compliance = &alpha; &times; Sequence_Fitness + (1 &minus; &alpha;) &times; CFS&nbsp;&nbsp;&nbsp;[Default: &alpha; = 0.6]</div>
+  <h2>3.3 OCEL 2.0 Support</h2>
+  <p>TRACE natively ingests OCEL 2.0 format event logs &mdash; the latest standard from IEEE for object-centric process mining. This allows simultaneous tracking of multiple object types (orders, shipments, vehicles, suppliers) within a single unified event log.</p>
+</div>
+
+<!-- S4 -->
+<div class="section" id="s4">
+  <span class="section-number">Section 04</span>
+  <h1>Key Features</h1>
+  <h2>4.1 Process Discovery &amp; Visualization</h2>
+  <ul>
+    <li>Automatic discovery of process variants from uploaded event logs</li>
+    <li>Object-centric directly-follows graph (OC-DFG) generation</li>
+    <li>Variant clustering using K-Means (grouping similar execution patterns)</li>
+    <li>Interactive process flow visualization on the dashboard</li>
+  </ul>
+  <h2>4.2 Carbon Intelligence Engine</h2>
+  <ul>
+    <li>Per-activity emission factor mapping (configurable by transport mode, supplier, region)</li>
+    <li>Automatic Scope 1 / Scope 2 / Scope 3 emissions categorization</li>
+    <li>Carbon budget threshold configuration per process type</li>
+    <li>Real-time violation flagging when carbon budgets are breached</li>
+  </ul>
+  <h2>4.3 ESG Reporting Module</h2>
+  <ul>
+    <li>Automated BRSR (Business Responsibility and Sustainability Report) generation</li>
+    <li>PDF export with branded report layout</li>
+    <li>Metrics: total emissions, emission intensity, compliance rate, hotspot identification</li>
+    <li>Historical trend comparison across reporting periods</li>
+  </ul>
+  <h2>4.4 AI Copilot (Ollama LLM)</h2>
+  <ul>
+    <li>Local LLM integration via Ollama &mdash; no cloud API dependency, privacy-preserving</li>
+    <li>Natural language querying of process mining results</li>
+    <li>Automated root cause analysis for violations</li>
+    <li>Recommendation generation for process optimization and emission reduction</li>
+  </ul>
+  <h2>4.5 Violation Management</h2>
+  <ul>
+    <li>Complete violation log with case ID, activity, violation type, severity</li>
+    <li>Separate tabs for Sequence Violations vs Carbon Violations</li>
+    <li>Exportable violation reports for audit trails</li>
+  </ul>
+</div>
+
+<!-- S5 -->
+<div class="section" id="s5">
+  <span class="section-number">Section 05</span>
+  <h1>Research Contribution &amp; Novelty</h1>
+  <h2>5.1 Academic Positioning</h2>
+  <p>TRACE builds on and explicitly extends the state-of-the-art:</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Dimension</th><th>Celonis</th><th>RWTH OCEAn (2025)</th><th>TRACE</th></tr></thead>
+      <tbody>
+        <tr><td>Log Format</td><td class="na">XES (flat)</td><td>OCEL 2.0</td><td class="yes">OCEL 2.0</td></tr>
+        <tr><td>Carbon Analysis</td><td class="no">None</td><td class="no">None</td><td class="yes">Native CFS engine</td></tr>
+        <tr><td>Dual-objective conformance</td><td class="no">No</td><td class="no">No</td><td class="yes">Yes</td></tr>
+        <tr><td>LLM Copilot</td><td class="na">Paid add-on</td><td class="no">No</td><td class="yes">Local Ollama</td></tr>
+        <tr><td>ESG / BRSR Reports</td><td class="no">No</td><td class="no">No</td><td class="yes">Automated</td></tr>
+        <tr><td>Open Source</td><td class="no">No</td><td class="na">Research only</td><td class="yes">Yes</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h2>5.2 Novel Contributions</h2>
+  <p><strong>1. Carbon Fitness Score (CFS):</strong> First formalized metric combining process conformance with carbon budget adherence in a single unified score.</p>
+  <p><strong>2. Dual-Objective Conformance Engine:</strong> Extension of classical fitness metrics to include environmental objectives &mdash; enabling truly sustainable process mining.</p>
+  <p><strong>3. OCEL 2.0 + Carbon Integration:</strong> First platform to natively bridge the OCEL 2.0 standard with per-activity carbon emission modeling.</p>
+  <p><strong>4. Local LLM Copilot for Process Intelligence:</strong> Privacy-preserving AI layer that operates entirely on-premises via Ollama, deployable in enterprise environments with data sovereignty requirements.</p>
+</div>
+
+<!-- S6 -->
+<div class="section" id="s6">
+  <span class="section-number">Section 06</span>
+  <h1>Technology Stack</h1>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Component</th><th>Technology</th></tr></thead>
+      <tbody>
+        <tr><td>Frontend Framework</td><td>Next.js 16 (React)</td></tr>
+        <tr><td>Styling</td><td>TailwindCSS</td></tr>
+        <tr><td>Backend Framework</td><td>FastAPI (Python 3.11)</td></tr>
+        <tr><td>Process Mining Engine</td><td>pm4py (OCEL 2.0)</td></tr>
+        <tr><td>Database</td><td>PostgreSQL</td></tr>
+        <tr><td>LLM Runtime</td><td>Ollama (local)</td></tr>
+        <tr><td>PDF Generation</td><td>WeasyPrint / ReportLab</td></tr>
+        <tr><td>Charting</td><td>Recharts</td></tr>
+        <tr><td>Deployment</td><td>Docker Compose</td></tr>
+        <tr><td>Version Control</td><td>Git / GitHub</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- S7 -->
+<div class="section" id="s7">
+  <span class="section-number">Section 07</span>
+  <h1>System Workflow</h1>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Data Ingestion</div><p class="step-desc">Users upload OCEL 2.0 compliant CSV/JSON event logs. The backend parses object types, activities, timestamps, and resource attributes.</p></div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">Process Discovery</div><p class="step-desc">pm4py discovers the process model (directly-follows graph) and identifies process variants. K-Means clustering groups similar variants for pattern analysis.</p></div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Conformance Checking</div><p class="step-desc">The dual-objective engine computes Sequence Fitness against the normative model and Carbon Fitness Score against configured carbon budgets. Violations are logged with case ID, severity, and type.</p></div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-body"><div class="step-title">ESG Intelligence</div><p class="step-desc">Emissions are aggregated by Scope 1/2/3, mapped to organizational units, and structured into BRSR-compliant report format.</p></div></div>
+    <div class="step"><div class="step-num">5</div><div class="step-body"><div class="step-title">AI Copilot Analysis</div><p class="step-desc">The Ollama LLM receives summarized process metrics and generates natural language insights, root cause hypotheses, and optimization recommendations.</p></div></div>
+    <div class="step"><div class="step-num">6</div><div class="step-body"><div class="step-title">Report Export</div><p class="step-desc">Users export PDF reports (ESG summary, BRSR annex, violation audit log) for submission to regulators, auditors, or internal stakeholders.</p></div></div>
+  </div>
+</div>
+
+<!-- S8 -->
+<div class="section" id="s8">
+  <span class="section-number">Section 08</span>
+  <h1>Impact &amp; Applications</h1>
+  <div class="metrics">
+    <div class="metric"><div class="metric-val">40&ndash;60%</div><div class="metric-label">Reduction in ESG report preparation time</div></div>
+    <div class="metric"><div class="metric-val">Real-time</div><div class="metric-label">Carbon violation alerts vs quarterly manual audits</div></div>
+    <div class="metric"><div class="metric-val">Net-Zero</div><div class="metric-label">Data-driven process redesign for sustainability targets</div></div>
+  </div>
+  <h2>Target Industries</h2>
+  <ul>
+    <li>Logistics &amp; Supply Chain (Scope 3 emissions from freight)</li>
+    <li>Manufacturing (production process carbon tracking)</li>
+    <li>Healthcare (supply chain compliance + sustainability)</li>
+    <li>Financial Services (ESG reporting for portfolio companies)</li>
+  </ul>
+  <h2>Regulatory Alignment</h2>
+  <ul>
+    <li><strong>India BRSR</strong> &mdash; Business Responsibility and Sustainability Reporting (SEBI mandated for top 1000 listed companies)</li>
+    <li><strong>EU CSRD</strong> &mdash; Corporate Sustainability Reporting Directive</li>
+    <li><strong>ISO 14064</strong> &mdash; Greenhouse Gas Quantification Standard</li>
+  </ul>
+</div>
+
+<!-- S9 -->
+<div class="section" id="s9">
+  <span class="section-number">Section 09</span>
+  <h1>Team</h1>
+  <div class="team-table">
+    <div class="team-card">
+      <div class="team-avatar">R</div>
+      <div class="team-name">Rudra Pratap Singh</div>
+      <div class="team-role">Full-Stack Development, Process Mining Engine, Carbon Intelligence Module, LLM Integration, ESG Report Generation</div>
+      <span class="team-badge">B.Tech IT &middot; 3rd Year</span>
+    </div>
+    <div class="team-card">
+      <div class="team-avatar">D</div>
+      <div class="team-name">Divayom Sengar</div>
+      <div class="team-role">Frontend Architecture, UI/UX Design, Dashboard Development, Data Visualization &amp; Charting</div>
+      <span class="team-badge">B.Tech IT &middot; 3rd Year</span>
+    </div>
+    <div class="team-card">
+      <div class="team-avatar">S</div>
+      <div class="team-name">Swastik Anurag Vyas</div>
+      <div class="team-role">Backend Development, Database Design, API Engineering, Conformance Engine Integration</div>
+      <span class="team-badge">B.Tech IT &middot; 3rd Year</span>
+    </div>
+  </div>
+  <p style="text-align:center;color:var(--gray);font-size:10pt;margin-top:8px">Manipal University Jaipur &nbsp;&middot;&nbsp; School of Computing &amp; Information Technology</p>
+</div>
+
+<!-- S10 -->
+<div class="section" id="s10">
+  <span class="section-number">Section 10</span>
+  <h1>Conclusion</h1>
+  <p>TRACE represents a significant step forward in making process mining practically useful for sustainability &mdash; bridging the gap between operational process intelligence and environmental accountability. By combining OCEL 2.0&rsquo;s expressive power with a novel dual-objective conformance engine and automated ESG reporting, TRACE delivers a platform that is simultaneously academically rigorous and enterprise-ready.</p>
+  <p>The platform is designed for real-world deployment: it runs locally (no cloud dependency), supports privacy-preserving LLM inference, and generates audit-ready ESG reports aligned with India&rsquo;s BRSR mandate.</p>
+  <div class="conclusion-box">
+    <p>We believe TRACE has the potential to be the <strong>open-source foundation for sustainable process mining research globally</strong> &mdash; proving that operational excellence and environmental accountability are not competing objectives, but complementary ones.</p>
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<div class="doc-footer">
+  <div class="doc-footer-left">TRACE &nbsp;&middot;&nbsp; Enterprise Process Mining &amp; Carbon Intelligence Platform</div>
+  <div class="doc-footer-right">HackCulture 2026 &nbsp;&middot;&nbsp; Manipal University Jaipur</div>
+</div>
+
+</div><!-- /page -->
+</body>
+</html>

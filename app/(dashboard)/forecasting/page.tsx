@@ -221,11 +221,10 @@ export default function BenchmarkingPage() {
       formData.append('file', selectedFile);
 
       if (needsMapping && mappingOverride.case_id && mappingOverride.activity && mappingOverride.timestamp) {
-        // Send as {case_id: {column: X, confidence: 1.0}, ...} format
         const overridePayload = {
-          case_id: { column: mappingOverride.case_id, confidence: 1.0 },
-          activity: { column: mappingOverride.activity, confidence: 1.0 },
-          timestamp: { column: mappingOverride.timestamp, confidence: 1.0 },
+          case_id: mappingOverride.case_id,
+          activity: mappingOverride.activity,
+          timestamp: mappingOverride.timestamp,
         };
         formData.append('mapping_override', JSON.stringify(overridePayload));
       }

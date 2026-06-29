@@ -45,7 +45,7 @@ def health_check():
 @app.post("/api/ocel/upload")
 async def upload_ocel_log(
     file: UploadFile = File(...),
-    mapping_override: Optional[str] = Form(None),
+    mapping_override: str | None = Form(default=None),
     workspace_id: Optional[int] = Form(None),
     db: Session = Depends(get_db)
 ):
@@ -466,7 +466,7 @@ def update_carbon_budget_setting(payload: CarbonBudgetUpdate, db: Session = Depe
 @app.post("/api/benchmarking/run")
 async def run_benchmarking(
     file: UploadFile = File(...),
-    mapping_override: Optional[str] = Form(None),
+    mapping_override: str | None = Form(default=None),
 ):
     """
     Run the full 6-model conformance benchmarking suite against an uploaded
