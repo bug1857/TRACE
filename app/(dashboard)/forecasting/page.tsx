@@ -612,7 +612,7 @@ export default function BenchmarkingPage() {
                           borderRadius: 6,
                           fontSize: 11,
                         }}
-                        formatter={(v: number) => [`${v.toFixed(1)}`, '']}
+                        formatter={(v: any) => [`${Number(v).toFixed(1)}`, '']}
                       />
                       <Legend
                         iconSize={8}

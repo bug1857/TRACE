@@ -250,7 +250,7 @@ export default function DashboardPage() {
                     }}
                     itemStyle={{ fontSize: 11 }}
                     labelStyle={{ color: 'var(--trace-subtle)', marginBottom: 4 }}
-                    formatter={(v: number) => [`${v.toLocaleString()} kg CO₂e`, 'Actual']}
+                    formatter={(v: any) => [`${Number(v).toLocaleString()} kg CO₂e`, 'Actual']}
                   />
                   <Area
                     type="monotone"
@@ -309,8 +309,8 @@ export default function DashboardPage() {
                         borderRadius: 6,
                         fontSize: 11,
                       }}
-                      formatter={(v: number, _name: string, props: any) => [
-                        `${v.toLocaleString()} kg CO₂e`,
+                      formatter={(v: any, _name: any, props: any) => [
+                        `${Number(v).toLocaleString()} kg CO₂e`,
                         props.payload?.fullName ?? 'Carbon',
                       ]}
                     />
