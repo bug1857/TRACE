@@ -59,9 +59,27 @@ async def upload_ocel_log(
                 detail="Workspace not found"
             )
     
-    # Read uploaded CSV
+    # File size guard — reject files over 50 MB before reading into memory
     try:
         contents = await file.read()
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to read uploaded file: {str(e)}"
+        )
+
+    file_size_mb = len(contents) / (1024 * 1024)
+    if file_size_mb > 50:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=(
+                f"File exceeds 50 MB limit ({file_size_mb:.1f} MB received). "
+                "Please upload a smaller dataset or contact support for bulk processing."
+            )
+        )
+
+    # Read uploaded CSV
+    try:
         # Decode as utf-8 (handling common CSV encodings)
         try:
             decoded = contents.decode("utf-8")
@@ -126,10 +144,13 @@ async def upload_ocel_log(
             )
 
     # Validate that the mapped timestamp column contains at least one parseable date/time value
+    # Also count how many rows are dropped due to unparseable timestamps.
     ts_col = mapping["timestamp"]["column"]
+    dropped_rows_count = 0
     if ts_col and ts_col in df.columns:
         parsed_ts = pd.to_datetime(df[ts_col], errors='coerce', format='mixed')
         valid_rows = parsed_ts.notna().sum()
+        dropped_rows_count = int(parsed_ts.isna().sum())
         if valid_rows == 0:
             error_body = {
                 "error": "Column mapped to Timestamp contains no parseable date/time values",
@@ -317,15 +338,11 @@ async def upload_ocel_log(
     except Exception:
         green_routes_result = []
 
-    # Calculate forecasting benchmarking
-    try:
-        from forecasting import benchmark_forecasts
-        forecasting_result = benchmark_forecasts(carbon_data["carbonBudget"], holdout_months=3)
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed during forecasting calculation: {str(e)}"
-        )
+    # Forecasting module has been replaced by the benchmarking engine.
+    # The dedicated /api/benchmarking/run endpoint handles conformance benchmarking.
+    # The forecasting field is retained in the response schema for backward
+    # compatibility but is always null from this endpoint.
+    forecasting_result = None
 
     # Return output contract
     # metadata keys exactly: filename, rowCount, caseCount, activityCount, totalEvents
@@ -335,7 +352,12 @@ async def upload_ocel_log(
             "rowCount": len(df),
             "caseCount": case_count,
             "activityCount": act_count,
-            "totalEvents": total_events
+            "totalEvents": total_events,
+            "droppedRows": dropped_rows_count,
+        },
+        "dataQuality": {
+            "droppedRows": dropped_rows_count,
+            "dropReason": "unparseable_timestamp" if dropped_rows_count > 0 else None,
         },
         "nodes": nodes,
         "edges": edges,
@@ -373,6 +395,197 @@ async def upload_ocel_log(
             )
 
     return response_payload
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# Carbon Budget Settings endpoints
+# ─────────────────────────────────────────────────────────────────────────
+
+@app.get("/api/settings/carbon-budget")
+def get_carbon_budget_setting(db: Session = Depends(get_db)):
+    """
+    Return the current monthly carbon budget limit in kg CO2e.
+    Falls back to the DEFAULT_MONTHLY_BUDGET_KG constant in carbon_budget.py
+    if no override has been saved.
+    """
+    from carbon_budget import DEFAULT_MONTHLY_BUDGET_KG
+    try:
+        override = db.query(models.CarbonBudgetSetting).order_by(
+            models.CarbonBudgetSetting.id.desc()
+        ).first()
+        value = float(override.monthly_budget_kg) if override else float(DEFAULT_MONTHLY_BUDGET_KG)
+        return {"monthly_budget_kg": value, "is_default": override is None}
+    except Exception:
+        # CarbonBudgetSetting table may not exist yet on older DBs
+        from carbon_budget import DEFAULT_MONTHLY_BUDGET_KG
+        return {"monthly_budget_kg": float(DEFAULT_MONTHLY_BUDGET_KG), "is_default": True}
+
+
+class CarbonBudgetUpdate(BaseModel):
+    monthly_budget_kg: float
+
+
+@app.patch("/api/settings/carbon-budget")
+def update_carbon_budget_setting(payload: CarbonBudgetUpdate, db: Session = Depends(get_db)):
+    """
+    Persist a new monthly carbon budget limit.
+    Value must be > 0.
+    """
+    if payload.monthly_budget_kg <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="monthly_budget_kg must be a positive number."
+        )
+    try:
+        # Ensure table exists (graceful migration)
+        models.Base.metadata.create_all(bind=db.get_bind())
+        existing = db.query(models.CarbonBudgetSetting).order_by(
+            models.CarbonBudgetSetting.id.desc()
+        ).first()
+        if existing:
+            existing.monthly_budget_kg = payload.monthly_budget_kg
+        else:
+            setting = models.CarbonBudgetSetting(
+                monthly_budget_kg=payload.monthly_budget_kg
+            )
+            db.add(setting)
+        db.commit()
+        return {"monthly_budget_kg": payload.monthly_budget_kg, "status": "updated"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to save carbon budget setting: {str(e)}"
+        )
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# Benchmarking endpoint
+# ─────────────────────────────────────────────────────────────────────────
+
+@app.post("/api/benchmarking/run")
+async def run_benchmarking(
+    file: UploadFile = File(...),
+    mapping_override: Optional[str] = Form(None),
+):
+    """
+    Run the full 6-model conformance benchmarking suite against an uploaded
+    event-log CSV.  Returns a BenchmarkReport containing per-model metrics
+    (fitness, precision, F1, CFS, execution_time_ms) plus a winner card.
+
+    If the total run takes longer than 120 seconds the endpoint returns
+    partial results with timed_out=true.
+    """
+    # ── Read file ────────────────────────────────────────────────────────
+    try:
+        contents = await file.read()
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to read uploaded file: {str(e)}"
+        )
+
+    file_size_mb = len(contents) / (1024 * 1024)
+    if file_size_mb > 50:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=(
+                f"File exceeds 50 MB limit ({file_size_mb:.1f} MB received). "
+                "Please upload a smaller dataset or contact support for bulk processing."
+            )
+        )
+
+    try:
+        try:
+            decoded = contents.decode("utf-8")
+        except UnicodeDecodeError:
+            decoded = contents.decode("latin-1")
+        df = pd.read_csv(io.StringIO(decoded))
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to parse CSV file: {str(e)}"
+        )
+
+    if df.empty:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The uploaded CSV file is empty."
+        )
+
+    # ── Column mapping ────────────────────────────────────────────────────
+    parsed_override = None
+    if mapping_override:
+        stripped = mapping_override.strip()
+        if stripped and stripped != "null":
+            try:
+                parsed_override = json.loads(mapping_override)
+            except Exception as e:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail={"error": "Invalid mapping_override format", "message": str(e)}
+                )
+
+    try:
+        mapping = map_columns(df, mapping_override=parsed_override)
+    except ColumnMappingError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=e.to_dict()
+        )
+
+    if parsed_override is None:
+        required_fields = ["case_id", "activity", "timestamp"]
+        missing_fields = [
+            f for f in required_fields if mapping[f]["confidence"] < 0.5
+        ]
+        if missing_fields:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={
+                    "error": f"Cannot auto-detect required columns: {', '.join(missing_fields)}",
+                    "missing_fields": missing_fields,
+                    "detected_mapping": mapping,
+                    "available_columns": df.columns.tolist()
+                }
+            )
+
+    case_col = mapping["case_id"]["column"]
+    activity_col = mapping["activity"]["column"]
+    timestamp_col = mapping["timestamp"]["column"]
+
+    # Validate timestamp column
+    parsed_ts = pd.to_datetime(df[timestamp_col], errors="coerce", format="mixed")
+    if parsed_ts.notna().sum() == 0:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Timestamp column contains no parseable date/time values."
+        )
+
+    # ── Run benchmark ─────────────────────────────────────────────────────
+    try:
+        from benchmarking.engine import run_benchmark
+        report = run_benchmark(
+            df=df,
+            case_col=case_col,
+            activity_col=activity_col,
+            timestamp_col=timestamp_col,
+            timeout_seconds=120.0,
+        )
+        return report.to_dict()
+    except ImportError as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=(
+                f"pm4py is not installed on this server. "
+                f"Install it with: pip install pm4py>=2.7.0. Error: {str(e)}"
+            )
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Benchmarking failed: {str(e)}"
+        )
 
 
 class AuditLogCreate(BaseModel):

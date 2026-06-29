@@ -15,14 +15,20 @@ import { useAnalysis } from '@/lib/AnalysisContext';
 
 export default function SimulationPage() {
   const { analysis } = useAnalysis();
-  const [scenarios, setScenarios] = useState<SimulationScenario[]>(mockSimulationScenarios);
+  const isReal = !!(analysis && analysis.cfsScores && analysis.cfsScores.length > 0);
+
+  // When real analysis loads, start with an empty scenario list.
+  // Only pre-populate mock scenarios when no real data exists.
+  const [scenarios, setScenarios] = useState<SimulationScenario[]>(
+    isReal ? [] : mockSimulationScenarios
+  );
   const [scenarioName, setScenarioName] = useState('Freight Route Optimization');
   const [airFreightRed, setAirFreightRed] = useState(40);
   const [supplierShift, setSupplierShift] = useState(30);
   const [activityRemoval, setActivityRemoval] = useState('None');
   const [isSimulating, setIsSimulating] = useState(false);
 
-  const isReal = !!(analysis && analysis.cfsScores && analysis.cfsScores.length > 0);
+  // isReal tracks whether a real analysis is in context
 
   // Compute baselines dynamically
   const totalBudgetLimit = (analysis && analysis.carbonBudget && analysis.carbonBudget.length > 0)
@@ -68,6 +74,10 @@ export default function SimulationPage() {
     setPrevAnalysis(analysis);
     setSimulatedResults(null);
     setActivityRemoval('None');
+    // When real analysis becomes available, clear any pre-seeded mock scenarios
+    if (analysis !== prevAnalysis && isReal) {
+      setScenarios([]);
+    }
   }
 
   // Derive comparison metrics dynamically for render
@@ -309,6 +319,9 @@ export default function SimulationPage() {
               <Play className="w-4 h-4" />
               <span>{isSimulating ? 'Running Model...' : 'Run Simulation'}</span>
             </Button>
+            <p className="text-[10px] text-[var(--trace-subtle)] font-sans text-center mt-1">
+              ⚠ Simulation uses statistical approximations, not a process execution model.
+            </p>
           </form>
         </div>
 
@@ -423,7 +436,13 @@ export default function SimulationPage() {
         <h3 className="text-[13px] font-sans font-medium text-[var(--foreground)] uppercase tracking-wider">
           Saved Simulation Scenarios Ledger
         </h3>
-        <DataTable columns={savedColumns} data={scenarios} />
+        {scenarios.length > 0 ? (
+          <DataTable columns={savedColumns} data={scenarios} />
+        ) : (
+          <div className="border border-[var(--border)] rounded-md py-10 text-center text-[12px] text-[var(--trace-subtle)] font-sans">
+            Run a simulation to see results here.
+          </div>
+        )}
       </div>
     </div>
   );

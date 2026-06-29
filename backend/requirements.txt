@@ -6,3 +6,5 @@ python-multipart==0.0.9
 python-jose[cryptography]
 python-multipart
 psycopg2-binary
+pm4py>=2.7.0
+numpy>=1.26.0

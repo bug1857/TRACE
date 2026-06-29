@@ -83,3 +83,11 @@ class ConformanceRuleOverride(Base):
     filename = Column(String, nullable=False)
     uploaded_at = Column(DateTime, default=datetime.datetime.utcnow)
 
+
+class CarbonBudgetSetting(Base):
+    """Persists the configurable monthly carbon budget limit (kg CO2e)."""
+    __tablename__ = "carbon_budget_settings"
+    id = Column(Integer, primary_key=True, index=True)
+    monthly_budget_kg = Column(Float, nullable=False)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow,
+                        onupdate=datetime.datetime.utcnow)

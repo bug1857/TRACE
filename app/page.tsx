@@ -88,7 +88,7 @@ export default function LandingPage() {
             ['Modules', 'Process Mining, Carbon Budget, Carbon Fitness, Supplier Fitness, Conformance, Forecasting, ESG/BRSR Reports.'],
             ['API Reference', 'POST /api/ocel/upload — main ingestion. Returns metadata, nodes, edges, carbon data, violations, forecasting.'],
             ['Configuration', 'Conformance rules, emission factor overrides, and team access managed per-workspace in Settings.'],
-            ['Demo Dataset', 'trace_demo_dataset.csv in repo root. 800 cases, 4,231 events, Jan–Dec 2025. 368 violations baseline.'],
+            ['Demo Dataset', 'A sample OCEL 2.0 CSV is included in the repository root for quick evaluation. Upload any event log with case ID, activity, and timestamp columns to run a live analysis.'],
           ].map(([title, desc]) => (
             <div key={title} className="rounded-xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-xl p-6">
               <p className="text-xs font-mono text-[#2DD4BF] tracking-wider mb-2">{title.toUpperCase()}</p>

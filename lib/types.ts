@@ -376,3 +376,36 @@ export interface BackendTeamMember {
   created_at: string;
 }
 
+// ── Benchmarking Engine types ──────────────────────────────────────────────
+
+export interface ModelResult {
+  model_name: string;
+  fitness: number | null;
+  precision: number | null;
+  f1_score: number | null;
+  cfs_score: number;
+  execution_time_ms: number;
+  error?: string;
+}
+
+export interface BenchmarkDatasetSummary {
+  cases: number;
+  events: number;
+  activities: number;
+  date_range: string;
+}
+
+export interface BenchmarkReport {
+  results: ModelResult[];
+  winner: ModelResult;
+  winner_justification: string;
+  dataset_summary: BenchmarkDatasetSummary;
+  timed_out?: boolean;
+}
+
+// ── Data quality from upload pipeline ─────────────────────────────────────
+
+export interface DataQuality {
+  droppedRows: number;
+  dropReason: string | null;
+}
