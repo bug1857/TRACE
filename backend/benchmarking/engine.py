@@ -592,6 +592,29 @@ def _run_declare(log: "EventLog", cfs: float) -> ModelResult:
         )
 
 
+def _run_alignments_guarded(log_obj, cfs_val, n_events):
+    if n_events > 15000:
+        return ModelResult(
+            model_name="Alignments",
+            fitness=None, precision=None, f1_score=None,
+            cfs_score=cfs_val,
+            execution_time_ms=0.0,
+            error="Skipped: Alignments model is O(n²) and exceeds 15,000 events limit."
+        )
+    return _run_alignments(log_obj, cfs_val)
+
+
+def _benchmark_model_worker(runner, log, cfs, n_events, q):
+    try:
+        if runner is _run_alignments_guarded:
+            result = runner(log, cfs, n_events)
+        else:
+            result = runner(log, cfs)
+        q.put(("ok", result))
+    except Exception as e:
+        q.put(("error", str(e)))
+
+
 # ════════════════════════════════════════════════════════════════════════════
 # Public API
 # ════════════════════════════════════════════════════════════════════════════
@@ -642,20 +665,9 @@ def run_benchmark(
     # ── Define model runners in order ─────────────────────────────────────
     n_events = len(df)
     
-    def run_alignments_guarded(log_obj, cfs_val):
-        if n_events > 15000:
-            return ModelResult(
-                model_name="Alignments",
-                fitness=None, precision=None, f1_score=None,
-                cfs_score=cfs_val,
-                execution_time_ms=0.0,
-                error="Skipped: Alignments model is O(n²) and exceeds 15,000 events limit."
-            )
-        return _run_alignments(log_obj, cfs_val)
-        
     runners = [
         ("Token Replay", _run_token_replay),
-        ("Alignments", run_alignments_guarded),
+        ("Alignments", _run_alignments_guarded),
         ("Footprint", _run_footprint),
         ("Inductive Miner", _run_inductive_miner_eval),
         ("Heuristics Miner", _run_heuristics_miner),
@@ -665,7 +677,7 @@ def run_benchmark(
     results: List[ModelResult] = []
     timed_out = False
 
-    import concurrent.futures
+    import multiprocessing as _mp
 
     for model_name, runner in runners:
         elapsed_so_far = time.perf_counter() - global_start
@@ -681,20 +693,50 @@ def run_benchmark(
             ))
             continue
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
-            future = ex.submit(runner, log, cfs)
-            try:
-                result = future.result(timeout=remaining)
-            except concurrent.futures.TimeoutError:
-                timed_out = True
-                result = ModelResult(
-                    model_name=model_name,
-                    fitness=None, precision=None, f1_score=None,
-                    cfs_score=cfs,
-                    execution_time_ms=round(remaining * 1000, 1),
-                    error=f"Timed out after {remaining:.1f}s — dataset too large for this model within the global timeout.",
-                )
-        results.append(result)
+        _q = _mp.Queue()
+        _p = _mp.Process(target=_benchmark_model_worker, args=(runner, log, cfs, n_events, _q))
+        _p.start()
+        _p.join(timeout=remaining)
+
+        if _p.is_alive():
+            _p.terminate()
+            _p.join(timeout=2.0)
+            if _p.is_alive():
+                _p.kill()
+                _p.join()
+            
+            timed_out = True
+            results.append(ModelResult(
+                model_name=model_name,
+                fitness=None, precision=None, f1_score=None,
+                cfs_score=cfs,
+                execution_time_ms=round(remaining * 1000, 1),
+                error=f"Timed out after {remaining:.1f}s — dataset too large for this model within the global timeout.",
+            ))
+            continue
+
+        if _q.empty():
+            timed_out = True
+            results.append(ModelResult(
+                model_name=model_name,
+                fitness=None, precision=None, f1_score=None,
+                cfs_score=cfs,
+                execution_time_ms=round(remaining * 1000, 1),
+                error="Model runner process exited without returning a result.",
+            ))
+            continue
+
+        _status, _payload = _q.get()
+        if _status == "error":
+            results.append(ModelResult(
+                model_name=model_name,
+                fitness=None, precision=None, f1_score=None,
+                cfs_score=cfs,
+                execution_time_ms=round(remaining * 1000, 1),
+                error=_payload,
+            ))
+        else:
+            results.append(_payload)
 
     # ── Determine winner ───────────────────────────────────────────────────
     winner, justification = _pick_winner(results)
