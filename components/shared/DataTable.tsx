@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   Table,
   TableBody,
@@ -37,9 +38,12 @@ export default function DataTable<T extends Record<string, any>>({
   pageSize = 100
 }: DataTableProps<T>) {
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+
   const [currentPage, setCurrentPage] = useState(1);
+  const parentRef = useRef<HTMLDivElement>(null);
 
   // Reset page when data or sort changes
+
   useEffect(() => {
     setCurrentPage(1);
   }, [data, sortConfig]);
@@ -82,16 +86,25 @@ export default function DataTable<T extends Record<string, any>>({
 
   const totalPages = Math.max(1, Math.ceil(sortedData.length / pageSize));
   
+
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
     return sortedData.slice(start, start + pageSize);
   }, [sortedData, currentPage, pageSize]);
 
+  const rowVirtualizer = useVirtualizer({
+    count: paginatedData.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 44,
+    overscan: 10,
+  });
+
+
   return (
     <div className="w-full border border-[var(--border)] rounded-md overflow-hidden bg-[var(--background)] flex flex-col">
-      <div className="overflow-x-auto w-full">
-        <Table className="border-collapse w-full">
-          <TableHeader className="bg-[var(--card)] border-b-2 border-[var(--border)]">
+      <div className="overflow-auto w-full max-h-[500px]" ref={parentRef}>
+        <Table className="border-collapse w-full relative">
+          <TableHeader className="bg-[var(--card)] border-b-2 border-[var(--border)] sticky top-0 z-10 shadow-sm">
             <TableRow className="hover:bg-transparent border-b-0 h-[38px]">
               {columns.map((column) => {
                 const isSorted = sortConfig?.key === column.accessorKey;
@@ -124,14 +137,22 @@ export default function DataTable<T extends Record<string, any>>({
           </TableHeader>
           <TableBody>
             {paginatedData.length > 0 ? (
-              paginatedData.map((row, rowIndex) => (
-                <TableRow
-                  key={row.id || rowIndex}
-                  onClick={() => onRowClick && onRowClick(row)}
-                  className={`h-[44px] border-b border-[var(--border)] last:border-b-0 transition-colors duration-200 hover:bg-[var(--card)]/50 ${
-                    onRowClick ? 'cursor-pointer' : ''
-                  }`}
-                >
+              <>
+                {rowVirtualizer.getVirtualItems().length > 0 && (
+                  <tr style={{ height: rowVirtualizer.getVirtualItems()[0].start }} />
+                )}
+                {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                  const row = paginatedData[virtualRow.index];
+                  return (
+                    <TableRow
+                      key={row.id || virtualRow.index}
+                      data-index={virtualRow.index}
+                      ref={rowVirtualizer.measureElement}
+                      onClick={() => onRowClick && onRowClick(row)}
+                      className={`h-[44px] border-b border-[var(--border)] last:border-b-0 transition-colors duration-200 hover:bg-[var(--card)]/50 ${
+                        onRowClick ? 'cursor-pointer' : ''
+                      }`}
+                    >
                   {columns.map((column) => {
                     const cellContent = column.cell
                       ? column.cell(row)
@@ -151,7 +172,11 @@ export default function DataTable<T extends Record<string, any>>({
                     );
                   })}
                 </TableRow>
-              ))
+              )})}
+              {rowVirtualizer.getVirtualItems().length > 0 && (
+                <tr style={{ height: rowVirtualizer.getTotalSize() - (rowVirtualizer.getVirtualItems()[rowVirtualizer.getVirtualItems().length - 1].end || 0) }} />
+              )}
+              </>
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="text-center py-8 text-[13px] text-[var(--muted-foreground)] font-sans">
