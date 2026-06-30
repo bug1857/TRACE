@@ -235,7 +235,32 @@ export default function BenchmarkingPage() {
         body: formData,
       });
 
-      const data = await res.json();
+      let data = await res.json();
+
+      if (res.ok && data.job_id) {
+        const jobId = data.job_id;
+        const poll = async (): Promise<any> => {
+          const statusRes = await fetch(`${baseUrl}/api/benchmarking/status/${jobId}`);
+          if (!statusRes.ok) {
+            throw new Error(`Status check failed: HTTP ${statusRes.status}`);
+          }
+          const statusData = await statusRes.json();
+          if (statusData.status === 'completed') {
+            if (!statusData.result || !statusData.result.dataset_summary || !Array.isArray(statusData.result.results)) {
+              throw new Error('Benchmark job completed but returned an incomplete result. This usually means the dataset was too large to process within the timeout — try a smaller file.');
+            }
+            return statusData.result;
+          } else if (statusData.status === 'error') {
+            throw new Error(statusData.error || 'Benchmarking job failed');
+          } else if (statusData.status === 'cancelled') {
+            throw new Error('Benchmark job was cancelled.');
+          } else {
+            await new Promise(r => setTimeout(r, 2000));
+            return poll();
+          }
+        };
+        data = await poll();
+      }
 
       if (!res.ok) {
         // Check if it's a column mapping detection failure
@@ -253,6 +278,10 @@ export default function BenchmarkingPage() {
         return;
       }
 
+      if (!data || !data.dataset_summary || !Array.isArray(data.results) || !data.winner) {
+        setError('Received an incomplete benchmark report from the server. Try again or use a smaller dataset.');
+        return;
+      }
       setReport(data as BenchmarkReport);
       setNeedsMapping(false);
     } catch (err: any) {

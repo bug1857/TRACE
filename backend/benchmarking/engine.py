@@ -604,11 +604,13 @@ def run_benchmark(
     results: List[ModelResult] = []
     timed_out = False
 
+    import concurrent.futures
+
     for model_name, runner in runners:
         elapsed_so_far = time.perf_counter() - global_start
-        if elapsed_so_far >= timeout_seconds:
+        remaining = timeout_seconds - elapsed_so_far
+        if remaining <= 0:
             timed_out = True
-            # Record remaining models as timed out
             results.append(ModelResult(
                 model_name=model_name,
                 fitness=None, precision=None, f1_score=None,
@@ -618,7 +620,19 @@ def run_benchmark(
             ))
             continue
 
-        result = runner(log, cfs)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
+            future = ex.submit(runner, log, cfs)
+            try:
+                result = future.result(timeout=remaining)
+            except concurrent.futures.TimeoutError:
+                timed_out = True
+                result = ModelResult(
+                    model_name=model_name,
+                    fitness=None, precision=None, f1_score=None,
+                    cfs_score=cfs,
+                    execution_time_ms=round(remaining * 1000, 1),
+                    error=f"Timed out after {remaining:.1f}s — dataset too large for this model within the global timeout.",
+                )
         results.append(result)
 
     # ── Determine winner ───────────────────────────────────────────────────
