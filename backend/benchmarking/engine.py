@@ -23,6 +23,16 @@ from __future__ import annotations
 
 import time
 import sys
+
+def _footprint_net_worker(net, im, fm, q):
+    """Module-level worker for multiprocessing — must NOT be nested inside
+    another function, or it cannot be pickled for the child process."""
+    try:
+        from pm4py.algo.discovery.footprints import algorithm as footprints_algo
+        result = footprints_algo.apply(net, im, fm)
+        q.put(("ok", result))
+    except Exception as e:
+        q.put(("error", str(e)))
 import os
 from dataclasses import dataclass, field, asdict
 from typing import List, Optional
@@ -352,7 +362,58 @@ def _run_footprint(log: "EventLog", cfs: float) -> ModelResult:
     try:
         net, im, fm = pm4py.discover_petri_net_inductive(log)
         fp_log = footprints_algo.apply(log, variant=footprints_algo.Variants.ENTIRE_EVENT_LOG)
-        fp_net = footprints_algo.apply(net, im, fm)
+
+        # NOTE: footprints_algo.apply(net, im, fm) computes footprints via the
+        # Petri net's reachability graph, which can take 100+ seconds even on
+        # tiny datasets depending on net topology (parallel branches/loops),
+        # independent of event log size. ThreadPoolExecutor.result(timeout=)
+        # does NOT actually kill a CPU-bound thread — it only stops waiting,
+        # leaving a zombie thread consuming CPU. We use multiprocessing here
+        # instead, since terminate() can actually kill a process.
+        import multiprocessing as _mp
+
+        _q = _mp.Queue()
+        _p = _mp.Process(target=_footprint_net_worker, args=(net, im, fm, _q))
+        _p.start()
+        _p.join(timeout=10.0)
+
+        if _p.is_alive():
+            _p.terminate()
+            _p.join(timeout=2.0)
+            if _p.is_alive():
+                _p.kill()
+                _p.join()
+            elapsed = (time.perf_counter() - t0) * 1000.0
+            return ModelResult(
+                model_name="Footprint",
+                fitness=None, precision=None, f1_score=None,
+                cfs_score=cfs,
+                execution_time_ms=round(elapsed, 1),
+                error="Skipped: Petri-net footprint computation exceeded 10s and was terminated (process model has high branching/loop complexity).",
+            )
+
+        if _q.empty():
+            elapsed = (time.perf_counter() - t0) * 1000.0
+            return ModelResult(
+                model_name="Footprint",
+                fitness=None, precision=None, f1_score=None,
+                cfs_score=cfs,
+                execution_time_ms=round(elapsed, 1),
+                error="Footprint computation process exited without returning a result.",
+            )
+
+        _status, _payload = _q.get()
+        if _status == "error":
+            elapsed = (time.perf_counter() - t0) * 1000.0
+            return ModelResult(
+                model_name="Footprint",
+                fitness=None, precision=None, f1_score=None,
+                cfs_score=cfs,
+                execution_time_ms=round(elapsed, 1),
+                error=_payload,
+            )
+        fp_net = _payload
+
         conf_result = footprints_conf.apply(fp_log, fp_net)
 
         # pm4py's footprint conformance API returns an empty set() when there
