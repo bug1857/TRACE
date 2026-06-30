@@ -548,8 +548,8 @@ export default function BenchmarkingPage() {
                                 </span>
                               </div>
                               {r.error && (
-                                <span className="block text-[10px] text-red-400 mt-0.5 font-mono truncate max-w-[180px]" title={r.error}>
-                                  Error: {r.error.length > 50 ? r.error.slice(0, 48) + '…' : r.error}
+                                <span className="block text-[10px] text-red-400 mt-0.5 font-mono max-w-[250px] whitespace-normal leading-relaxed">
+                                  Error: {r.error}
                                 </span>
                               )}
                             </td>

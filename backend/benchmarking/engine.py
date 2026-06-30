@@ -210,6 +210,14 @@ def _safe_f1(fitness: Optional[float], precision: Optional[float]) -> Optional[f
     return round(2.0 * fitness * precision / denom, 4)
 
 
+def _blend_cfs(base_cfs: float, fitness: Optional[float], f1_score: Optional[float]) -> float:
+    """Blend the dataset's base CFS with the model's conformance score (F1 or fitness)."""
+    primary_score = f1_score if f1_score is not None else fitness
+    if primary_score is None:
+        return base_cfs
+    return round((primary_score * 100.0 * 0.7) + (base_cfs * 0.3), 1)
+
+
 def _dataset_summary(df: pd.DataFrame, case_col: str,
                      activity_col: str, timestamp_col: str) -> dict:
     parsed_ts = pd.to_datetime(df[timestamp_col], errors="coerce", format="mixed")
@@ -291,7 +299,7 @@ def _run_token_replay(log: "EventLog", cfs: float) -> ModelResult:
             fitness=fitness,
             precision=precision,
             f1_score=_safe_f1(fitness, precision),
-            cfs_score=cfs,
+            cfs_score=_blend_cfs(cfs, fitness, _safe_f1(fitness, precision)),
             execution_time_ms=round(elapsed, 1),
         )
     except Exception as exc:
@@ -342,7 +350,7 @@ def _run_alignments(log: "EventLog", cfs: float) -> ModelResult:
             fitness=fitness,
             precision=precision,
             f1_score=_safe_f1(fitness, precision),
-            cfs_score=cfs,
+            cfs_score=_blend_cfs(cfs, fitness, _safe_f1(fitness, precision)),
             execution_time_ms=round(elapsed, 1),
         )
     except Exception as exc:
@@ -441,7 +449,7 @@ def _run_footprint(log: "EventLog", cfs: float) -> ModelResult:
             fitness=fitness,
             precision=precision,
             f1_score=_safe_f1(fitness, precision),
-            cfs_score=cfs,
+            cfs_score=_blend_cfs(cfs, fitness, _safe_f1(fitness, precision)),
             execution_time_ms=round(elapsed, 1),
         )
     except Exception as exc:
@@ -491,7 +499,7 @@ def _run_inductive_miner_eval(log: "EventLog", cfs: float) -> ModelResult:
             fitness=fitness,
             precision=precision,
             f1_score=_safe_f1(fitness, precision),
-            cfs_score=cfs,
+            cfs_score=_blend_cfs(cfs, fitness, _safe_f1(fitness, precision)),
             execution_time_ms=round(elapsed, 1),
         )
     except Exception as exc:
@@ -531,7 +539,7 @@ def _run_heuristics_miner(log: "EventLog", cfs: float) -> ModelResult:
             fitness=fitness,
             precision=precision,
             f1_score=_safe_f1(fitness, precision),
-            cfs_score=cfs,
+            cfs_score=_blend_cfs(cfs, fitness, _safe_f1(fitness, precision)),
             execution_time_ms=round(elapsed, 1),
         )
     except Exception as exc:
@@ -578,7 +586,7 @@ def _run_declare(log: "EventLog", cfs: float) -> ModelResult:
             fitness=fitness,
             precision=None,        # precision is N/A for DECLARE
             f1_score=None,         # cannot compute without precision
-            cfs_score=cfs,
+            cfs_score=_blend_cfs(cfs, fitness, None),
             execution_time_ms=round(elapsed, 1),
         )
     except Exception as exc:

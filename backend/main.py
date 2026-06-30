@@ -254,10 +254,12 @@ def _run_benchmark_job(job_id, df, case_col, activity_col, timestamp_col):
 
 app = FastAPI(title="TRACE. Process Mining Backend")
 
+import os
+
 # Configure CORS to allow origin http://localhost:3000
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=os.environ.get("CORS_ORIGINS", "http://localhost:3000").split(","),
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -285,21 +287,27 @@ async def upload_ocel_log(
     
     # File size guard — reject files over 50 MB before reading into memory
     try:
+        file.file.seek(0, 2)
+        file_size_bytes = file.file.tell()
+        file.file.seek(0)
+        
+        file_size_mb = file_size_bytes / (1024 * 1024)
+        if file_size_mb > 50:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=(
+                    f"File exceeds 50 MB limit ({file_size_mb:.1f} MB received). "
+                    "Please upload a smaller dataset or contact support for bulk processing."
+                )
+            )
+        
         contents = await file.read()
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Failed to read uploaded file: {str(e)}"
-        )
-
-    file_size_mb = len(contents) / (1024 * 1024)
-    if file_size_mb > 50:
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=(
-                f"File exceeds 50 MB limit ({file_size_mb:.1f} MB received). "
-                "Please upload a smaller dataset or contact support for bulk processing."
-            )
         )
 
     # Read uploaded CSV
