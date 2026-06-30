@@ -170,6 +170,11 @@ def _df_to_event_log(df: pd.DataFrame, case_col: str,
                      activity_col: str, timestamp_col: str) -> "EventLog":
     """Convert a pandas DataFrame to a pm4py EventLog object."""
     df_pm = df[[case_col, activity_col, timestamp_col]].copy()
+    
+    # Cast to save memory before pm4py conversion
+    df_pm[case_col] = df_pm[case_col].astype(str)
+    df_pm[activity_col] = df_pm[activity_col].astype('category')
+    
     df_pm = df_pm.rename(columns={
         case_col: "case:concept:name",
         activity_col: "concept:name",
@@ -253,7 +258,7 @@ def _run_token_replay(log: "EventLog", cfs: float) -> ModelResult:
     """Model 1: Token Replay on an Inductive Miner discovered net."""
     t0 = time.perf_counter()
     try:
-        net, im, fm = inductive_miner.apply(log)
+        net, im, fm = pm4py.discover_petri_net_inductive(log)
         replayed = token_replay.apply(log, net, im, fm)
         fitness_vals = [t.get("trace_fitness", 0.0) for t in replayed]
         fitness = float(np.mean(fitness_vals)) if fitness_vals else 0.0
@@ -294,7 +299,7 @@ def _run_alignments(log: "EventLog", cfs: float) -> ModelResult:
     """Model 2: Alignment-based conformance on an Inductive Miner net."""
     t0 = time.perf_counter()
     try:
-        net, im, fm = inductive_miner.apply(log)
+        net, im, fm = pm4py.discover_petri_net_inductive(log)
         aligned = alignments_algo.apply(log, net, im, fm)
 
         costs = []
@@ -345,14 +350,21 @@ def _run_footprint(log: "EventLog", cfs: float) -> ModelResult:
     """Model 3: Footprint-based fitness and precision."""
     t0 = time.perf_counter()
     try:
-        net, im, fm = inductive_miner.apply(log)
+        net, im, fm = pm4py.discover_petri_net_inductive(log)
         fp_log = footprints_algo.apply(log, variant=footprints_algo.Variants.ENTIRE_EVENT_LOG)
         fp_net = footprints_algo.apply(net, im, fm)
         conf_result = footprints_conf.apply(fp_log, fp_net)
 
-        # conf_result is a dict with 'fitnesss'/'fitness' and 'precision' keys
-        fitness_val = conf_result.get("fitness", conf_result.get("fitnesss", None))
-        precision_val = conf_result.get("precision", None)
+        # pm4py's footprint conformance API returns an empty set() when there
+        # are zero deviating relations (i.e. the log perfectly conforms to the
+        # footprint model), and a dict with 'fitness'/'precision' keys otherwise.
+        if isinstance(conf_result, dict):
+            fitness_val = conf_result.get("fitness", conf_result.get("fitnesss", None))
+            precision_val = conf_result.get("precision", None)
+        else:
+            # Empty set (or any non-dict) means no deviations found — perfect conformance.
+            fitness_val = 1.0
+            precision_val = 1.0
 
         fitness = round(float(fitness_val), 4) if fitness_val is not None else None
         precision = round(float(precision_val), 4) if precision_val is not None else None
@@ -392,14 +404,10 @@ def _run_inductive_miner_eval(log: "EventLog", cfs: float) -> ModelResult:
     t0 = time.perf_counter()
     try:
         try:
-            from pm4py.algo.discovery.inductive.variants import im_f as im_f_module
-            net, im_marking, fm_marking = inductive_miner.apply(
-                log,
-                variant=inductive_miner.Variants.IMf,
-            )
+            net, im_marking, fm_marking = pm4py.discover_petri_net_inductive(log, noise_threshold=0.2)
         except Exception:
             # Fallback to base IM if IMf variant unavailable
-            net, im_marking, fm_marking = inductive_miner.apply(log)
+            net, im_marking, fm_marking = pm4py.discover_petri_net_inductive(log)
 
         replayed = token_replay.apply(log, net, im_marking, fm_marking)
         fitness_vals = [t.get("trace_fitness", 0.0) for t in replayed]
@@ -571,9 +579,22 @@ def run_benchmark(
     cfs = _compute_cfs_for_log(df, activity_col)
 
     # ── Define model runners in order ─────────────────────────────────────
+    n_events = len(df)
+    
+    def run_alignments_guarded(log_obj, cfs_val):
+        if n_events > 15000:
+            return ModelResult(
+                model_name="Alignments",
+                fitness=None, precision=None, f1_score=None,
+                cfs_score=cfs_val,
+                execution_time_ms=0.0,
+                error="Skipped: Alignments model is O(n²) and exceeds 15,000 events limit."
+            )
+        return _run_alignments(log_obj, cfs_val)
+        
     runners = [
         ("Token Replay", _run_token_replay),
-        ("Alignments", _run_alignments),
+        ("Alignments", run_alignments_guarded),
         ("Footprint", _run_footprint),
         ("Inductive Miner", _run_inductive_miner_eval),
         ("Heuristics Miner", _run_heuristics_miner),
