@@ -119,76 +119,101 @@ def detect_violations(events_df: pd.DataFrame, case_id_col: str, activity_col: s
     df_sorted["_parsed_ts"] = pd.to_datetime(df_sorted[timestamp_col], errors="coerce", format="mixed")
     df_sorted = df_sorted.sort_values(by=[case_id_col, "_parsed_ts"]).reset_index()
     
-    for idx, row in df_sorted.iterrows():
-        activity = str(row[activity_col])
-        activity_lower = activity.lower()
-        case_id = str(row[case_id_col])
-        
-        # Format timestamp
-        if pd.notna(row["_parsed_ts"]):
-            ts_str = row["_parsed_ts"].isoformat()
-        else:
-            ts_str = str(row[timestamp_col])
+    rules_to_use = override_rules if override_rules is not None else CONFORMANCE_RULES
+
+    # 1. Build lookup dict upfront from all rules
+    disallowed_map = {}
+    for rule in rules_to_use:
+        for disallowed in rule["disallowed_activities"]:
+            disallowed_map[disallowed.lower()] = {
+                "mandated": rule["mandated_alternative"],
+                "category": rule["category"],
+                "reduction_factor": rule["reduction_factors"].get(disallowed, 1.0)
+            }
             
-        # Check against rules
-        rules_to_use = override_rules if override_rules is not None else CONFORMANCE_RULES
-        for rule in rules_to_use:
-            for disallowed in rule["disallowed_activities"]:
-                if disallowed.lower() in activity_lower:
-                    mandated = rule["mandated_alternative"]
-                    category = rule["category"]
-                    reduction_factor = rule["reduction_factors"].get(disallowed, 1.0)
-                    
-                    # Compute carbon factors
-                    _, forbidden_factor, _ = classify_activity(activity)
-                    
-                    # Check for weight/quantity column to scale carbon
-                    qty = 1.0
-                    for col in ["weight", "quantity", "cargo_weight", "volume", "amount"]:
-                        if col in row and pd.notna(row[col]):
-                            try:
-                                qty = float(row[col])
-                            except ValueError:
-                                pass
-                            break
-                            
-                    forbidden_carbon = forbidden_factor * qty
-                    delta = forbidden_carbon * reduction_factor
-                    
-                    # Determine severity
-                    if delta > 2.0:
-                        severity = "critical"
-                    elif delta > 0.5:
-                        severity = "warning"
-                    else:
-                        severity = "info"
-                        
-                    # Build unique violation ID
-                    clean_act = "".join(c for c in activity if c.isalnum() or c in ("-", "_"))
-                    v_id = f"v-{case_id}-{clean_act}-{idx}"
-                    
-                    # Format mandated alternative string byte-for-byte as today
-                    if mandated == "Rail":
-                        if "freight" in activity_lower:
-                            mandated_alternative_str = "rail freight"
-                        else:
-                            mandated_alternative_str = "rail delivery"
-                    else:
-                        mandated_alternative_str = mandated.lower()
-                    
-                    violations.append({
-                        "id": v_id,
-                        "caseId": case_id,
-                        "activity": activity,
-                        "mandatedAlternative": mandated_alternative_str,
-                        "category": category,
-                        "severity": severity,
-                        "carbonDeltaKg": round(delta, 2),
-                        "estimated": True,
-                        "timestamp": ts_str
-                    })
-                    break  # Matched one disallowed activity for this rule category, move to next rule
-                    
+    # 2. Pre-classify all unique activities once
+    unique_acts = df_sorted[activity_col].unique()
+    factor_cache = {act: classify_activity(str(act)) for act in unique_acts}
+
+    # Format timestamp series
+    ts_series = df_sorted["_parsed_ts"].dt.strftime("%Y-%m-%dT%H:%M:%S").fillna(df_sorted[timestamp_col].astype(str))
+    
+    act_lower_series = df_sorted[activity_col].astype(str).str.lower()
+    
+    # Check for weight/quantity column to scale carbon
+    qty_col = None
+    for col in ["weight", "quantity", "cargo_weight", "volume", "amount"]:
+        if col in df_sorted.columns:
+            qty_col = col
+            break
+            
+    if qty_col:
+        qty_series = pd.to_numeric(df_sorted[qty_col], errors='coerce').fillna(1.0)
+    else:
+        qty_series = pd.Series(1.0, index=df_sorted.index)
+        
+    # Track which rows are already flagged
+    flagged_mask = pd.Series(False, index=df_sorted.index)
+
+    # 4. Build violation IDs upfront
+    clean_act_series = df_sorted[activity_col].astype(str).str.replace(r'[^a-zA-Z0-9\-_]', '', regex=True)
+    v_id_series = "v-" + df_sorted[case_id_col].astype(str) + "-" + clean_act_series + "-" + df_sorted.index.astype(str)
+    
+    # 3. Vectorize the matching using pandas string ops
+    for disallowed_key, rule_info in disallowed_map.items():
+        mask = act_lower_series.str.contains(disallowed_key, regex=False, na=False) & ~flagged_mask
+        if not mask.any():
+            continue
+            
+        flagged_mask |= mask
+        matched_rows = df_sorted[mask]
+        
+        for row in matched_rows.itertuples():
+            idx = row.Index
+            activity = str(getattr(row, activity_col))
+            activity_lower = activity.lower()
+            case_id = str(getattr(row, case_id_col))
+            ts_str = ts_series.at[idx]
+            
+            mandated = rule_info["mandated"]
+            category = rule_info["category"]
+            reduction_factor = rule_info["reduction_factor"]
+            
+            _, forbidden_factor, _ = factor_cache[getattr(row, activity_col)]
+            qty = float(qty_series.at[idx])
+            
+            forbidden_carbon = forbidden_factor * qty
+            delta = forbidden_carbon * reduction_factor
+            
+            if delta > 2.0:
+                severity = "critical"
+            elif delta > 0.5:
+                severity = "warning"
+            else:
+                severity = "info"
+                
+            v_id = v_id_series.at[idx]
+            
+            if mandated == "Rail":
+                if "freight" in activity_lower:
+                    mandated_alternative_str = "rail freight"
+                else:
+                    mandated_alternative_str = "rail delivery"
+            else:
+                mandated_alternative_str = mandated.lower()
+                
+            violations.append({
+                "id": v_id,
+                "caseId": case_id,
+                "activity": activity,
+                "mandatedAlternative": mandated_alternative_str,
+                "category": category,
+                "severity": severity,
+                "carbonDeltaKg": round(delta, 2),
+                "estimated": True,
+                "timestamp": ts_str
+            })
+            
     return violations
 
 
