@@ -6,7 +6,12 @@ const api = axios.create({
   timeout: 300000 // 5 minutes for large file processing
 });
 
-export async function uploadOcelFile(file: File, mappingOverride?: string, workspaceId?: number) {
+export async function uploadOcelFile(
+  file: File, 
+  mappingOverride?: string, 
+  workspaceId?: number,
+  onProgress?: (progress: number, stage: string) => void
+) {
   const formData = new FormData();
   formData.append('file', file);
   if (mappingOverride) {
@@ -15,11 +20,49 @@ export async function uploadOcelFile(file: File, mappingOverride?: string, works
   if (workspaceId !== undefined && workspaceId !== null) {
     formData.append('workspace_id', workspaceId.toString());
   }
+
+  if (onProgress) {
+    onProgress(0, "Uploading file...");
+  }
+
   const response = await api.post('/api/ocel/upload', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
+    onUploadProgress: (progressEvent) => {
+      if (progressEvent.total) {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        if (onProgress) {
+          onProgress(percentCompleted < 100 ? percentCompleted : 100, "Uploading file...");
+        }
+      }
+    }
   });
+
+  if (response.data && response.data.job_id) {
+    const jobId = response.data.job_id;
+    return new Promise((resolve, reject) => {
+      const poll = async () => {
+        try {
+          const statusRes = await api.get(`/api/upload/status/${jobId}`);
+          if (statusRes.data.status === 'completed') {
+            resolve(statusRes.data.result);
+          } else if (statusRes.data.status === 'error') {
+            reject(new Error(statusRes.data.error || 'Background job failed'));
+          } else {
+            if (onProgress) {
+              onProgress(100, statusRes.data.stage || "Processing...");
+            }
+            setTimeout(poll, 1500);
+          }
+        } catch (e) {
+          reject(e);
+        }
+      };
+      setTimeout(poll, 1500);
+    });
+  }
+
   return response.data;
 }
 

@@ -30,15 +30,25 @@ export interface UploadResponse {
 interface AnalysisContextType {
   analysis: UploadResponse | null;
   setAnalysis: (data: UploadResponse | null) => void;
+  uploadProgress: number;
+  setUploadProgress: (progress: number) => void;
+  uploadStage: string;
+  setUploadStage: (stage: string) => void;
 }
 
 const AnalysisContext = createContext<AnalysisContextType | undefined>(undefined);
 
 export function AnalysisProvider({ children }: { children: ReactNode }) {
   const [analysis, setAnalysis] = useState<UploadResponse | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStage, setUploadStage] = useState('');
 
   return (
-    <AnalysisContext.Provider value={{ analysis, setAnalysis }}>
+    <AnalysisContext.Provider value={{ 
+      analysis, setAnalysis,
+      uploadProgress, setUploadProgress,
+      uploadStage, setUploadStage
+    }}>
       {children}
     </AnalysisContext.Provider>
   );
