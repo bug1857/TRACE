@@ -77,19 +77,19 @@ def calculate_carbon_budget(
         }
         
     # Classify each event row
-    factors = []
-    categories = []
-    estimated_flags = []
+    unique_acts = df_clean[activity_col].unique()
+    act_lookup = {
+        act: classify_activity(str(act), custom_factors=custom_factors) 
+        for act in unique_acts
+    }
     
-    for act in df_clean[activity_col]:
-        cat, factor, est = classify_activity(act, custom_factors=custom_factors)
-        categories.append(cat)
-        factors.append(factor)
-        estimated_flags.append(est)
-        
-    df_clean["carbon"] = factors
-    df_clean["category"] = categories
-    df_clean["estimated"] = estimated_flags
+    df_clean[["category", "carbon", "estimated"]] = pd.DataFrame(
+        df_clean[activity_col].map(
+            lambda a: act_lookup[a]
+        ).tolist(),
+        columns=["category", "carbon", "estimated"],
+        index=df_clean.index
+    )
     
     # Total overall carbon
     total_carbon = float(df_clean["carbon"].sum())
@@ -126,27 +126,20 @@ def calculate_carbon_budget(
         })
         
     # Activity carbon breakdown
-    activity_grouped = df_clean.groupby(activity_col)
-    activity_breakdown = []
+    activity_breakdown_df = df_clean.groupby(activity_col).agg(
+        category=(activity_col, lambda x: act_lookup[x.iloc[0]][0]),
+        estimated=(activity_col, lambda x: bool(act_lookup[x.iloc[0]][2])),
+        frequency=(activity_col, 'count'),
+        totalCarbon=('carbon', 'sum')
+    ).reset_index()
     
-    for act_name, group in activity_grouped:
-        # Since activity name is identical, any row's classified values represent the group
-        first_row = group.iloc[0]
-        cat = first_row["category"]
-        est = bool(first_row["estimated"])
-        freq = len(group)
-        tot_carbon = float(group["carbon"].sum())
-        
-        activity_breakdown.append({
-            "activity": str(act_name),
-            "category": cat,
-            "estimated": est,
-            "frequency": int(freq),
-            "totalCarbon": round(tot_carbon, 2)
-        })
-        
-    # Sort activity breakdown by total carbon descending for presentation
-    activity_breakdown = sorted(activity_breakdown, key=lambda x: x["totalCarbon"], reverse=True)
+    activity_breakdown = activity_breakdown_df.rename(
+        columns={activity_col: "activity"}
+    ).to_dict(orient='records')
+    
+    activity_breakdown = sorted(
+        activity_breakdown, key=lambda x: x["totalCarbon"], reverse=True
+    )
     
     return {
         "carbonBudget": carbon_budget_list,

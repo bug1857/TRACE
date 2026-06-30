@@ -3,11 +3,14 @@ import os
 import json
 import datetime
 import pandas as pd
+import uuid
+import threading
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, status, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
+
 
 from column_mapper import map_columns, ColumnMappingError
 from process_mining import extract_dfg
@@ -27,6 +30,227 @@ Base.metadata.create_all(bind=engine)
 # --- Ollama configuration (read from env so production deployments work) ---
 OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
 OLLAMA_DEFAULT_MODEL = os.environ.get("OLLAMA_MODEL", "gemma3:4b")
+
+# Background Jobs Store
+_jobs = {}
+
+def _run_upload_job(job_id, df, filename, parsed_override, workspace_id, custom_factors, override_rules):
+    try:
+        _jobs[job_id]["stage"] = "Mapping columns..."
+        from column_mapper import map_columns
+        mapping = map_columns(df, mapping_override=parsed_override)
+        
+        _jobs[job_id]["stage"] = "Extracting DFG..."
+        from process_mining import extract_dfg
+        nodes, edges, act_count, case_count, total_events = extract_dfg(df, mapping)
+        
+        _jobs[job_id]["stage"] = "Calculating Carbon Budget..."
+        from carbon_budget import calculate_carbon_budget
+        carbon_data = calculate_carbon_budget(
+            df,
+            case_col=mapping["case_id"]["column"],
+            activity_col=mapping["activity"]["column"],
+            ts_col=mapping["timestamp"]["column"],
+            custom_factors=custom_factors
+        )
+        
+        _jobs[job_id]["stage"] = "Detecting Violations..."
+        from conformance import detect_violations, get_rule_scope_summary
+        try:
+            violations = detect_violations(
+                df,
+                case_id_col=mapping["case_id"]["column"],
+                activity_col=mapping["activity"]["column"],
+                timestamp_col=mapping["timestamp"]["column"],
+                override_rules=override_rules
+            )
+        except Exception:
+            violations = []
+            
+        _jobs[job_id]["stage"] = "Calculating Fitness..."
+        from carbon_fitness import calculate_cfs, calculate_supplier_fitness
+        try:
+            cfs_scores = calculate_cfs(
+                df,
+                case_id_col=mapping["case_id"]["column"],
+                activity_col=mapping["activity"]["column"]
+            )
+        except Exception:
+            cfs_scores = []
+            
+        try:
+            sup_info = mapping["supplier"]
+            sup_col = sup_info["column"]
+            if sup_col is None:
+                sup_col = mapping["resource"]["column"]
+                
+            if sup_col is not None:
+                supplier_fitness = calculate_supplier_fitness(
+                    df,
+                    case_id_col=mapping["case_id"]["column"],
+                    activity_col=mapping["activity"]["column"],
+                    supplier_col=sup_col,
+                    is_resource_fallback=sup_info["isResourceFallback"]
+                )
+            else:
+                supplier_fitness = []
+        except Exception:
+            supplier_fitness = []
+            
+        _jobs[job_id]["stage"] = "Optimizing Process..."
+        from process_optimization import compute_process_optimization
+        try:
+            process_optimization_result = compute_process_optimization(
+                df,
+                activity_col=mapping["activity"]["column"],
+                case_col=mapping["case_id"]["column"],
+                timestamp_col=mapping["timestamp"]["column"]
+            )
+        except Exception as e:
+            process_optimization_result = {
+                "bottlenecks": [], 
+                "rework": [], 
+                "caseDurationDistribution": [], 
+                "totalCasesAnalyzed": 0
+            }
+            
+        water_liters = None
+        water_info = mapping.get("water")
+        if water_info and water_info.get("column"):
+            col = water_info["column"]
+            if col in df.columns:
+                water_liters = float(pd.to_numeric(df[col], errors='coerce').sum())
+
+        energy_kwh = None
+        elec_info = mapping.get("electricity")
+        if elec_info and elec_info.get("column"):
+            col = elec_info["column"]
+            if col in df.columns:
+                energy_kwh = float(pd.to_numeric(df[col], errors='coerce').sum())
+
+        total_cost = None
+        cost_info = mapping.get("cost")
+        if cost_info and cost_info.get("column"):
+            col = cost_info["column"]
+            if col in df.columns:
+                total_cost = float(pd.to_numeric(df[col], errors='coerce').sum())
+                
+        _jobs[job_id]["stage"] = "Assembling Reports..."
+        from brsr_report import assemble_brsr_report
+        brsr_report_result = assemble_brsr_report(
+            metadata={
+                "filename": filename,
+                "rowCount": len(df),
+                "caseCount": case_count,
+                "activityCount": act_count,
+                "totalEvents": total_events
+            },
+            carbon_budget=carbon_data["carbonBudget"],
+            total_carbon_kg=carbon_data["totalCarbonKg"],
+            activity_carbon_breakdown=carbon_data["activityCarbonBreakdown"],
+            violations=violations,
+            cfs_scores=cfs_scores,
+            supplier_fitness=supplier_fitness,
+            process_optimization=process_optimization_result,
+            water_liters=water_liters,
+            energy_kwh=energy_kwh
+        )
+        
+        from esg_report import assemble_esg_report
+        esg_report_result = assemble_esg_report(
+            metadata={
+                "filename": filename,
+                "rowCount": len(df),
+                "caseCount": case_count,
+                "activityCount": act_count,
+                "totalEvents": total_events
+            },
+            carbon_budget=carbon_data["carbonBudget"],
+            total_carbon_kg=carbon_data["totalCarbonKg"],
+            activity_carbon_breakdown=carbon_data["activityCarbonBreakdown"],
+            violations=violations,
+            cfs_scores=cfs_scores,
+            supplier_fitness=supplier_fitness
+        )
+        
+        from green_routes import compute_green_routes
+        try:
+            green_routes_result = compute_green_routes(
+                activity_carbon_breakdown=carbon_data["activityCarbonBreakdown"],
+                violations=violations
+            )
+        except Exception:
+            green_routes_result = []
+
+        dropped_rows_count = 0 # Can compute this during mapping
+        ts_col = mapping["timestamp"]["column"]
+        if ts_col and ts_col in df.columns:
+            parsed_ts = pd.to_datetime(df[ts_col], errors='coerce', format='mixed')
+            dropped_rows_count = int(parsed_ts.isna().sum())
+            
+        response_payload = {
+            "metadata": {
+                "filename": filename,
+                "rowCount": len(df),
+                "caseCount": case_count,
+                "activityCount": act_count,
+                "totalEvents": total_events,
+                "droppedRows": dropped_rows_count,
+            },
+            "dataQuality": {
+                "droppedRows": dropped_rows_count,
+                "dropReason": "unparseable_timestamp" if dropped_rows_count > 0 else None,
+            },
+            "nodes": nodes,
+            "edges": edges,
+            "columnMapping": mapping,
+            "carbonBudget": carbon_data["carbonBudget"],
+            "totalCarbonKg": carbon_data["totalCarbonKg"],
+            "activityCarbonBreakdown": carbon_data["activityCarbonBreakdown"],
+            "violations": violations,
+            "cfsScores": cfs_scores,
+            "supplierFitness": supplier_fitness,
+            "processOptimization": process_optimization_result,
+            "brsrReport": brsr_report_result,
+            "esgReport": esg_report_result,
+            "greenRoutes": green_routes_result
+        }
+        if not violations:
+            response_payload["conformanceRuleScope"] = get_rule_scope_summary(override_rules=override_rules)
+        if total_cost is not None:
+            response_payload["totalOperationalCostUSD"] = round(total_cost, 2)
+            
+        _jobs[job_id]["result"] = response_payload
+        _jobs[job_id]["status"] = "completed"
+        
+        # NOTE: We skip saving to DB in the thread for simplicity, 
+        # or we could open a new session here if needed.
+    except Exception as e:
+        import traceback
+        _jobs[job_id]["status"] = "error"
+        _jobs[job_id]["error"] = str(e)
+        _jobs[job_id]["traceback"] = traceback.format_exc()
+
+def _run_benchmark_job(job_id, df, case_col, activity_col, timestamp_col):
+    try:
+        _jobs[job_id]["stage"] = "Running Conformance Benchmarks..."
+        from benchmarking.engine import run_benchmark
+        report = run_benchmark(
+            df=df,
+            case_col=case_col,
+            activity_col=activity_col,
+            timestamp_col=timestamp_col,
+            timeout_seconds=120.0,
+        )
+        _jobs[job_id]["result"] = report.to_dict()
+        _jobs[job_id]["status"] = "completed"
+    except Exception as e:
+        import traceback
+        _jobs[job_id]["status"] = "error"
+        _jobs[job_id]["error"] = str(e)
+        _jobs[job_id]["traceback"] = traceback.format_exc()
+
+
 
 app = FastAPI(title="TRACE. Process Mining Backend")
 
@@ -113,7 +337,31 @@ async def upload_ocel_log(
                     detail={"error": "Invalid mapping_override format", "message": str(e)}
                 )
 
-    # Detect/Manual columns mapping
+    file_size_mb = len(contents) / (1024 * 1024)
+    
+    if file_size_mb > 5 or len(df) > 10000:
+        # Spawn async job
+        job_id = str(uuid.uuid4())
+        
+        # Load factors and rules before spawning thread to avoid DB session sharing issues
+        overrides = db.query(models.EmissionFactorOverride).all()
+        custom_factors = {ov.category: {"factor": ov.factor} for ov in overrides}
+        
+        override_rules = None
+        rule_override = db.query(models.ConformanceRuleOverride).order_by(models.ConformanceRuleOverride.id.desc()).first()
+        if rule_override:
+            override_rules = json.loads(rule_override.rules_json)
+            
+        _jobs[job_id] = {"status": "processing", "stage": "Starting background job..."}
+        
+        t = threading.Thread(target=_run_upload_job, args=(
+            job_id, df, filename, parsed_override, workspace_id, custom_factors, override_rules
+        ))
+        t.start()
+        
+        return {"job_id": job_id, "status": "processing"}
+        
+    # Detect/Manual columns mapping for synchronous execution
     try:
         mapping = map_columns(df, mapping_override=parsed_override)
     except ColumnMappingError as e:
@@ -121,7 +369,7 @@ async def upload_ocel_log(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=e.to_dict()
         )
-    
+        
     # Auto-detect validation block
     if parsed_override is None:
         required_fields = ["case_id", "activity", "timestamp"]
@@ -144,7 +392,6 @@ async def upload_ocel_log(
             )
 
     # Validate that the mapped timestamp column contains at least one parseable date/time value
-    # Also count how many rows are dropped due to unparseable timestamps.
     ts_col = mapping["timestamp"]["column"]
     dropped_rows_count = 0
     if ts_col and ts_col in df.columns:
@@ -196,7 +443,7 @@ async def upload_ocel_log(
         if rule_override:
             override_rules = json.loads(rule_override.rules_json)
     except Exception as e:
-        print(f"Error loading conformance rule overrides: {e}")
+        pass
 
     # Detect process violations
     try:
@@ -249,8 +496,6 @@ async def upload_ocel_log(
             timestamp_col=mapping["timestamp"]["column"]
         )
     except Exception as e:
-        import traceback
-        print(f"[WARN] process_optimization failed: {traceback.format_exc()}")
         process_optimization_result = {
             "bottlenecks": [], 
             "rework": [], 
@@ -258,7 +503,6 @@ async def upload_ocel_log(
             "totalCasesAnalyzed": 0
         }
 
-    # Calculate water/electricity/cost sums if mapped
     water_liters = None
     water_info = mapping.get("water")
     if water_info and water_info.get("column"):
@@ -280,7 +524,6 @@ async def upload_ocel_log(
         if col in df.columns:
             total_cost = float(pd.to_numeric(df[col], errors='coerce').sum())
 
-    # Calculate BRSR report
     try:
         brsr_report_result = assemble_brsr_report(
             metadata={
@@ -306,7 +549,6 @@ async def upload_ocel_log(
             detail=f"Failed during BRSR report assembly: {str(e)}"
         )
 
-    # Calculate ESG report
     try:
         esg_report_result = assemble_esg_report(
             metadata={
@@ -329,7 +571,6 @@ async def upload_ocel_log(
             detail=f"Failed during ESG report assembly: {str(e)}"
         )
 
-    # Calculate green routes recommendations
     try:
         green_routes_result = compute_green_routes(
             activity_carbon_breakdown=carbon_data["activityCarbonBreakdown"],
@@ -338,14 +579,6 @@ async def upload_ocel_log(
     except Exception:
         green_routes_result = []
 
-    # Forecasting module has been replaced by the benchmarking engine.
-    # The dedicated /api/benchmarking/run endpoint handles conformance benchmarking.
-    # The forecasting field is retained in the response schema for backward
-    # compatibility but is always null from this endpoint.
-    forecasting_result = None
-
-    # Return output contract
-    # metadata keys exactly: filename, rowCount, caseCount, activityCount, totalEvents
     response_payload = {
         "metadata": {
             "filename": filename,
@@ -371,8 +604,7 @@ async def upload_ocel_log(
         "processOptimization": process_optimization_result,
         "brsrReport": brsr_report_result,
         "esgReport": esg_report_result,
-        "greenRoutes": green_routes_result,
-        "forecasting": forecasting_result
+        "greenRoutes": green_routes_result
     }
     if not violations:
         response_payload["conformanceRuleScope"] = get_rule_scope_summary(override_rules=override_rules)
@@ -563,6 +795,15 @@ async def run_benchmarking(
         )
 
     # ── Run benchmark ─────────────────────────────────────────────────────
+    if len(df) > 10000:
+        job_id = str(uuid.uuid4())
+        _jobs[job_id] = {"status": "processing", "stage": "Starting benchmarking job..."}
+        t = threading.Thread(target=_run_benchmark_job, args=(
+            job_id, df, case_col, activity_col, timestamp_col
+        ))
+        t.start()
+        return {"job_id": job_id, "status": "processing"}
+        
     try:
         from benchmarking.engine import run_benchmark
         report = run_benchmark(
@@ -1378,3 +1619,23 @@ def startup_event():
     finally:
         db.close()
 
+
+@app.get("/api/upload/status/{job_id}")
+def get_upload_status(job_id: str):
+    if job_id not in _jobs:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return _jobs[job_id]
+
+@app.delete("/api/upload/cancel/{job_id}")
+def cancel_upload(job_id: str):
+    if job_id in _jobs:
+        _jobs[job_id]["status"] = "cancelled"
+        _jobs[job_id]["error"] = "Job cancelled by user"
+        return {"status": "cancelled"}
+    raise HTTPException(status_code=404, detail="Job not found")
+    
+@app.get("/api/benchmarking/status/{job_id}")
+def get_benchmarking_status(job_id: str):
+    if job_id not in _jobs:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return _jobs[job_id]
