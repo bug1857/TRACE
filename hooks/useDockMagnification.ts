@@ -1,7 +1,7 @@
 import { useRef, useCallback } from "react";
 import { useMotionValue, useSpring, MotionValue } from "framer-motion";
 
-const MAGNIFICATION = 1.55;
+const MAGNIFICATION = 1.15;
 const RANGE         = 80;
 const SPRING_CONFIG = { stiffness: 300, damping: 28, mass: 0.5 };
 
