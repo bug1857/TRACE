@@ -19,6 +19,8 @@ export default function ForecastingBenchmarkingPage() {
   const [elapsedMs, setElapsedMs] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<any | null>(null);
+  const [nFolds, setNFolds] = useState<number>(2);
+  const [tftEpochs, setTftEpochs] = useState<number>(10);
 
   const handleFileSelect = useCallback((file: File) => {
     setSelectedFile(file);
@@ -51,10 +53,10 @@ export default function ForecastingBenchmarkingPage() {
       const formData = new FormData();
       formData.append('file', selectedFile);
       formData.append('horizon', '4');
-      formData.append('n_folds', '2');
+      formData.append('n_folds', nFolds.toString());
       formData.append('step', '4');
       formData.append('min_train_size', '52');
-      formData.append('tft_epochs', '10');
+      formData.append('tft_epochs', tftEpochs.toString());
 
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
       const res = await fetch(`${baseUrl}/api/benchmark/forecast`, {
@@ -147,6 +149,38 @@ export default function ForecastingBenchmarkingPage() {
                 {error}
               </div>
             )}
+
+            <div className="grid grid-cols-2 gap-4 pt-2 border-t border-[var(--border)]">
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-[var(--foreground)]">Folds (Cross Validation)</label>
+                <select
+                  value={nFolds}
+                  onChange={(e) => setNFolds(Number(e.target.value))}
+                  disabled={isRunning}
+                  className="w-full h-10 px-3 rounded-md bg-[var(--background)] border border-[var(--border)] text-sm"
+                >
+                  <option value={1}>1 (Very Fast)</option>
+                  <option value={2}>2 (Fast, Default)</option>
+                  <option value={3}>3 (Balanced)</option>
+                  <option value={5}>5 (Thorough, Slower)</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-[var(--foreground)]">TFT Epochs</label>
+                <select
+                  value={tftEpochs}
+                  onChange={(e) => setTftEpochs(Number(e.target.value))}
+                  disabled={isRunning}
+                  className="w-full h-10 px-3 rounded-md bg-[var(--background)] border border-[var(--border)] text-sm"
+                >
+                  <option value={1}>1 (Test only)</option>
+                  <option value={5}>5 (Fast)</option>
+                  <option value={10}>10 (Default)</option>
+                  <option value={40}>40 (Thorough)</option>
+                  <option value={80}>80 (Max, High Memory)</option>
+                </select>
+              </div>
+            </div>
 
             <Button
               className="w-full h-12 text-base font-semibold"
