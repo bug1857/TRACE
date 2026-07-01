@@ -1741,9 +1741,9 @@ async def run_forecasting_benchmark(
 
     # Check if we need to aggregate the data
     if "series_id" not in df.columns or "week_start" not in df.columns:
-        if "Order date (DateOrders)" in df.columns and "Category Name" in df.columns:
+        if "order date (DateOrders)" in df.columns and "Category Name" in df.columns:
             from forecasting.src.data_prep import build_weekly_series, top_categories
-            df["order_date"] = pd.to_datetime(df["Order date (DateOrders)"])
+            df["order_date"] = pd.to_datetime(df["order date (DateOrders)"])
             cats = top_categories(df, 8)
             df = build_weekly_series(df, cats)
         else:
