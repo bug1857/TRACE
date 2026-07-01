@@ -1753,6 +1753,14 @@ async def run_forecasting_benchmark(
             )
     else:
         df["week_start"] = pd.to_datetime(df["week_start"])
+        if "week_of_year" not in df.columns:
+            df["week_of_year"] = df["week_start"].dt.isocalendar().week.astype(int)
+        if "month" not in df.columns:
+            df["month"] = df["week_start"].dt.month
+        if "quarter" not in df.columns:
+            df["quarter"] = df["week_start"].dt.quarter
+        if "is_holiday_season" not in df.columns:
+            df["is_holiday_season"] = df["month"].isin([11, 12]).astype(int)
         
     job_id = str(uuid.uuid4())
     _jobs[job_id] = {"status": "processing", "stage": "Initializing forecasting engine..."}
