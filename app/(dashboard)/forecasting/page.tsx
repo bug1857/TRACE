@@ -51,10 +51,10 @@ export default function ForecastingBenchmarkingPage() {
       const formData = new FormData();
       formData.append('file', selectedFile);
       formData.append('horizon', '4');
-      formData.append('n_folds', '5');
+      formData.append('n_folds', '2');
       formData.append('step', '4');
       formData.append('min_train_size', '52');
-      formData.append('tft_epochs', '80');
+      formData.append('tft_epochs', '10');
 
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
       const res = await fetch(`${baseUrl}/api/benchmark/forecast`, {

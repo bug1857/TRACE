@@ -253,6 +253,12 @@ def _run_benchmark_job(job_id, df, case_col, activity_col, timestamp_col):
 
 def _forecast_worker(runner, df, horizon, n_folds, step, min_train_size, kwargs, q):
     try:
+        import torch
+        torch.set_num_threads(1)
+    except ImportError:
+        pass
+        
+    try:
         if kwargs is not None:
             result_df = runner(df, horizon, n_folds, step, min_train_size, **kwargs)
         else:
