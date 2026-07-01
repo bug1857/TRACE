@@ -275,31 +275,55 @@ def _run_forecast_job(job_id, df, horizon, n_folds, step, min_train_size, tft_ep
         q1 = _mp.Queue()
         p1 = _mp.Process(target=_forecast_worker, args=(run_per_series_models, df, horizon, n_folds, step, min_train_size, {"run_prophet": enable_prophet}, q1))
         p1.start()
-        p1.join(timeout=300.0) # 5 min timeout
         
-        if p1.is_alive():
-            p1.terminate()
-            p1.join(timeout=2.0)
-            if p1.is_alive(): p1.kill(); p1.join()
-            raise Exception("Per-series models timed out.")
+        start_time = time.time()
+        status, payload1 = None, None
+        while True:
+            if not q1.empty():
+                status, payload1 = q1.get()
+                break
+            if not p1.is_alive():
+                time.sleep(0.1)
+                if not q1.empty():
+                    status, payload1 = q1.get()
+                break
+            if time.time() - start_time > 300.0:
+                p1.terminate()
+                p1.join(timeout=2.0)
+                if p1.is_alive(): p1.kill(); p1.join()
+                raise Exception("Per-series models timed out.")
+            time.sleep(0.1)
+        p1.join()
         
-        status, payload1 = q1.get()
+        if status is None: raise Exception("Per-series models process died unexpectedly.")
         if status == "error": raise Exception(f"Per-series models failed: {payload1}")
         
         _jobs[job_id]["stage"] = "Running Global Deep Learning Model (TFT)..."
         q2 = _mp.Queue()
         p2 = _mp.Process(target=_forecast_worker, args=(run_tft_global, df, horizon, n_folds, step, min_train_size, {"epochs": tft_epochs}, q2))
         p2.start()
-        p2.join(timeout=300.0)
         
-        if p2.is_alive():
-            p2.terminate()
-            p2.join(timeout=2.0)
-            if p2.is_alive(): p2.kill(); p2.join()
-            raise Exception("TFT model timed out.")
-            
-        status, payload2 = q2.get()
-        if status == "error": raise Exception(f"TFT failed: {payload2}")
+        start_time = time.time()
+        status2, payload2 = None, None
+        while True:
+            if not q2.empty():
+                status2, payload2 = q2.get()
+                break
+            if not p2.is_alive():
+                time.sleep(0.1)
+                if not q2.empty():
+                    status2, payload2 = q2.get()
+                break
+            if time.time() - start_time > 300.0:
+                p2.terminate()
+                p2.join(timeout=2.0)
+                if p2.is_alive(): p2.kill(); p2.join()
+                raise Exception("TFT model timed out.")
+            time.sleep(0.1)
+        p2.join()
+        
+        if status2 is None: raise Exception("TFT process died unexpectedly.")
+        if status2 == "error": raise Exception(f"TFT failed: {payload2}")
         
         _jobs[job_id]["stage"] = "Summarizing Results..."
         all_results = pd.concat([payload1, payload2], ignore_index=True)
@@ -1761,7 +1785,13 @@ async def run_forecasting_benchmark(
             df["quarter"] = df["week_start"].dt.quarter
         if "is_holiday_season" not in df.columns:
             df["is_holiday_season"] = df["month"].isin([11, 12]).astype(int)
-        
+        if "avg_price" not in df.columns:
+            df["avg_price"] = 0.0
+        if "avg_discount_rate" not in df.columns:
+            df["avg_discount_rate"] = 0.0
+        if "n_orders" not in df.columns:
+            df["n_orders"] = 1.0
+            
     job_id = str(uuid.uuid4())
     _jobs[job_id] = {"status": "processing", "stage": "Initializing forecasting engine..."}
     
