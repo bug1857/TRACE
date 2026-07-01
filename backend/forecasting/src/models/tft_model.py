@@ -240,10 +240,10 @@ class TFTGlobalModel:
                 for s in series_ids
             }
 
-        X_enc_t = torch.tensor(np.stack(X_enc))
-        X_dec_t = torch.tensor(np.stack(X_dec))
-        Y_t = torch.tensor(np.stack(Y))
-        S_t = torch.tensor(np.array(S), dtype=torch.long)
+        X_enc_t = torch.as_tensor(np.stack(X_enc), dtype=torch.float32)
+        X_dec_t = torch.as_tensor(np.stack(X_dec), dtype=torch.float32)
+        Y_t = torch.as_tensor(np.stack(Y), dtype=torch.float32)
+        S_t = torch.as_tensor(np.array(S), dtype=torch.long)
 
         model = TFT(n_series=n_series, hidden_dim=self.hidden_dim, horizon=self.horizon)
         optimizer = torch.optim.Adam(model.parameters(), lr=self.lr, weight_decay=1e-5)
