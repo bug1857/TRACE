@@ -97,7 +97,7 @@ export default function ForecastingBenchmarkingPage() {
     <div className="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <PageHeader
         title="Demand Forecasting Benchmark"
-        description="Evaluate state-of-the-art time series models (ARIMA, ETS, Prophet, XGBoost, TFT) on your demand datasets."
+        subtitle="Evaluate state-of-the-art time series models (ARIMA, ETS, Prophet, XGBoost, TFT) on your demand datasets."
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
