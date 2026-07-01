@@ -278,8 +278,9 @@ def _run_forecast_job(job_id, df, horizon, n_folds, step, min_train_size, tft_ep
         # Run per-series models in a process
         import os
         enable_prophet = str(os.environ.get("ENABLE_PROPHET", "false")).lower() == "true"
-        q1 = _mp.Queue()
-        p1 = _mp.Process(target=_forecast_worker, args=(run_per_series_models, df, horizon, n_folds, step, min_train_size, {"run_prophet": enable_prophet}, q1))
+        ctx = _mp.get_context("spawn")
+        q1 = ctx.Queue()
+        p1 = ctx.Process(target=_forecast_worker, args=(run_per_series_models, df, horizon, n_folds, step, min_train_size, {"run_prophet": enable_prophet}, q1))
         p1.start()
         
         start_time = time.time()
@@ -305,8 +306,8 @@ def _run_forecast_job(job_id, df, horizon, n_folds, step, min_train_size, tft_ep
         if status == "error": raise Exception(f"Per-series models failed: {payload1}")
         
         _jobs[job_id]["stage"] = "Running Global Deep Learning Model (TFT)..."
-        q2 = _mp.Queue()
-        p2 = _mp.Process(target=_forecast_worker, args=(run_tft_global, df, horizon, n_folds, step, min_train_size, {"epochs": tft_epochs}, q2))
+        q2 = ctx.Queue()
+        p2 = ctx.Process(target=_forecast_worker, args=(run_tft_global, df, horizon, n_folds, step, min_train_size, {"epochs": tft_epochs}, q2))
         p2.start()
         
         start_time = time.time()
