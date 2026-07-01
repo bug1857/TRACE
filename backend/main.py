@@ -864,6 +864,7 @@ async def run_benchmarking(
 
     # Validate timestamp column
     parsed_ts = pd.to_datetime(df[timestamp_col], errors="coerce", format="mixed")
+    if parsed_ts.notna().sum() == 0:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Timestamp column contains no parseable date/time values."
