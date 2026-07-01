@@ -67,7 +67,7 @@ export default function ForecastingBenchmarkingPage() {
       if (res.ok && data.job_id) {
         const jobId = data.job_id;
         const poll = async (): Promise<any> => {
-          const statusRes = await fetch(`${baseUrl}/api/jobs/${jobId}`);
+          const statusRes = await fetch(`${baseUrl}/api/benchmarking/status/${jobId}`);
           if (!statusRes.ok) throw new Error(`Status check failed: HTTP ${statusRes.status}`);
           const statusData = await statusRes.json();
           if (statusData.status === 'completed') {
