@@ -1,0 +1,7 @@
+pandas>=2.0
+numpy>=1.24
+statsmodels>=0.14
+xgboost>=2.0
+torch>=2.0
+prophet>=1.1        # needs cmdstan installed: python -c "import cmdstanpy; cmdstanpy.install_cmdstan()"
+pytest>=8.0

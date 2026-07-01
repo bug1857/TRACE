@@ -6,6 +6,7 @@ import { useDockMagnification } from '@/hooks/useDockMagnification';
 import { DockSidebarItem } from '@/components/DockSidebarItem';
 import { usePathname } from 'next/navigation';
 import {
+  Activity,
   Building2,
   Briefcase,
   LayoutGrid,
@@ -71,6 +72,7 @@ const navGroups: NavGroup[] = [
       { name: 'ESG Report', href: '/esg-report', icon: FileText },
       { name: 'BRSR Report', href: '/brsr-report', icon: FileSpreadsheet },
       { name: 'Green Routes', href: '/green-routes', icon: Compass },
+      { name: 'Conformance Benchmark', href: '/benchmarking', icon: Activity },
       { name: 'Forecasting', href: '/forecasting', icon: TrendingUp }
     ]
   },

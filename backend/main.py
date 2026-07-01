@@ -251,6 +251,74 @@ def _run_benchmark_job(job_id, df, case_col, activity_col, timestamp_col):
         _jobs[job_id]["traceback"] = traceback.format_exc()
 
 
+def _forecast_worker(runner, df, horizon, n_folds, step, min_train_size, kwargs, q):
+    try:
+        if kwargs is not None:
+            result_df = runner(df, horizon, n_folds, step, min_train_size, **kwargs)
+        else:
+            result_df = runner(df, horizon, n_folds, step, min_train_size)
+        q.put(("ok", result_df))
+    except Exception as e:
+        q.put(("error", str(e)))
+
+def _run_forecast_job(job_id, df, horizon, n_folds, step, min_train_size, tft_epochs):
+    try:
+        import multiprocessing as _mp
+        import time
+        from forecasting.src.benchmark import run_per_series_models, run_tft_global, summarize
+        
+        _jobs[job_id]["stage"] = "Running Statistical & ML Models (ARIMA, ETS, XGBoost, Prophet)..."
+        
+        # Run per-series models in a process
+        import os
+        enable_prophet = str(os.environ.get("ENABLE_PROPHET", "false")).lower() == "true"
+        q1 = _mp.Queue()
+        p1 = _mp.Process(target=_forecast_worker, args=(run_per_series_models, df, horizon, n_folds, step, min_train_size, {"run_prophet": enable_prophet}, q1))
+        p1.start()
+        p1.join(timeout=300.0) # 5 min timeout
+        
+        if p1.is_alive():
+            p1.terminate()
+            p1.join(timeout=2.0)
+            if p1.is_alive(): p1.kill(); p1.join()
+            raise Exception("Per-series models timed out.")
+        
+        status, payload1 = q1.get()
+        if status == "error": raise Exception(f"Per-series models failed: {payload1}")
+        
+        _jobs[job_id]["stage"] = "Running Global Deep Learning Model (TFT)..."
+        q2 = _mp.Queue()
+        p2 = _mp.Process(target=_forecast_worker, args=(run_tft_global, df, horizon, n_folds, step, min_train_size, {"epochs": tft_epochs}, q2))
+        p2.start()
+        p2.join(timeout=300.0)
+        
+        if p2.is_alive():
+            p2.terminate()
+            p2.join(timeout=2.0)
+            if p2.is_alive(): p2.kill(); p2.join()
+            raise Exception("TFT model timed out.")
+            
+        status, payload2 = q2.get()
+        if status == "error": raise Exception(f"TFT failed: {payload2}")
+        
+        _jobs[job_id]["stage"] = "Summarizing Results..."
+        all_results = pd.concat([payload1, payload2], ignore_index=True)
+        summary = summarize(all_results)
+        
+        # Format for frontend
+        _jobs[job_id]["result"] = {
+            "summary": summary.to_dict(orient="records"),
+            "raw": all_results.to_dict(orient="records")
+        }
+        _jobs[job_id]["status"] = "completed"
+        
+    except Exception as e:
+        import traceback
+        _jobs[job_id]["status"] = "error"
+        _jobs[job_id]["error"] = str(e)
+        _jobs[job_id]["traceback"] = traceback.format_exc()
+
+
 
 app = FastAPI(title="TRACE. Process Mining Backend")
 
@@ -796,7 +864,6 @@ async def run_benchmarking(
 
     # Validate timestamp column
     parsed_ts = pd.to_datetime(df[timestamp_col], errors="coerce", format="mixed")
-    if parsed_ts.notna().sum() == 0:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Timestamp column contains no parseable date/time values."
@@ -1647,3 +1714,51 @@ def get_benchmarking_status(job_id: str):
     if job_id not in _jobs:
         raise HTTPException(status_code=404, detail="Job not found")
     return _jobs[job_id]
+
+@app.post("/api/benchmark/forecast")
+async def run_forecasting_benchmark(
+    file: UploadFile = File(...),
+    horizon: int = Form(4),
+    n_folds: int = Form(5),
+    step: int = Form(4),
+    min_train_size: int = Form(52),
+    tft_epochs: int = Form(80)
+):
+    try:
+        contents = await file.read()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to read file: {e}")
+        
+    try:
+        try:
+            decoded = contents.decode("utf-8")
+        except UnicodeDecodeError:
+            decoded = contents.decode("latin-1")
+        df = pd.read_csv(io.StringIO(decoded))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to parse CSV: {e}")
+
+    # Check if we need to aggregate the data
+    if "series_id" not in df.columns or "week_start" not in df.columns:
+        if "Order date (DateOrders)" in df.columns and "Category Name" in df.columns:
+            from forecasting.src.data_prep import build_weekly_series, top_categories
+            df["order_date"] = pd.to_datetime(df["Order date (DateOrders)"])
+            cats = top_categories(df, 8)
+            df = build_weekly_series(df, cats)
+        else:
+            raise HTTPException(
+                status_code=422,
+                detail="CSV must contain 'series_id', 'week_start', 'y' OR be the raw DataCo dataset."
+            )
+    else:
+        df["week_start"] = pd.to_datetime(df["week_start"])
+        
+    job_id = str(uuid.uuid4())
+    _jobs[job_id] = {"status": "processing", "stage": "Initializing forecasting engine..."}
+    
+    t = threading.Thread(target=_run_forecast_job, args=(
+        job_id, df, horizon, n_folds, step, min_train_size, tft_epochs
+    ))
+    t.start()
+    
+    return {"job_id": job_id, "status": "processing"}
